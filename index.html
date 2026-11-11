@@ -92,6 +92,12 @@
   .sheet h3 { margin: 0 0 10px; font-size: 19px; }
   .hero { position: relative; }
   .swapbtn { position: absolute; top: 14px; right: 14px; background: rgba(255,255,255,.85); color: #0f172a; }
+  .wtog { display:flex; gap:6px; background:#f1f5f9; border-radius:99px; padding:4px; margin-bottom:12px; }
+  .wtog button { flex:1; border:0; border-radius:99px; padding:9px 6px; font-weight:700; font-size:14px; background:transparent; color:#475569; }
+  .wtog button.on { background:#fff; color:#0f172a; box-shadow:0 1px 4px rgba(0,0,0,.12); }
+  .why { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+  .why span { background:#fff; border-radius:99px; padding:4px 10px; font-size:12px; border:1px solid #e2e8f0; }
+  .wk .loc { display:block; border:0; background:#f1f5f9; border-radius:8px; margin-top:4px; padding:2px 0; font-size:14px; width:100%; }
   .moved { margin-top: 8px; font-size: 12px; background: rgba(255,255,255,.6); border-radius: 99px; padding: 4px 10px; display: inline-block; }
   .days button { position: relative; } .days .sw { position: absolute; top: 2px; right: 4px; font-style: normal; font-size: 10px; color: #7c3aed; }
   .sh { margin: 14px 0 8px; font-size: 14px; color: #475569; }
@@ -537,7 +543,8 @@ const PROGRAMS = { A:['row','goblet','lunge','press','pushup','plank'], B:['row'
 /* ================= STATE ================= */
 const KEY = 'minuge.v1';
 let state = JSON.parse(localStorage.getItem(KEY) || 'null') || {};
-state.settings = Object.assign({ kcal:1470, protein:110, cycleStart:'', cycleLen:28, programStart:'' }, state.settings || {});
+state.settings = Object.assign({ kcal:1700, protein:110, auto:true, height:170, age:31, cycleStart:'', cycleLen:28, programStart:'' }, state.settings || {});
+state.work = state.work || {};
 state.days = state.days || {};
 state.weights = state.weights || [];
 if (!state.settings.programStart) state.settings.programStart = iso(mondayOf(new Date()));
@@ -556,10 +563,10 @@ function weekInfo(){
   const diff = Math.floor((mondayOf(new Date()) - mondayOf(start)) / (7*864e5));
   return WEEKS[((diff % 4) + 4) % 4];
 }
-function cyclePhase(){
+function cyclePhase(k = iso(new Date())){
   const cs = state.settings.cycleStart; if (!cs) return null;
   const len = +state.settings.cycleLen || 28;
-  const diff = Math.floor((new Date(iso(new Date())+'T12:00:00') - new Date(cs+'T12:00:00')) / 864e5);
+  const diff = Math.floor((new Date(k+'T12:00:00') - new Date(cs+'T12:00:00')) / 864e5);
   if (diff < 0) return null;
   const d = (diff % len) + 1;
   if (d <= 5) return { d, name:'Menstruation', e:'🩸', c:'#fff1f2', tip:'Let til moderat træning. Spis jernrigt (æg, bønner, linser, kød) med C-vitamin. Spring intervaller over, hvis du er træt.' };
@@ -583,7 +590,7 @@ function header(){
   const w = weekInfo(), sch = schFor(now.getDay());
   const titles = { today:'Hej! 👋', food:'Mad i dag', train:'Træning', week:'Min uge' };
   $('#hdrTitle').textContent = titles[tab];
-  const work = [1,2,3].includes(now.getDay());
+  const work = workAt(now.getDay()) === 'office';
   $('#hdrSub').textContent = `Uge ${w.n} af 4 · ${w.title} · ${work ? 'Arbejdsdag 🚗' : 'Hjemmedag 🏡'} · ${sch.title}`;
 }
 
@@ -602,11 +609,12 @@ function ring(val, goal, color, size=130){
 
 /* ================= I DAG ================= */
 function renderToday(){
-  const k = iso(new Date()), d = day(k), t = totals(k), g = state.settings, sch = schFor(new Date().getDay());
+  const k = iso(new Date()), d = day(k), t = totals(k), G = goalFor(k), g = { kcal:G.kcal, protein:G.p }, wd = new Date().getDay(), sch = schFor(wd);
   const left = g.kcal - t.kcal, over = left < 0;
   const ph = cyclePhase();
   const checks = [['d3b','💊','D3 + B-vitamin'],['c','🍋','C-brus'],['coll','✨','Collagen'],['sleep','😴','7–8 timers søvn'],['stretch','🧘‍♀️','Stræk 5 min'],['iron','🩸','Jern (hvis aftalt)']];
   $('#view').innerHTML = `
+    ${workToggle(wd)}
     <div class="card">
       <div class="rings">
         <div class="ring">${ring(t.kcal, g.kcal, over ? '#e11d48' : '#f97316')}<div class="c"><b>${r0(Math.abs(left))}</b><span>${over ? 'kcal over' : 'kcal tilbage'}</span></div></div>
@@ -623,6 +631,10 @@ function renderToday(){
       <div class="row between"><span class="big">${sch.e}</span>${d.done ? '<span class="btn small" style="background:#0f766e">✓ Gennemført</span>' : '<span class="btn small gray">Start ›</span>'}</div>
       <h2>${sch.title}</h2><div style="font-size:14px">${sch.sub}</div>
     </button>
+    ${suggestCard(wd)}
+    ${workAt(wd)==='office' ? `<div class="card" style="background:#fffbeb"><h2>🚗 Kontordag</h2><div style="font-size:14px">Kefir-skålen før afgang · shaken på formiddagen · frokost senest kl. 11–12 · skyr eller æg inden for 1 time efter hjemkomst.</div></div>`
+      : `<div class="card" style="background:#f0fdf4"><h2>🏡 Hjemmedag</h2><div style="font-size:14px">Morgenmad i ro inden kl. 9 · træn gerne formiddag eller i frokostpausen · frokost lige efter træning${LIGHT.includes(sch.type) ? ' · ekstra: 20 min rask gang på gangbåndet i en pause' : ''}.</div></div>`}
+    ${goalCard(k)}
 
     ${ph ? `<div class="card phase" style="background:${ph.c}"><b>${ph.e} ${ph.name} · cyklusdag ${ph.d}</b><div style="margin-top:4px">${ph.tip}</div></div>` : ''}
 
@@ -632,7 +644,6 @@ function renderToday(){
       <h2 style="margin-top:14px">💧 Vand <span class="muted" style="font-weight:400">${(d.water*0.25).toFixed(2).replace('.',',')} l af 2 l</span></h2>
       <div class="water">${Array.from({length:8}, (_,i) => `<button class="${i<d.water?'on':''}" onclick="setWater(${i+1})">💧</button>`).join('')}</div>
     </div>
-    ${[1,2,3].includes(new Date().getDay()) ? `<div class="card" style="background:#fffbeb"><h2>🚗 Arbejdsdag</h2><div style="font-size:14px">Kefir-skålen før afgang · shaken på formiddagen · frokost senest kl. 11–12 · skyr eller æg inden for 1 time efter hjemkomst.</div></div>` : ''}
   `;
 }
 function toggleCheck(id){ const d = day(); d.checks[id] = !d.checks[id]; save(); render(); }
@@ -640,7 +651,7 @@ function setWater(n){ const d = day(); d.water = d.water === n ? n-1 : n; save()
 
 /* ================= MAD ================= */
 function renderFood(){
-  const k = iso(new Date()), d = day(k), t = totals(k), g = state.settings;
+  const k = iso(new Date()), d = day(k), t = totals(k), G = goalFor(k), g = { kcal:G.kcal, protein:G.p };
   const list = d.food.slice().reverse();
   $('#view').innerHTML = `
     <div class="card">
@@ -770,6 +781,7 @@ function renderTrain(){
   const now = new Date().getDay(), key = keyForWeekday(trainDay), d = day(key), sch = schFor(trainDay), w = weekInfo(), moved = srcFor(trainDay) !== trainDay;
   const order = [1,2,3,4,5,6,0];
   let html = `<div class="days">${order.map((wd,i) => { const dd = state.days[keyForWeekday(wd)]; return `<button class="${wd===trainDay?'on':''} ${wd===now?'today':''}" onclick="trainDay=${wd};openEx=null;render()">${SHORT[i]}<span class="ok">${dd && dd.done ? '✅' : schFor(wd).e}</span>${srcFor(wd)!==wd?'<i class="sw">⇄</i>':''}</button>`; }).join('')}</div>
+    ${workToggle(trainDay)}${suggestCard(trainDay)}
     <div class="hero t-${sch.type}"><div class="big">${sch.e}</div><h2>${sch.title}</h2><div style="font-size:14px">${DAYNAMES[trainDay]} · ${sch.sub}</div>
       ${moved ? `<div class="moved">⇄ Ændret denne uge · planen var ${SCHEDULE[trainDay].e} ${SCHEDULE[trainDay].title}</div>` : ''}
       <button class="btn small swapbtn" onclick="openSwap()">🔄 ${moved ? 'Ændr' : 'Byt dag'}</button></div>`;
@@ -824,6 +836,69 @@ function swapDays(a, b){
 function pickWorkout(wd, src){ setSrc(wd, src); save(); closeSheet(); openEx = null; toast(`${SCHEDULE[src].e} ${DAYNAMES[wd]}: ${SCHEDULE[src].title}`); render(); }
 function resetSwap(wd){ setSrc(wd, wd); save(); closeSheet(); openEx = null; toast('↺ Tilbage til planen'); render(); }
 function keyForWeekday(wd){ const m = mondayOf(new Date()); m.setDate(m.getDate() + ((wd+6)%7)); return iso(m); }
+
+/* ================= HJEMME / KONTOR ================= */
+const ORDER = [1,2,3,4,5,6,0];
+const LIGHT = ['walk','rest'], HEAVY = ['str','row','run'];
+function workAt(wd){ const v = state.work[keyForWeekday(wd)]; return v || ([1,2,3].includes(wd) ? 'office' : 'home'); }
+function setWork(wd, v){ const k = keyForWeekday(wd); if (v === ([1,2,3].includes(wd) ? 'office' : 'home')) delete state.work[k]; else state.work[k] = v; save(); toast(v === 'home' ? '🏡 Hjemme – planen er opdateret' : '🏢 Kontor – planen er opdateret'); render(); }
+function workToggle(wd){ const v = workAt(wd);
+  return `<div class="wtog"><button class="${v==='office'?'on':''}" onclick="setWork(${wd},'office')">🏢 Kontor</button><button class="${v==='home'?'on':''}" onclick="setWork(${wd},'home')">🏡 Hjemme</button></div>`; }
+// Foreslår at flytte hård træning til hjemmedage og let træning til kontordage (kun dage fra i dag og frem)
+function workSuggest(wd){
+  const today = new Date().getDay(), idx = w => ORDER.indexOf(w);
+  if (idx(wd) < idx(today) || (state.days[keyForWeekday(wd)] || {}).done) return null;
+  const me = schFor(wd), loc = workAt(wd);
+  const later = ORDER.filter(w => w !== wd && idx(w) >= idx(today) && !(state.days[keyForWeekday(w)] || {}).done);
+  if (loc === 'home' && LIGHT.includes(me.type)) {
+    const t = later.find(w => schFor(w).type === 'str' && workAt(w) === 'office') ?? later.find(w => HEAVY.includes(schFor(w).type) && workAt(w) === 'office') ?? later.find(w => schFor(w).type === 'str' && idx(w) > idx(wd));
+    if (t == null) return null;
+    return { e:'💡', text:`Du er hjemme ${DAYNAMES[wd].toLowerCase()} og har mere tid. Vil du tage ${schFor(t).e} ${schFor(t).title} i dag og flytte ${me.e} ${me.title} til ${DAYNAMES[t].toLowerCase()}?`, a:wd, b:t };
+  }
+  if (loc === 'office' && HEAVY.includes(me.type)) {
+    const t = later.find(w => LIGHT.includes(schFor(w).type) && workAt(w) === 'home');
+    if (t == null) return { e:'🚗', text:`Kontordag med ${me.title}: tag den korte version (2 sæt / 20 min), hvis du er træt efter køreturen.` };
+    return { e:'💡', text:`Du er på kontoret ${DAYNAMES[wd].toLowerCase()}. Vil du flytte ${me.e} ${me.title} til ${DAYNAMES[t].toLowerCase()}, hvor du er hjemme, og tage ${schFor(t).e} ${schFor(t).title} i dag?`, a:wd, b:t };
+  }
+  return null;
+}
+function suggestCard(wd){ const sg = workSuggest(wd); if (!sg) return '';
+  return `<div class="card" style="background:#eff6ff"><div style="font-size:14px">${sg.e} ${sg.text}</div>${sg.b != null ? `<button class="btn small" style="margin-top:8px" onclick="swapDays(${sg.a},${sg.b})">⇄ Ja, byt</button>` : ''}</div>`; }
+
+/* ================= DAGLIGE MÅL ================= */
+function wdOfKey(k){ return new Date(k+'T12:00:00').getDay(); }
+function curWeight(k = iso(new Date())){ const ws = state.weights.filter(w => w.date <= k).sort((a,b) => a.date < b.date ? -1 : 1); return ws.length ? ws[ws.length-1].kg : 65; }
+function weightRate(k = iso(new Date())){ // kg tabt pr. uge over de seneste 1-5 uger
+  const ws = state.weights.filter(w => w.date <= k).sort((a,b) => a.date < b.date ? -1 : 1); if (ws.length < 2) return 0;
+  const last = ws[ws.length-1], lt = new Date(last.date+'T12:00:00');
+  const old = ws.filter(w => { const d = (lt - new Date(w.date+'T12:00:00')) / 864e5; return d >= 6 && d <= 35; })[0]; if (!old) return 0;
+  return (old.kg - last.kg) / ((lt - new Date(old.date+'T12:00:00')) / (7*864e5));
+}
+function schForKey(k){ const wd = wdOfKey(k); return keyForWeekday(wd) === k ? schFor(wd) : SCHEDULE[wd]; }
+function goalFor(k = iso(new Date())){
+  const g = state.settings, w = curWeight(k), h = +g.height || 170, a = +g.age || 31;
+  const bmr = Math.round(10*w + 6.25*h - 5*a - 161), sch = schForKey(k), ph = cyclePhase(k), rate = weightRate(k);
+  const burn = { rest:0, walk:75, str:125, row:150, run:150 }[sch.type] || 0;
+  const why = [`Hvilestofskifte ${bmr}`, `Hverdag ×1,45`, `Skånsomt underskud −400`];
+  let kcal = bmr*1.45 - 400;
+  if (burn) { kcal += burn; why.push(`${sch.e} ${sch.title} +${burn}`); }
+  let tips = [];
+  if (sch.type === 'str') tips.push('🍌 Efter styrke: banan eller skyr inden for 1 time');
+  if (['row','run'].includes(sch.type)) tips.push('🍞 Kondi: lidt ekstra kulhydrat, fx en skive rugbrød mere');
+  if (ph && ph.name === 'Lutealfase') { kcal += 125; why.push('🌙 Lutealfase +125'); tips.push('🥛 Lutealfase: skyr med bær er en god ekstra snack'); }
+  if (ph && ph.name === 'Menstruation') tips.push('🩸 Menstruation: jernrigt (æg, linser, kød) med C-vitamin');
+  if (rate > 0.75) { kcal += 150; why.push(`⚖️ Hurtigt vægttab (${rate.toFixed(1).replace('.',',')} kg/uge) +150`); tips.push('⚠️ Du taber dig hurtigere end anbefalet – spis lidt mere for at passe på stofskiftet'); }
+  kcal = Math.max(bmr, 1200, Math.round(kcal/10)*10);
+  const p = Math.round(w*1.7/5)*5;
+  if (!g.auto) return { kcal: +g.kcal || kcal, p: +g.protein || p, auto:false, why:['Egne mål (sat i Indstillinger)'], tips, bmr, w, autoK:kcal, autoP:p };
+  why.push(`Protein 1,7 g × ${String(w).replace('.',',')} kg`);
+  return { kcal, p, auto:true, why, tips, bmr, w, autoK:kcal, autoP:p };
+}
+function goalCard(k){ const G = goalFor(k);
+  return `<div class="card" style="background:#fff7ed"><h2>🎯 Dagens mål: ${G.kcal} kcal · ${G.p} g protein</h2>
+    <div class="why">${G.why.map(x => `<span>${x}</span>`).join('')}</div>
+    ${G.tips.length ? `<div style="font-size:14px;margin-top:8px">${G.tips.join('<br>')}</div>` : ''}
+    ${!G.auto ? `<div class="muted" style="margin-top:6px">Automatisk ville være ${G.autoK} kcal · ${G.autoP} g. <a href="#" onclick="setS('auto',true);render();return false">Brug automatisk</a></div>` : ''}</div>`; }
 function segsFor(wd, w){
   if (wd === 1) return [['Rolig gang', 20*60, '#38bdf8']];
   if (wd === 2) return [['Opvarmning, roligt', 180, '#7dd3fc'], ['Rask gang 5–6 km/t', (w.walk-6)*60, '#0284c7'], ['Nedkøling', 180, '#7dd3fc']];
@@ -921,17 +996,18 @@ function setDone(key, v){
 
 /* ================= UGE ================= */
 function renderWeek(){
-  const order = [1,2,3,4,5,6,0], g = state.settings, today = iso(new Date());
+  const order = [1,2,3,4,5,6,0], g = state.settings, today = iso(new Date()), G0 = goalFor(today);
   let doneCount = 0, kcalSum = 0, kcalDays = 0;
   const cells = order.map((wd,i) => {
     const k = keyForWeekday(wd), dd = state.days[k], t = dd ? totals(k) : { kcal:0, p:0 };
     if (dd && dd.done) doneCount++; if (t.kcal > 0) { kcalSum += t.kcal; kcalDays++; }
-    return `<div class="d ${k===today?'today':''}"><b>${SHORT[i]}</b><span class="e">${dd && dd.done ? '✅' : schFor(wd).e}</span><div class="mini"><div style="height:${Math.min(100, t.kcal/g.kcal*100)}%;background:${t.kcal>g.kcal*1.05?'#e11d48':'#f97316'}"></div></div>${t.kcal ? r0(t.kcal) : '–'}</div>`;
+    return `<div class="d ${k===today?'today':''}"><b>${SHORT[i]}</b><span class="e">${dd && dd.done ? '✅' : schFor(wd).e}</span><div class="mini"><div style="height:${Math.min(100, t.kcal/goalFor(k).kcal*100)}%;background:${t.kcal>goalFor(k).kcal*1.05?'#e11d48':'#f97316'}"></div></div>${t.kcal ? r0(t.kcal) : '–'}<small class="muted" style="display:block;font-size:10px">/${goalFor(k).kcal}</small><button class="loc" onclick="setWork(${wd},'${workAt(wd)==='home'?'office':'home'}')">${workAt(wd)==='home'?'🏡':'🏢'}</button></div>`;
   }).join('');
   const ws = state.weights.slice(-12);
   $('#view').innerHTML = `
     <div class="card"><h2>📅 Denne uge</h2><div class="wk">${cells}</div>
-      <div class="row between" style="margin-top:12px;font-size:14px"><span>💪 Træninger: <b>${doneCount} / 7</b></span><span>🔥 Snit: <b>${kcalDays ? r0(kcalSum/kcalDays) : '–'} kcal</b></span></div></div>
+      <div class="row between" style="margin-top:12px;font-size:14px"><span>💪 Træninger: <b>${doneCount} / 7</b></span><span>🔥 Snit: <b>${kcalDays ? r0(kcalSum/kcalDays) : '–'} kcal</b></span></div>
+      <div class="muted" style="margin-top:6px">Tryk 🏢/🏡 for at skifte mellem kontor og hjemme – forslag og mål opdateres.</div></div>
 
     <div class="card"><h2>⚖️ Vægt</h2>
       <div class="row"><input class="field" id="wIn" type="number" inputmode="decimal" step="0.1" placeholder="fx 64,5" style="margin:0"><button class="btn" onclick="addWeight()">Gem</button></div>
@@ -941,10 +1017,17 @@ function renderWeek(){
 
     <div class="card settings"><h2>⚙️ Indstillinger</h2>
       <div class="grid2">
-        <div><label>Kalorie-mål</label><input class="field" type="number" value="${g.kcal}" onchange="setS('kcal',+this.value)"></div>
-        <div><label>Protein-mål (g)</label><input class="field" type="number" value="${g.protein}" onchange="setS('protein',+this.value)"></div>
-        <div><label>1. dag i seneste menstruation</label><input class="field" type="date" value="${g.cycleStart}" onchange="setS('cycleStart',this.value)"></div>
-        <div><label>Cykluslængde (dage)</label><input class="field" type="number" value="${g.cycleLen}" onchange="setS('cycleLen',+this.value)"></div>
+      </div>
+      <label>Mål for kalorier og protein</label>
+      <div class="wtog"><button class="${g.auto?'on':''}" onclick="setS('auto',true);render()">🤖 Automatisk</button><button class="${!g.auto?'on':''}" onclick="setManual()">✍️ Mine egne</button></div>
+      <div class="muted" style="margin:-4px 0 10px">${g.auto ? `I dag: ${G0.kcal} kcal · ${G0.p} g protein. Regnes ud fra vægt (${String(G0.w).replace('.',',')} kg), højde, alder, dagens træning, cyklus og vægtudvikling – aldrig under dit hvilestofskifte (${G0.bmr} kcal).` : `Dine egne mål bruges hver dag. Automatisk ville i dag være ${G0.autoK} kcal · ${G0.autoP} g.`}</div>
+      <div class="grid2">
+        <div><label>Kalorie-mål</label><input class="field" type="number" ${g.auto?'disabled':''} value="${g.auto?G0.kcal:g.kcal}" onchange="setS('kcal',+this.value)"></div>
+        <div><label>Protein-mål (g)</label><input class="field" type="number" ${g.auto?'disabled':''} value="${g.auto?G0.p:g.protein}" onchange="setS('protein',+this.value)"></div>
+        <div><label>Højde (cm)</label><input class="field" type="number" value="${g.height}" onchange="setS('height',+this.value);render()"></div>
+        <div><label>Alder</label><input class="field" type="number" value="${g.age}" onchange="setS('age',+this.value);render()"></div>
+        <div><label>1. dag i seneste menstruation</label><input class="field" type="date" value="${g.cycleStart}" onchange="setS('cycleStart',this.value);render()"></div>
+        <div><label>Cykluslængde (dage)</label><input class="field" type="number" value="${g.cycleLen}" onchange="setS('cycleLen',+this.value);render()"></div>
         <div><label>Start på 4-ugers plan</label><input class="field" type="date" value="${g.programStart}" onchange="setS('programStart',this.value)"></div>
       </div>
       <div class="row" style="flex-wrap:wrap;gap:8px">
@@ -955,6 +1038,7 @@ function renderWeek(){
     </div>`;
 }
 function setS(k, v){ state.settings[k] = v; save(); toast('Gemt'); header(); }
+function setManual(){ const G = goalFor(); state.settings.auto = false; state.settings.kcal = G.kcal; state.settings.protein = G.p; save(); toast('Skriv dine egne mål'); render(); }
 function addWeight(){ const v = parseFloat(($('#wIn').value||'').replace(',','.')); if (!(v > 30 && v < 200)) { toast('Skriv en gyldig vægt'); return; } state.weights = state.weights.filter(w => w.date !== iso(new Date())); state.weights.push({ date: iso(new Date()), kg: v }); save(); toast('Vægt gemt'); render(); }
 function weightChart(ws){
   const W = 300, H = 110, pad = 24, vals = ws.map(w => w.kg), mn = Math.min(...vals, 60) - .5, mx = Math.max(...vals) + .5;
