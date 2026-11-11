@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Min uge">
+<meta name="theme-color" content="#0f766e">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" href="icon.png">
+<title>Min uge</title>
+<style>
+  :root {
+    --teal: #0f766e; --teal2: #34d399; --ink: #1f2d3d; --muted: #64748b; --line: #e2e8f0;
+    --bg: #f4f7f6; --card: #fff; --orange: #f97316; --red: #e11d48; --blue: #2563eb; --violet: #7c3aed;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; font-size: 16px; }
+  body { padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
+  button { font: inherit; color: inherit; border: none; background: none; cursor: pointer; }
+  input, select { font: inherit; }
+  .hidden { display: none !important; }
+
+  header { background: linear-gradient(135deg, var(--teal), var(--teal2)); color: #fff; padding: calc(14px + env(safe-area-inset-top)) 18px 18px; border-radius: 0 0 22px 22px; }
+  header .date { font-size: 13px; opacity: .9; text-transform: capitalize; }
+  header h1 { margin: 2px 0 0; font-size: 26px; }
+  header .sub { font-size: 13px; opacity: .95; margin-top: 4px; }
+
+  main { padding: 14px; max-width: 560px; margin: 0 auto; }
+  .card { background: var(--card); border-radius: 18px; padding: 14px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(15, 23, 42, .06); }
+  .card h2 { font-size: 17px; margin: 0 0 10px; display: flex; align-items: center; gap: 8px; }
+  .muted { color: var(--muted); font-size: 13px; }
+  .row { display: flex; align-items: center; gap: 10px; }
+  .between { justify-content: space-between; }
+
+  nav { position: fixed; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,.96); backdrop-filter: blur(10px); border-top: 1px solid var(--line); display: grid; grid-template-columns: repeat(4, 1fr); padding: 6px 4px calc(6px + env(safe-area-inset-bottom)); z-index: 20; }
+  nav button { display: flex; flex-direction: column; align-items: center; font-size: 11px; color: var(--muted); padding: 4px 0; gap: 2px; }
+  nav button .i { font-size: 22px; filter: grayscale(1); opacity: .6; }
+  nav button.on { color: var(--teal); font-weight: 600; }
+  nav button.on .i { filter: none; opacity: 1; }
+
+  /* Rings */
+  .rings { display: grid; grid-template-columns: 130px 1fr; gap: 14px; align-items: center; }
+  .ring { position: relative; width: 130px; height: 130px; }
+  .ring svg { transform: rotate(-90deg); }
+  .ring .c { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .ring .c b { font-size: 26px; }
+  .ring .c span { font-size: 12px; color: var(--muted); }
+  .bar { height: 12px; background: #eef2f1; border-radius: 99px; overflow: hidden; }
+  .bar > div { height: 100%; border-radius: 99px; transition: width .4s; }
+  .stat { margin-bottom: 10px; }
+  .stat .row { font-size: 14px; margin-bottom: 4px; }
+
+  /* Chips & buttons */
+  .btn { background: var(--teal); color: #fff; border-radius: 14px; padding: 12px 16px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; justify-content: center; }
+  .btn.ghost { background: #ecfdf5; color: var(--teal); }
+  .btn.gray { background: #f1f5f9; color: var(--ink); }
+  .btn.full { width: 100%; }
+  .btn.small { padding: 7px 11px; font-size: 14px; border-radius: 10px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .action { background: #fff; border-radius: 18px; padding: 16px 10px; text-align: center; box-shadow: 0 1px 3px rgba(15,23,42,.06); }
+  .action .e { font-size: 30px; display: block; }
+  .action b { display: block; margin-top: 4px; font-size: 15px; }
+  .action span { font-size: 12px; color: var(--muted); }
+
+  .checks { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .chk { display: flex; align-items: center; gap: 8px; padding: 10px; border-radius: 12px; background: #f8fafc; border: 1px solid var(--line); font-size: 14px; text-align: left; }
+  .chk .b { width: 22px; height: 22px; border-radius: 7px; border: 2px solid #cbd5e1; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #fff; flex: none; }
+  .chk.on { background: #ecfdf5; border-color: #a7f3d0; }
+  .chk.on .b { background: var(--teal); border-color: var(--teal); }
+  .water { display: flex; gap: 6px; flex-wrap: wrap; }
+  .water button { font-size: 24px; opacity: .25; }
+  .water button.on { opacity: 1; }
+
+  /* Food list */
+  .entry { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid #f1f5f9; }
+  .entry:last-child { border-bottom: none; }
+  .thumb { width: 48px; height: 48px; border-radius: 12px; background: #fff7ed; display: flex; align-items: center; justify-content: center; font-size: 24px; flex: none; overflow: hidden; }
+  .thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .entry .t { flex: 1; min-width: 0; }
+  .entry .t b { display: block; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .entry .k { text-align: right; font-size: 14px; font-weight: 600; }
+  .entry .k span { display: block; font-size: 12px; color: var(--muted); font-weight: 400; }
+  .del { color: #94a3b8; font-size: 18px; padding: 4px; }
+
+  /* Sheet */
+  .backdrop { position: fixed; inset: 0; background: rgba(15,23,42,.45); z-index: 40; }
+  .sheet { position: fixed; left: 0; right: 0; bottom: 0; max-height: 88vh; overflow-y: auto; background: #fff; border-radius: 22px 22px 0 0; z-index: 41; padding: 10px 16px calc(18px + env(safe-area-inset-bottom)); max-width: 560px; margin: 0 auto; }
+  .sheet .grab { width: 40px; height: 5px; border-radius: 9px; background: #cbd5e1; margin: 0 auto 10px; }
+  .sheet h3 { margin: 0 0 10px; font-size: 19px; }
+  .tabs { display: flex; background: #f1f5f9; border-radius: 12px; padding: 3px; margin-bottom: 12px; }
+  .tabs button { flex: 1; padding: 8px 4px; border-radius: 10px; font-size: 14px; color: var(--muted); }
+  .tabs button.on { background: #fff; color: var(--ink); font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+  .opt { display: flex; align-items: center; gap: 10px; padding: 11px 10px; border-radius: 12px; width: 100%; text-align: left; border: 1px solid var(--line); margin-bottom: 7px; background: #fff; }
+  .opt .e { font-size: 24px; }
+  .opt .t { flex: 1; }
+  .opt .t b { display: block; font-size: 15px; }
+  .opt .t span { font-size: 12px; color: var(--muted); }
+  .opt .plus { width: 30px; height: 30px; border-radius: 50%; background: var(--teal); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+  .field { width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line); background: #f8fafc; margin-bottom: 10px; }
+  .photo-prev { width: 100%; max-height: 220px; object-fit: cover; border-radius: 14px; margin-bottom: 10px; }
+  .stepper { display: flex; align-items: center; justify-content: center; gap: 14px; margin: 10px 0; }
+  .stepper button { width: 44px; height: 44px; border-radius: 50%; background: #f1f5f9; font-size: 22px; font-weight: 600; }
+  .stepper input { width: 90px; text-align: center; font-size: 22px; font-weight: 700; border: none; border-bottom: 2px solid var(--line); padding: 4px; background: transparent; }
+  .calc { text-align: center; font-size: 15px; margin-bottom: 12px; }
+  .calc b { font-size: 22px; color: var(--orange); }
+
+  /* Training */
+  .days { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 12px; }
+  .days button { flex: 1; min-width: 44px; padding: 8px 0; border-radius: 12px; background: #fff; font-size: 13px; font-weight: 600; color: var(--muted); position: relative; }
+  .days button.on { background: var(--teal); color: #fff; }
+  .days button.today::after { content: ""; position: absolute; left: 50%; bottom: 3px; width: 5px; height: 5px; margin-left: -2.5px; border-radius: 50%; background: var(--orange); }
+  .days button .ok { display: block; font-size: 11px; }
+  .hero { border-radius: 18px; padding: 16px; margin-bottom: 12px; color: #0b1324; }
+  .hero .big { font-size: 40px; }
+  .hero h2 { margin: 4px 0 2px; font-size: 22px; }
+  .t-walk { background: #bae6fd; } .t-str { background: #fecaca; } .t-run { background: #bbf7d0; } .t-rest { background: #e5e7eb; } .t-row { background: #ddd6fe; }
+  .ex { background: #fff; border-radius: 16px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(15,23,42,.06); overflow: hidden; }
+  .ex .top { display: flex; align-items: center; gap: 10px; padding: 12px; width: 100%; text-align: left; }
+  .ex .num { width: 30px; height: 30px; border-radius: 50%; background: var(--red); color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center; flex: none; }
+  .ex.B .num { background: var(--blue); }
+  .ex.done .num { background: var(--teal); }
+  .ex .top .t { flex: 1; }
+  .ex .top .t b { display: block; font-size: 16px; }
+  .ex .top .t span { font-size: 13px; color: var(--muted); }
+  .ex .chev { color: #94a3b8; transition: transform .2s; }
+  .ex.open .chev { transform: rotate(90deg); }
+  .ex .body { padding: 0 12px 12px; }
+  .fig { background: linear-gradient(#f8fafc, #eef6f4); border-radius: 14px; margin-bottom: 10px; }
+  .fig svg { width: 100%; height: auto; display: block; }
+  .ex ul { margin: 0 0 10px 18px; padding: 0; font-size: 14px; }
+  .ex li { margin-bottom: 3px; }
+  .sets { display: flex; gap: 8px; align-items: center; padding: 0 12px 12px 52px; }
+  .set { width: 42px; height: 42px; border-radius: 50%; border: 2px dashed #cbd5e1; display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--muted); font-size: 14px; }
+  .set.on { background: var(--teal); border: 2px solid var(--teal); color: #fff; }
+  .sets .lbl { font-size: 12px; color: var(--muted); margin-left: 4px; }
+
+  /* Timer */
+  .timer { text-align: center; }
+  .timer .seg { font-size: 15px; font-weight: 600; margin-bottom: 2px; }
+  .timer .clock { font-size: 56px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -1px; }
+  .timer .next { font-size: 13px; color: var(--muted); margin-bottom: 10px; }
+  .segs { display: flex; gap: 2px; height: 10px; margin: 10px 0 14px; border-radius: 99px; overflow: hidden; }
+  .segs div { height: 100%; }
+  .rest { position: fixed; left: 12px; right: 12px; bottom: calc(84px + env(safe-area-inset-bottom)); background: #0f172a; color: #fff; border-radius: 18px; padding: 12px 16px; z-index: 30; display: flex; align-items: center; gap: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.25); max-width: 536px; margin: 0 auto; }
+  .rest b { font-size: 28px; font-variant-numeric: tabular-nums; }
+  .rest .t { flex: 1; font-size: 14px; }
+  .toast { position: fixed; top: calc(14px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); background: #0f172a; color: #fff; padding: 10px 16px; border-radius: 99px; font-size: 14px; z-index: 60; box-shadow: 0 6px 18px rgba(0,0,0,.2); white-space: nowrap; }
+
+  /* Week */
+  .wk { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+  .wk .d { background: #f8fafc; border-radius: 12px; padding: 7px 2px; text-align: center; font-size: 12px; border: 1px solid var(--line); }
+  .wk .d.today { border-color: var(--teal); border-width: 2px; }
+  .wk .d b { display: block; font-size: 13px; }
+  .wk .d .e { font-size: 18px; display: block; margin: 3px 0; }
+  .wk .mini { height: 40px; width: 12px; margin: 4px auto 2px; background: #eef2f1; border-radius: 6px; position: relative; overflow: hidden; }
+  .wk .mini div { position: absolute; bottom: 0; left: 0; right: 0; background: var(--orange); border-radius: 6px; }
+  .phase { border-radius: 14px; padding: 12px; font-size: 14px; }
+  .settings label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="date" id="hdrDate"></div>
+  <h1 id="hdrTitle">Min uge</h1>
+  <div class="sub" id="hdrSub"></div>
+</header>
+
+<main id="view"></main>
+
+<nav>
+  <button data-tab="today" class="on"><span class="i">🏠</span>I dag</button>
+  <button data-tab="food"><span class="i">🍽️</span>Mad</button>
+  <button data-tab="train"><span class="i">💪</span>Træning</button>
+  <button data-tab="week"><span class="i">📅</span>Uge</button>
+</nav>
+
+<input type="file" id="cam" accept="image/*" capture="environment" class="hidden">
+<div id="overlay"></div>
+<div id="restBox"></div>
+
+<script>
+/* ================= DATA ================= */
+const DAYNAMES = ['Søndag','Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag'];
+const SHORT = ['Man','Tir','Ons','Tor','Fre','Lør','Søn'];
+
+const PLAN_FOODS = [
+  { e:'🥣', name:'Kefir-skål med frø og paranød', kcal:270, p:15, note:'250 g kefir, chia, græskar- og solsikkekerner, bær, 1 paranød' },
+  { e:'🥤', name:'Proteinshake', kcal:120, p:24, note:'30 g whey med vand' },
+  { e:'☕', name:'Kaffe med mælk (1 kop)', kcal:20, p:1.7, note:'ca. 50 ml letmælk' },
+  { e:'🥪', name:'Frokost: rugbrød + kylling/fisk', kcal:400, p:35, note:'2 skiver rugbrød, 110 g protein, grønt, 1 tsk. olie' },
+  { e:'🍎', name:'Æble + mandler', kcal:100, p:2.5, note:'1 æble og 10 g mandler' },
+  { e:'🍽️', name:'Aftensmad: laks/kylling + kartofler', kcal:450, p:38, note:'140 g protein, 120 g kartofler/ris, grønt, 1 tsk. olie' },
+  { e:'🥝', name:'Kiwi', kcal:45, p:0.8, note:'Aftenens kiwi' },
+  { e:'🥛', name:'Skyr (150 g)', kcal:95, p:16, note:'God snack ved sen hjemkomst' },
+  { e:'🍌', name:'Ekstra frugt', kcal:70, p:0.8, note:'Fx banan eller appelsin' },
+];
+
+// name, emoji, kcal/100g, protein/100g, standardportion (g), portionstekst
+const FOOD_DB = [
+  ['Rugbrød','🍞',210,6.5,50,'1 skive'],['Franskbrød / bolle','🥖',260,9,40,'1 skive'],['Havregryn','🥣',370,13,40,'1 portion'],
+  ['Kefir','🥛',55,3.4,250,'1 skål'],['Skyr naturel','🥛',62,11,150,'1 bæger'],['Græsk yoghurt 2%','🥛',75,9,150,'1 portion'],
+  ['Letmælk','🥛',46,3.5,200,'1 glas'],['Æg','🥚',140,12.5,60,'1 stk.'],['Kyllingebryst, stegt','🍗',165,31,110,'1 portion'],
+  ['Laks','🐟',200,20,140,'1 portion'],['Torsk','🐟',80,18,150,'1 portion'],['Tun i vand','🐟',110,25,100,'1 dåse'],
+  ['Hakket oksekød 8–12%','🥩',190,20,125,'1 portion'],['Svinemørbrad','🥩',130,22,125,'1 portion'],['Kyllingepålæg','🥪',105,20,30,'3 skiver'],
+  ['Ost 30+','🧀',270,29,20,'1 skive'],['Hytteost','🧀',90,12,100,'½ bæger'],['Kartofler, kogte','🥔',75,2,150,'1 portion'],
+  ['Fuldkornsris, kogt','🍚',125,3,150,'1 portion'],['Pasta, kogt','🍝',150,5.5,180,'1 portion'],['Bulgur, kogt','🍚',105,3.5,150,'1 portion'],
+  ['Linser, kogte','🫘',115,9,150,'1 portion'],['Kikærter','🫘',140,8,150,'1 portion'],['Broccoli','🥦',35,3,100,'1 portion'],
+  ['Gulerod','🥕',40,1,100,'1 stk.'],['Salat, agurk, tomat','🥗',18,1,100,'1 skål'],['Avocado','🥑',200,2,75,'½ stk.'],
+  ['Æble','🍎',52,0.3,150,'1 stk.'],['Banan','🍌',90,1.1,120,'1 stk.'],['Bær','🫐',45,1,100,'1 håndfuld'],
+  ['Kiwi','🥝',60,1.1,75,'1 stk.'],['Appelsin','🍊',47,0.9,150,'1 stk.'],['Mandler','🌰',580,21,10,'ca. 8 stk.'],
+  ['Paranød','🌰',660,14,5,'1 stk.'],['Chiafrø','🌱',490,17,5,'1 tsk.'],['Græskarkerner','🎃',560,30,5,'1 tsk.'],
+  ['Peanutbutter','🥜',600,25,15,'1 spsk.'],['Olivenolie','🫒',900,0,5,'1 tsk.'],['Smør','🧈',740,0.6,5,'1 tsk.'],
+  ['Hummus','🫘',300,7,50,'2 spsk.'],['Proteinbar','🍫',360,36,55,'1 bar'],['Wheyprotein','🥤',400,80,30,'1 scoop'],
+  ['Mørk chokolade','🍫',550,7,20,'2 stykker'],['Pizza','🍕',260,11,120,'1 slice'],['Burger','🍔',245,12,250,'1 stk.'],
+  ['Chips','🥔',540,6,30,'1 lille skål'],['Rødvin','🍷',85,0,150,'1 glas'],['Øl','🍺',42,0.4,330,'1 flaske'],
+  ['Sodavand','🥤',42,0,330,'1 dåse'],['Kanelsnegl','🥐',400,6,90,'1 stk.'],
+];
+
+// Ugeskema: index 0 = søndag
+const SCHEDULE = {
+  1:{ type:'walk', e:'🚶‍♀️', title:'Let gang', sub:'Gangbånd, roligt · 20 min (valgfri)', segs:[['Rolig gang', 20*60, '#38bdf8']] },
+  2:{ type:'walk', e:'🚶‍♀️', title:'Gangbånd', sub:'Rask gang 5–6 km/t · 30 min', segs:[['Opvarmning, roligt', 3*60, '#7dd3fc'],['Rask gang 5–6 km/t', 24*60, '#0284c7'],['Nedkøling', 3*60, '#7dd3fc']] },
+  3:{ type:'rest', e:'🧘‍♀️', title:'Hvile + stræk', sub:'10 min på måtten', stretch:true },
+  4:{ type:'str', e:'🏋️‍♀️', title:'Styrke A', sub:'Ro 5 min + 5 øvelser · ca. 35 min', prog:'A' },
+  5:{ type:'row', e:'🚣‍♀️', title:'Kondi-mix', sub:'Gangbånd 30 min + romaskine 10 min', segs:null },
+  6:{ type:'run', e:'🏃‍♀️', title:'Ude: intervaller', sub:'1 min jog / 2 min gang · 30–45 min', segs:null },
+  0:{ type:'str', e:'🏋️‍♀️', title:'Styrke B', sub:'Ro 5 min + 5 øvelser + rolig gåtur 30 min', prog:'B' },
+};
+
+const STRETCHES = [
+  ['Kat-ko på alle fire', 120, '#a78bfa'],['Barnestilling', 120, '#c4b5fd'],['Hoftebøjer-stræk, venstre', 60, '#a78bfa'],
+  ['Hoftebøjer-stræk, højre', 60, '#c4b5fd'],['Baglår liggende, venstre', 60, '#a78bfa'],['Baglår liggende, højre', 60, '#c4b5fd'],['Rolig vejrtrækning på ryggen', 120, '#a78bfa'],
+];
+
+const WEEKS = [
+  { n:1, title:'Start roligt', sets:3, note:'3 × 10–12 gentagelser. Fokus på teknik.', walk:30, int:[60,120,6] },
+  { n:2, title:'Byg op', sets:3, note:'3 × 12 gentagelser.', walk:40, int:[60,120,8] },
+  { n:3, title:'Hårdeste uge', sets:3, note:'3 × 15 med 3 sek. ned i bevægelsen.', walk:40, int:[60,60,8] },
+  { n:4, title:'Let uge', sets:2, note:'Kun 2 runder. Kroppen restituerer.', walk:30, int:null },
+];
+
+/* ---------- Stregtegninger: to positioner pr. øvelse, som animeres ---------- */
+const S = { h:[100,28], n:[100,42], p:[100,88], kl:[100,118], fl:[100,148], el:[100,64], hl:[100,86] };
+const P = (o) => Object.assign({}, S, o);
+const EX = {
+  row: { name:'Opvarmning på romaskinen', reps:'5 min', time:300, db:false,
+    tips:['Rækkefølge frem: ben → ryg → arme','Tilbage: arme → ryg → ben','Roligt tempo, du skal bare blive varm'],
+    props:'<line x1="30" y1="140" x2="175" y2="140" stroke="#94a3b8" stroke-width="4" stroke-linecap="round"/><rect x="128" y="126" width="10" height="14" rx="2" fill="#94a3b8"/>',
+    A:{ h:[114,76], n:[104,88], p:[80,128], kl:[104,104], fl:[128,132], el:[124,98], hl:[142,108] },
+    B:{ h:[52,74], n:[58,88], p:[70,128], kl:[102,122], fl:[130,132], el:[66,112], hl:[86,106] } },
+  goblet: { name:'Goblet squat', reps:'12–15', db:'one',
+    tips:['Hold én håndvægt lodret foran brystet','Sæt dig ned, som på en stol – 3 sek. ned','Knæ peger samme vej som tæerne, hælene i gulvet'],
+    A:P({ el:[106,62], hl:[112,50] }),
+    B:{ h:[94,54], n:[92,68], p:[76,112], kl:[105,118], fl:[100,148], el:[100,88], hl:[108,76] } },
+  lunge: { name:'Baglæns udfald', reps:'10 pr. ben', db:'both',
+    tips:['En vægt i hver hånd ned langs siden','Tag et langt skridt bagud og sænk bagerste knæ mod gulvet','Skub tilbage med forreste hæl. Skift ben'],
+    A:P({}),
+    B:{ h:[96,48], n:[96,62], p:[96,108], kl:[122,118], fl:[122,148], kr:[86,140], fr:[60,146], el:[96,84], hl:[96,106] } },
+  press: { name:'Skulderpres', reps:'12', db:'both',
+    tips:['Start med vægtene ved skuldrene','Pres lige op uden at svaje i lænden','Stram maven og sænk langsomt'],
+    A:P({ el:[116,50], hl:[112,32] }),
+    B:P({ el:[106,22], hl:[104,2] }) },
+  pushup: { name:'Armstrækninger på knæ', reps:'8–10', db:false,
+    tips:['Hænder lidt bredere end skuldrene','Kroppen er en lige linje fra knæ til hoved','Sænk brystet mod måtten og pres op'],
+    props:'<rect x="30" y="148" width="150" height="4" rx="2" fill="#a7f3d0"/>',
+    A:{ h:[150,100], n:[136,108], p:[88,128], kl:[70,148], fl:[46,140], el:[137,128], hl:[138,148] },
+    B:{ h:[151,128], n:[136,134], p:[88,140], kl:[70,148], fl:[46,140], el:[122,140], hl:[138,148] } },
+  plank: { name:'Planke', reps:'25 sek.', time:25, db:false,
+    tips:['Albuer under skuldrene','Spænd maven og balderne','Træk vejret roligt – hold hoften lige'],
+    props:'<rect x="30" y="148" width="150" height="4" rx="2" fill="#a7f3d0"/>',
+    A:{ h:[155,120], n:[140,126], p:[100,134], kl:[70,140], fl:[40,146], el:[140,148], hl:[162,148] },
+    B:{ h:[155,119], n:[140,125], p:[100,131], kl:[70,139], fl:[40,146], el:[140,148], hl:[162,148] } },
+  rdl: { name:'Rumænsk dødløft', reps:'12', db:'both',
+    tips:['Vægte foran lårene, let bøjede knæ','Skub hoften bagud med lige ryg – 3 sek. ned','Stop når du mærker baglårene, og pres hoften frem'],
+    A:P({ el:[102,64], hl:[104,88] }),
+    B:{ h:[146,62], n:[132,66], p:[90,88], kl:[98,118], fl:[100,148], el:[128,90], hl:[126,112] } },
+  hip: { name:'Hip thrust på måtten', reps:'15', db:'one',
+    tips:['Lig på ryggen med fødderne i måtten','Læg en håndvægt på hoften og hold den','Løft hoften til en lige linje og klem balderne'],
+    props:'<rect x="15" y="150" width="160" height="4" rx="2" fill="#a7f3d0"/>',
+    A:{ h:[30,136], n:[48,142], p:[92,146], kl:[120,120], fl:[136,148], el:[70,142], hl:[90,140] },
+    B:{ h:[30,136], n:[48,140], p:[92,118], kl:[124,116], fl:[136,148], el:[70,132], hl:[90,114] } },
+  oarow: { name:'Etarms roning', reps:'12 pr. arm', db:'l',
+    tips:['Støt hånd og knæ på en stol','Træk vægten op mod hoften – albuen tæt på kroppen','Sænk langsomt. Skift arm'],
+    props:'<rect x="128" y="108" width="40" height="7" rx="2" fill="#94a3b8"/><line x1="132" y1="115" x2="132" y2="150" stroke="#94a3b8" stroke-width="4"/><line x1="164" y1="115" x2="164" y2="150" stroke="#94a3b8" stroke-width="4"/>',
+    A:{ h:[138,74], n:[124,80], p:[78,92], kl:[84,120], fl:[84,148], kr:[72,120], fr:[70,148], er:[132,94], hr:[136,108], el:[120,100], hl:[120,122] },
+    B:{ h:[138,74], n:[124,80], p:[78,92], kl:[84,120], fl:[84,148], kr:[72,120], fr:[70,148], er:[132,94], hr:[136,108], el:[104,78], hl:[112,98] } },
+  curl: { name:'Biceps-curl', reps:'12', db:'both',
+    tips:['Albuerne holdes stille ind til kroppen','Løft vægtene op mod skuldrene','Sænk langsomt – 3 sek. ned'],
+    A:P({ el:[101,64], hl:[103,88] }),
+    B:P({ el:[101,64], hl:[116,52] }) },
+  deadbug: { name:'Døde insekter', reps:'10 pr. side', db:false,
+    tips:['Lig på ryggen, arme lige op og ben i 90°','Pres lænden ned i måtten hele tiden','Stræk modsat arm og ben langsomt ud. Skift side'],
+    props:'<rect x="10" y="146" width="170" height="4" rx="2" fill="#a7f3d0"/>',
+    A:{ h:[30,130], n:[46,136], p:[94,140], kl:[98,110], fl:[122,112], kr:[98,110], fr:[122,112], el:[52,116], hl:[56,96], er:[52,116], hr:[56,96] },
+    B:{ h:[30,130], n:[46,136], p:[94,140], kl:[98,110], fl:[122,112], kr:[124,134], fr:[152,138], el:[30,126], hl:[12,122], er:[52,116], hr:[56,96] } },
+};
+const PROGRAMS = { A:['row','goblet','lunge','press','pushup','plank'], B:['row','rdl','hip','oarow','curl','deadbug'] };
+
+/* ================= STATE ================= */
+const KEY = 'minuge.v1';
+let state = JSON.parse(localStorage.getItem(KEY) || 'null') || {};
+state.settings = Object.assign({ kcal:1470, protein:110, cycleStart:'', cycleLen:28, programStart:'' }, state.settings || {});
+state.days = state.days || {};
+state.weights = state.weights || [];
+if (!state.settings.programStart) state.settings.programStart = iso(mondayOf(new Date()));
+save();
+
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(state)); } catch(e){ toast('Hukommelsen er fuld – slet nogle billeder'); } }
+function iso(d){ return d.toLocaleDateString('sv-SE'); }
+function mondayOf(d){ const x = new Date(d); const w = (x.getDay()+6)%7; x.setDate(x.getDate()-w); x.setHours(12,0,0,0); return x; }
+function day(k = iso(new Date())){ return state.days[k] || (state.days[k] = { food:[], sets:{}, done:false, checks:{}, water:0 }); }
+function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function r0(n){ return Math.round(n); }
+function totals(k){ const d = day(k); return d.food.reduce((a,f) => ({ kcal:a.kcal+f.kcal, p:a.p+f.p }), { kcal:0, p:0 }); }
+function weekInfo(){
+  const start = new Date(state.settings.programStart + 'T12:00:00');
+  const diff = Math.floor((mondayOf(new Date()) - mondayOf(start)) / (7*864e5));
+  return WEEKS[((diff % 4) + 4) % 4];
+}
+function cyclePhase(){
+  const cs = state.settings.cycleStart; if (!cs) return null;
+  const len = +state.settings.cycleLen || 28;
+  const diff = Math.floor((new Date(iso(new Date())+'T12:00:00') - new Date(cs+'T12:00:00')) / 864e5);
+  if (diff < 0) return null;
+  const d = (diff % len) + 1;
+  if (d <= 5) return { d, name:'Menstruation', e:'🩸', c:'#fff1f2', tip:'Let til moderat træning. Spis jernrigt (æg, bønner, linser, kød) med C-vitamin. Spring intervaller over, hvis du er træt.' };
+  if (d <= 13) return { d, name:'Follikelfase', e:'⚡', c:'#f0fdf4', tip:'Fuld plan – bedste tid til intervaller og til at gøre øvelserne sværere.' };
+  if (d <= 16) return { d, name:'Ægløsning', e:'🌟', c:'#fffbeb', tip:'Fuld plan. Varm godt op.' };
+  return { d, name:'Lutealfase', e:'🌙', c:'#f5f3ff', tip:'Mere appetit er normalt – læg 100–150 kcal oveni, fx skyr. Lidt mindre kondition er ok.' };
+}
+
+/* ================= UI HELPERS ================= */
+const $ = (s, el=document) => el.querySelector(s);
+let tab = 'today', trainDay = new Date().getDay(), openEx = null;
+function toast(msg){ const t = document.createElement('div'); t.className='toast'; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2200); }
+function vibrate(p){ if (navigator.vibrate) navigator.vibrate(p); }
+let actx;
+function beep(f=880, dur=.18){ try { actx = actx || new (window.AudioContext||window.webkitAudioContext)(); const o = actx.createOscillator(), g = actx.createGain(); o.frequency.value = f; o.connect(g); g.connect(actx.destination); g.gain.setValueAtTime(.25, actx.currentTime); g.gain.exponentialRampToValueAtTime(.001, actx.currentTime+dur); o.start(); o.stop(actx.currentTime+dur); } catch(e){} }
+function fmt(s){ s = Math.max(0, Math.ceil(s)); return Math.floor(s/60) + ':' + String(s%60).padStart(2,'0'); }
+
+function header(){
+  const now = new Date();
+  $('#hdrDate').textContent = now.toLocaleDateString('da-DK', { weekday:'long', day:'numeric', month:'long' });
+  const w = weekInfo(), sch = SCHEDULE[now.getDay()];
+  const titles = { today:'Hej! 👋', food:'Mad i dag', train:'Træning', week:'Min uge' };
+  $('#hdrTitle').textContent = titles[tab];
+  const work = [1,2,3].includes(now.getDay());
+  $('#hdrSub').textContent = `Uge ${w.n} af 4 · ${w.title} · ${work ? 'Arbejdsdag 🚗' : 'Hjemmedag 🏡'} · ${sch.title}`;
+}
+
+function render(){
+  header();
+  document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
+  ({ today:renderToday, food:renderFood, train:renderTrain, week:renderWeek })[tab]();
+}
+document.querySelectorAll('nav button').forEach(b => b.onclick = () => { tab = b.dataset.tab; if (tab==='train') trainDay = new Date().getDay(); render(); scrollTo(0,0); });
+
+function ring(val, goal, color, size=130){
+  const r = size/2 - 10, c = 2*Math.PI*r, pct = Math.min(1, val/goal);
+  return `<svg width="${size}" height="${size}"><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="#eef2f1" stroke-width="12"/>
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${color}" stroke-width="12" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${c*(1-pct)}" style="transition:stroke-dashoffset .5s"/></svg>`;
+}
+
+/* ================= I DAG ================= */
+function renderToday(){
+  const k = iso(new Date()), d = day(k), t = totals(k), g = state.settings, sch = SCHEDULE[new Date().getDay()];
+  const left = g.kcal - t.kcal, over = left < 0;
+  const ph = cyclePhase();
+  const checks = [['d3b','💊','D3 + B-vitamin'],['c','🍋','C-brus'],['coll','✨','Collagen'],['sleep','😴','7–8 timers søvn'],['stretch','🧘‍♀️','Stræk 5 min'],['iron','🩸','Jern (hvis aftalt)']];
+  $('#view').innerHTML = `
+    <div class="card">
+      <div class="rings">
+        <div class="ring">${ring(t.kcal, g.kcal, over ? '#e11d48' : '#f97316')}<div class="c"><b>${r0(Math.abs(left))}</b><span>${over ? 'kcal over' : 'kcal tilbage'}</span></div></div>
+        <div>
+          <div class="stat"><div class="row between"><span>🔥 Kalorier</span><b>${r0(t.kcal)} / ${g.kcal}</b></div><div class="bar"><div style="width:${Math.min(100,t.kcal/g.kcal*100)}%;background:#f97316"></div></div></div>
+          <div class="stat"><div class="row between"><span>💪 Protein</span><b>${r0(t.p)} / ${g.protein} g</b></div><div class="bar"><div style="width:${Math.min(100,t.p/g.protein*100)}%;background:#0f766e"></div></div></div>
+          <button class="btn small ghost" onclick="openAdd()">＋ Tilføj mad</button>
+          <button class="btn small ghost" onclick="snap()">📷</button>
+        </div>
+      </div>
+    </div>
+
+    <button class="hero t-${sch.type}" style="width:100%;text-align:left" onclick="tab='train';trainDay=${new Date().getDay()};render()">
+      <div class="row between"><span class="big">${sch.e}</span>${d.done ? '<span class="btn small" style="background:#0f766e">✓ Gennemført</span>' : '<span class="btn small gray">Start ›</span>'}</div>
+      <h2>${sch.title}</h2><div style="font-size:14px">${sch.sub}</div>
+    </button>
+
+    ${ph ? `<div class="card phase" style="background:${ph.c}"><b>${ph.e} ${ph.name} · cyklusdag ${ph.d}</b><div style="margin-top:4px">${ph.tip}</div></div>` : ''}
+
+    <div class="card">
+      <h2>✅ Dagens tjekliste</h2>
+      <div class="checks">${checks.map(([id,e,l]) => `<button class="chk ${d.checks[id]?'on':''}" onclick="toggleCheck('${id}')"><span class="b">${d.checks[id]?'✓':''}</span>${e} ${l}</button>`).join('')}</div>
+      <h2 style="margin-top:14px">💧 Vand <span class="muted" style="font-weight:400">${(d.water*0.25).toFixed(2).replace('.',',')} l af 2 l</span></h2>
+      <div class="water">${Array.from({length:8}, (_,i) => `<button class="${i<d.water?'on':''}" onclick="setWater(${i+1})">💧</button>`).join('')}</div>
+    </div>
+    ${[1,2,3].includes(new Date().getDay()) ? `<div class="card" style="background:#fffbeb"><h2>🚗 Arbejdsdag</h2><div style="font-size:14px">Kefir-skålen før afgang · shaken på formiddagen · frokost senest kl. 11–12 · skyr eller æg inden for 1 time efter hjemkomst.</div></div>` : ''}
+  `;
+}
+function toggleCheck(id){ const d = day(); d.checks[id] = !d.checks[id]; save(); render(); }
+function setWater(n){ const d = day(); d.water = d.water === n ? n-1 : n; save(); render(); }
+
+/* ================= MAD ================= */
+function renderFood(){
+  const k = iso(new Date()), d = day(k), t = totals(k), g = state.settings;
+  const list = d.food.slice().reverse();
+  $('#view').innerHTML = `
+    <div class="card">
+      <div class="stat"><div class="row between"><span>🔥 ${r0(t.kcal)} af ${g.kcal} kcal</span><b>${r0(g.kcal - t.kcal)} tilbage</b></div><div class="bar"><div style="width:${Math.min(100,t.kcal/g.kcal*100)}%;background:${t.kcal>g.kcal?'#e11d48':'#f97316'}"></div></div></div>
+      <div class="stat" style="margin:0"><div class="row between"><span>💪 ${r0(t.p)} af ${g.protein} g protein</span><b>${r0(Math.max(0,g.protein - t.p))} g mangler</b></div><div class="bar"><div style="width:${Math.min(100,t.p/g.protein*100)}%;background:#0f766e"></div></div></div>
+    </div>
+    <div class="grid2" style="margin-bottom:12px">
+      <button class="action" onclick="snap()"><span class="e">📷</span><b>Tag billede</b><span>og vælg hvad det er</span></button>
+      <button class="action" onclick="openAdd('plan')"><span class="e">⚡</span><b>Fra min plan</b><span>ét tryk</span></button>
+      <button class="action" onclick="openAdd('search')"><span class="e">🔎</span><b>Søg mad</b><span>vælg gram</span></button>
+      <button class="action" onclick="openAdd('custom')"><span class="e">✏️</span><b>Skriv selv</b><span>navn og kcal</span></button>
+    </div>
+    <div class="card">
+      <h2>📝 I dag</h2>
+      ${list.length ? list.map(f => `
+        <div class="entry">
+          <div class="thumb">${f.photo ? `<img src="${f.photo}">` : esc(f.e || '🍽️')}</div>
+          <div class="t"><b>${esc(f.name)}</b><span class="muted">${esc(f.time)}${f.g ? ' · ' + f.g + ' g' : ''}</span></div>
+          <div class="k">${r0(f.kcal)} kcal<span>${r0(f.p)} g protein</span></div>
+          <button class="del" onclick="delFood('${f.id}')">✕</button>
+        </div>`).join('') : '<div class="muted">Intet logget endnu. Start med din kefir-skål ☀️</div>'}
+    </div>`;
+}
+function delFood(id){ const d = day(); d.food = d.food.filter(f => f.id !== id); save(); render(); }
+function addFood(item){
+  const d = day();
+  d.food.push(Object.assign({ id: Date.now().toString(36) + Math.random().toString(36).slice(2,6), time: new Date().toLocaleTimeString('da-DK', { hour:'2-digit', minute:'2-digit' }) }, item, pendingPhoto ? { photo: pendingPhoto } : {}));
+  pendingPhoto = null; save(); closeSheet(); toast(`${item.e || '✓'} ${r0(item.kcal)} kcal tilføjet`); render();
+}
+
+/* Kamera */
+let pendingPhoto = null;
+function snap(){ $('#cam').value = ''; $('#cam').click(); }
+$('#cam').onchange = (e) => {
+  const file = e.target.files[0]; if (!file) return;
+  const img = new Image(), url = URL.createObjectURL(file);
+  img.onload = () => {
+    const max = 360, sc = Math.min(1, max / Math.max(img.width, img.height));
+    const c = document.createElement('canvas'); c.width = img.width*sc; c.height = img.height*sc;
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    pendingPhoto = c.toDataURL('image/jpeg', .7); URL.revokeObjectURL(url);
+    openAdd('plan');
+  };
+  img.src = url;
+};
+
+/* Tilføj-ark */
+let addTab = 'plan', searchQ = '', picked = null, grams = 0;
+function openAdd(t){ addTab = t || 'plan'; picked = null; searchQ = ''; drawSheet(); }
+function closeSheet(){ $('#overlay').innerHTML = ''; }
+function cancelSheet(){ pendingPhoto = null; $('#overlay').innerHTML = ''; }
+function drawSheet(){
+  let body = '';
+  if (picked) {
+    const [name, e, kc, pr, , unit] = picked;
+    body = `<button class="btn small gray" onclick="picked=null;drawSheet()">‹ Tilbage</button>
+      <div style="text-align:center;font-size:44px;margin-top:6px">${e}</div>
+      <h3 style="text-align:center;margin:4px 0 0">${esc(name)}</h3>
+      <div class="muted" style="text-align:center">${kc} kcal og ${pr} g protein pr. 100 g · standard: ${unit}</div>
+      <div class="stepper"><button onclick="stepG(-1)">−</button><input id="gIn" type="number" inputmode="numeric" value="${grams}" oninput="grams=+this.value||0;calcG()"><button onclick="stepG(1)">+</button></div>
+      <div class="muted" style="text-align:center;margin-top:-6px">gram</div>
+      <div class="calc" id="gCalc"></div>
+      <button class="btn full" onclick="addPicked()">Tilføj</button>`;
+  } else if (addTab === 'plan') {
+    body = PLAN_FOODS.map((f,i) => `<button class="opt" onclick="addPlan(${i})"><span class="e">${f.e}</span><span class="t"><b>${esc(f.name)}</b><span>${f.kcal} kcal · ${f.p} g protein · ${esc(f.note)}</span></span><span class="plus">＋</span></button>`).join('');
+  } else if (addTab === 'search') {
+    const q = searchQ.toLowerCase();
+    const res = FOOD_DB.filter(f => f[0].toLowerCase().includes(q));
+    body = `<input class="field" id="sIn" placeholder="Søg fx kylling, æg, pasta…" value="${esc(searchQ)}" oninput="searchQ=this.value;drawList()">
+      <div id="sList">${listHtml(res)}</div>`;
+  } else {
+    body = `<input class="field" id="cName" placeholder="Hvad spiste du? Fx 'Pastasalat i kantinen'">
+      <div class="grid2"><input class="field" id="cKcal" type="number" inputmode="numeric" placeholder="kcal (ca.)"><input class="field" id="cP" type="number" inputmode="decimal" placeholder="protein g (valgfri)"></div>
+      <div class="muted" style="margin:-4px 0 10px">Tip: et normalt varmt måltid er ofte 450–650 kcal. Gæt hellere end at lade være.</div>
+      <button class="btn full" onclick="addCustom()">Tilføj</button>`;
+  }
+  $('#overlay').innerHTML = `<div class="backdrop" onclick="cancelSheet()"></div>
+    <div class="sheet"><div class="grab"></div>
+      ${pendingPhoto ? `<img class="photo-prev" src="${pendingPhoto}"><div class="muted" style="margin:-4px 0 10px">📷 Billedet gemmes sammen med det, du vælger herunder.</div>` : ''}
+      <h3>${pendingPhoto ? 'Hvad er på billedet?' : 'Tilføj mad'}</h3>
+      ${picked ? '' : `<div class="tabs">${[['plan','⚡ Min plan'],['search','🔎 Søg'],['custom','✏️ Skriv selv']].map(([id,l]) => `<button class="${addTab===id?'on':''}" onclick="addTab='${id}';drawSheet()">${l}</button>`).join('')}</div>`}
+      ${body}
+    </div>`;
+  if (picked) calcG();
+  if (addTab === 'search' && !picked) { const i = $('#sIn'); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }
+}
+function listHtml(res){ return res.length ? res.map(f => `<button class="opt" onclick="pickFood('${esc(f[0])}')"><span class="e">${f[1]}</span><span class="t"><b>${esc(f[0])}</b><span>${f[5]} (${f[4]} g) ≈ ${r0(f[2]*f[4]/100)} kcal · ${(f[3]*f[4]/100).toFixed(1).replace('.',',')} g protein</span></span><span class="plus">›</span></button>`).join('') : '<div class="muted">Ingen match – brug "Skriv selv".</div>'; }
+function drawList(){ const q = searchQ.toLowerCase(); $('#sList').innerHTML = listHtml(FOOD_DB.filter(f => f[0].toLowerCase().includes(q))); }
+function pickFood(name){ picked = FOOD_DB.find(f => f[0] === name); grams = picked[4]; drawSheet(); }
+function stepG(dir){ const st = picked[4] >= 100 ? 25 : 5; grams = Math.max(0, grams + dir*st); $('#gIn').value = grams; calcG(); }
+function calcG(){ const [, , kc, pr] = picked; $('#gCalc').innerHTML = `<b>${r0(kc*grams/100)} kcal</b> · ${(pr*grams/100).toFixed(1).replace('.',',')} g protein`; }
+function addPicked(){ const [name, e, kc, pr] = picked; addFood({ name, e, g: grams, kcal: kc*grams/100, p: pr*grams/100 }); }
+function addPlan(i){ const f = PLAN_FOODS[i]; addFood({ name:f.name, e:f.e, kcal:f.kcal, p:f.p }); }
+function addCustom(){
+  const name = $('#cName').value.trim(), kcal = parseFloat($('#cKcal').value), p = parseFloat(($('#cP').value||'0').replace(',','.')) || 0;
+  if (!name || !(kcal >= 0)) { toast('Skriv navn og kcal'); return; }
+  addFood({ name, e:'✏️', kcal, p });
+}
+
+/* ================= TRÆNING ================= */
+function figure(id){
+  const ex = EX[id], A = full(ex.A), B = full(ex.B);
+  const dur = '2.8s', ks = 'keySplines=".45 0 .55 1;.45 0 .55 1" calcMode="spline" keyTimes="0;.5;1"';
+  const an = (attr, a, b) => a === b ? '' : `<animate attributeName="${attr}" values="${a};${b};${a}" dur="${dur}" repeatCount="indefinite" ${ks}/>`;
+  const line = (j1, j2, col, w) => `<line x1="${A[j1][0]}" y1="${A[j1][1]}" x2="${A[j2][0]}" y2="${A[j2][1]}" stroke="${col}" stroke-width="${w}" stroke-linecap="round">
+      ${an('x1',A[j1][0],B[j1][0])}${an('y1',A[j1][1],B[j1][1])}${an('x2',A[j2][0],B[j2][0])}${an('y2',A[j2][1],B[j2][1])}</line>`;
+  const dot = (j, r, fill) => `<circle cx="${A[j][0]}" cy="${A[j][1]}" r="${r}" fill="${fill}">${an('cx',A[j][0],B[j][0])}${an('cy',A[j][1],B[j][1])}</circle>`;
+  const back = '#94a3b8', front = '#0f766e';
+  let s = `<svg viewBox="0 -14 200 172" xmlns="http://www.w3.org/2000/svg">${ex.props || '<line x1="20" y1="151" x2="180" y2="151" stroke="#cbd5e1" stroke-width="3" stroke-linecap="round"/>'}`;
+  s += line('p','kr',back,7) + line('kr','fr',back,7) + line('n','er',back,6) + line('er','hr',back,6);
+  s += line('n','p',front,8) + line('p','kl',front,7) + line('kl','fl',front,7) + line('n','el',front,6) + line('el','hl',front,6);
+  s += dot('h', 11, front);
+  if (ex.db === 'both' || ex.db === 'one' || ex.db === 'l') s += dot('hl', 6, '#f97316');
+  if (ex.db === 'both') s += dot('hr', 6, '#fb923c');
+  return s + '</svg>';
+}
+function full(o){ const r = Object.assign({}, o); r.kr = r.kr || r.kl; r.fr = r.fr || r.fl; r.er = r.er || r.el; r.hr = r.hr || r.hl; return r; }
+
+function renderTrain(){
+  const now = new Date().getDay(), key = keyForWeekday(trainDay), d = day(key), sch = SCHEDULE[trainDay], w = weekInfo();
+  const order = [1,2,3,4,5,6,0];
+  let html = `<div class="days">${order.map((wd,i) => { const dd = state.days[keyForWeekday(wd)]; return `<button class="${wd===trainDay?'on':''} ${wd===now?'today':''}" onclick="trainDay=${wd};openEx=null;render()">${SHORT[i]}<span class="ok">${dd && dd.done ? '✅' : SCHEDULE[wd].e}</span></button>`; }).join('')}</div>
+    <div class="hero t-${sch.type}"><div class="big">${sch.e}</div><h2>${sch.title}</h2><div style="font-size:14px">${DAYNAMES[trainDay]} · ${sch.sub}</div></div>`;
+
+  if (sch.type === 'str') {
+    const ids = PROGRAMS[sch.prog];
+    html += `<div class="card" style="background:#ecfdf5"><b>Uge ${w.n}: ${w.title}</b><div style="font-size:14px">${w.note} Pause 60 sek. mellem sæt – timeren starter automatisk.</div></div>`;
+    ids.forEach((id, i) => {
+      const ex = EX[id], sets = id === 'row' ? 1 : w.sets, got = (d.sets[id] || []);
+      const done = got.filter(Boolean).length >= sets;
+      html += `<div class="ex ${sch.prog} ${openEx===id?'open':''} ${done?'done':''}">
+        <button class="top" onclick="openEx=openEx==='${id}'?null:'${id}';render()"><span class="num">${done ? '✓' : i}</span><span class="t"><b>${ex.name}</b><span>${id==='row' ? ex.reps : sets + ' × ' + ex.reps}${ex.db ? ' · 🏋️ håndvægt' : ' · 🧘 måtte'}</span></span><span class="chev">›</span></button>
+        ${openEx===id ? `<div class="body"><div class="fig">${figure(id)}</div><ul>${ex.tips.map(t => `<li>${t}</li>`).join('')}</ul>${ex.time ? `<button class="btn small ghost" onclick="exTimer('${id}')">⏱️ Start ${fmt(ex.time)}</button>` : ''}</div>` : ''}
+        <div class="sets">${Array.from({length:sets}, (_,s) => `<button class="set ${got[s]?'on':''}" onclick="tapSet('${key}','${id}',${s},${sets})">${got[s] ? '✓' : s+1}</button>`).join('')}<span class="lbl">${id==='row' ? 'tryk når du er varm' : 'tryk efter hvert sæt'}</span></div>
+      </div>`;
+    });
+    if (sch.prog === 'B') html += `<div class="card"><b>🚶‍♀️ Bagefter: rolig gåtur 30 min</b><div class="muted">Ude eller på gangbåndet.</div></div>`;
+  } else if (sch.type === 'rest') {
+    html += timerCard(STRETCHES, 'Stræk-program', key);
+  } else {
+    html += timerCard(segsFor(trainDay, w), 'Timer', key);
+    if (trainDay === 6) html += `<div class="card" style="background:#f0fdf4"><b>❄️ Vinter</b><div style="font-size:14px">Mørkt, glat eller meget koldt? Lav samme intervaller på gangbåndet. Husk refleks og lys udenfor.</div></div>`;
+  }
+  html += d.done
+    ? `<button class="btn full gray" onclick="setDone('${key}',false)">✅ Gennemført – fortryd</button>`
+    : `<button class="btn full" onclick="setDone('${key}',true)">Marker dagens træning som gennemført</button>`;
+  $('#view').innerHTML = html;
+  if (timer.run && timer.key === key) tickUI();
+}
+function keyForWeekday(wd){ const m = mondayOf(new Date()); m.setDate(m.getDate() + ((wd+6)%7)); return iso(m); }
+function segsFor(wd, w){
+  if (wd === 1) return [['Rolig gang', 20*60, '#38bdf8']];
+  if (wd === 2) return [['Opvarmning, roligt', 180, '#7dd3fc'], ['Rask gang 5–6 km/t', (w.walk-6)*60, '#0284c7'], ['Nedkøling', 180, '#7dd3fc']];
+  if (wd === 5) { const s = [['Gangbånd, rask gang', w.walk*60 - 600, '#0284c7']]; for (let i=0;i<5;i++) s.push(['Ro lidt hurtigere', 60, '#7c3aed'], ['Ro roligt', 60, '#c4b5fd']); return s; }
+  if (wd === 6) {
+    const s = [['Opvarmning: gang', 300, '#86efac']];
+    if (!w.int) s.push(['Rolig tur, gang eller let jog', 30*60, '#16a34a']);
+    else for (let i=0;i<w.int[2];i++) s.push([`Jog (${i+1}/${w.int[2]})`, w.int[0], '#16a34a'], ['Gang', w.int[1], '#bbf7d0']);
+    s.push(['Nedkøling: gang', 300, '#86efac']); return s;
+  }
+  return [['Gang', 1800, '#38bdf8']];
+}
+
+/* Interval-timer */
+const timer = { run:false, segs:[], i:0, left:0, end:0, key:null, id:null };
+function timerCard(segs, label, key){
+  const total = segs.reduce((a,s) => a+s[1], 0);
+  const active = timer.key === key && timer.segs.length;
+  const cur = active ? timer.segs[timer.i] : segs[0];
+  return `<div class="card timer">
+    <div class="muted">${label} · i alt ${Math.round(total/60)} min · ${segs.length} trin</div>
+    <div class="segs">${segs.map((s,i) => `<div style="flex:${s[1]};background:${s[2]};opacity:${active && i<timer.i ? .35 : 1}"></div>`).join('')}</div>
+    <div class="seg" id="tSeg">${cur[0]}</div>
+    <div class="clock" id="tClock">${fmt(active ? timer.left : cur[1])}</div>
+    <div class="next" id="tNext">${segs[1] ? 'Næste: ' + segs[1][0] : ''}</div>
+    <div class="row" style="justify-content:center">
+      ${timer.run && timer.key === key ? `<button class="btn" onclick="pauseTimer()">⏸ Pause</button>` : `<button class="btn" onclick='startTimer(${JSON.stringify(segs)}, "${key}")'>▶ ${active ? 'Fortsæt' : 'Start'}</button>`}
+      ${active ? `<button class="btn gray" onclick="skipSeg()">⏭ Spring over</button><button class="btn gray" onclick="resetTimer()">↺</button>` : ''}
+    </div>
+    <div class="muted" style="margin-top:8px">Telefonen bipper og vibrerer ved skift. Hold skærmen tændt.</div>
+  </div>`;
+}
+let tInt = null, wakeLock = null;
+function startTimer(segs, key){
+  beep(660, .05);
+  if (timer.key !== key || !timer.segs.length) Object.assign(timer, { segs, i:0, left:segs[0][1], key });
+  timer.run = true; timer.end = Date.now() + timer.left*1000;
+  clearInterval(tInt); tInt = setInterval(tick, 250);
+  try { navigator.wakeLock && navigator.wakeLock.request('screen').then(l => wakeLock = l).catch(()=>{}); } catch(e){}
+  render();
+}
+function pauseTimer(){ timer.run = false; timer.left = (timer.end - Date.now())/1000; clearInterval(tInt); render(); }
+function resetTimer(){ clearInterval(tInt); Object.assign(timer, { run:false, segs:[], i:0, left:0, key:null }); render(); }
+function skipSeg(){ timer.end = Date.now(); if (!timer.run) { timer.left = 0; nextSeg(); render(); } }
+function nextSeg(){
+  timer.i++;
+  if (timer.i >= timer.segs.length) {
+    clearInterval(tInt); timer.run = false; beep(988,.3); setTimeout(() => beep(1318,.4), 300); vibrate([200,100,200,100,400]);
+    const k = timer.key; Object.assign(timer, { segs:[], i:0, key:null });
+    setDone(k, true); return;
+  }
+  timer.left = timer.segs[timer.i][1]; timer.end = Date.now() + timer.left*1000;
+  beep(880); setTimeout(() => beep(880), 220); vibrate([150,80,150]);
+}
+function tick(){
+  timer.left = (timer.end - Date.now())/1000;
+  if (timer.left <= 0) { nextSeg(); if (tab === 'train') render(); return; }
+  if (tab === 'train') tickUI();
+}
+function tickUI(){
+  const c = $('#tClock'); if (!c || !timer.segs.length) return;
+  c.textContent = fmt(timer.left); $('#tSeg').textContent = timer.segs[timer.i][0];
+  const n = timer.segs[timer.i+1]; $('#tNext').textContent = n ? 'Næste: ' + n[0] : 'Sidste trin 💪';
+}
+function exTimer(id){ const ex = EX[id]; startRest(ex.time, ex.name); }
+
+/* Sæt og pause */
+let restInt = null;
+function tapSet(key, id, s, sets){
+  const d = day(key); d.sets[id] = d.sets[id] || [];
+  d.sets[id][s] = !d.sets[id][s]; save();
+  if (d.sets[id][s]) {
+    vibrate(40);
+    const ids = PROGRAMS[SCHEDULE[trainDay].prog], w = weekInfo();
+    const allDone = ids.every(x => (d.sets[x]||[]).filter(Boolean).length >= (x==='row'?1:w.sets));
+    if (allDone) { setDone(key, true); return; }
+    if (id !== 'row') startRest(60, 'Pause');
+    if ((d.sets[id]||[]).filter(Boolean).length >= sets) { const nx = ids[ids.indexOf(id)+1]; if (nx) openEx = nx; }
+  }
+  render();
+}
+function startRest(sec, label){
+  clearInterval(restInt); let end = Date.now() + sec*1000; beep(660,.05);
+  const draw = () => { const left = (end - Date.now())/1000;
+    if (left <= 0) { clearInterval(restInt); $('#restBox').innerHTML = ''; beep(880); setTimeout(() => beep(1100,.25), 220); vibrate([200,100,200]); toast(label === 'Pause' ? 'Klar til næste sæt 💪' : 'Tid! 👏'); return; }
+    $('#restBox').innerHTML = `<div class="rest"><span style="font-size:26px">⏱️</span><div class="t">${label}<div style="opacity:.7;font-size:12px">${label==='Pause' ? 'Træk vejret, drik lidt vand' : 'Hold den!'}</div></div><b>${fmt(left)}</b><button class="btn small gray" onclick="endRest()">Spring over</button></div>`; };
+  draw(); restInt = setInterval(draw, 250);
+}
+function endRest(){ clearInterval(restInt); $('#restBox').innerHTML = ''; }
+function setDone(key, v){
+  const d = day(key); d.done = v; save();
+  if (v) { toast('🎉 Godt gået! Træning gennemført'); vibrate([60,40,60]); endRest(); }
+  render();
+}
+
+/* ================= UGE ================= */
+function renderWeek(){
+  const order = [1,2,3,4,5,6,0], g = state.settings, today = iso(new Date());
+  let doneCount = 0, kcalSum = 0, kcalDays = 0;
+  const cells = order.map((wd,i) => {
+    const k = keyForWeekday(wd), dd = state.days[k], t = dd ? totals(k) : { kcal:0, p:0 };
+    if (dd && dd.done) doneCount++; if (t.kcal > 0) { kcalSum += t.kcal; kcalDays++; }
+    return `<div class="d ${k===today?'today':''}"><b>${SHORT[i]}</b><span class="e">${dd && dd.done ? '✅' : SCHEDULE[wd].e}</span><div class="mini"><div style="height:${Math.min(100, t.kcal/g.kcal*100)}%;background:${t.kcal>g.kcal*1.05?'#e11d48':'#f97316'}"></div></div>${t.kcal ? r0(t.kcal) : '–'}</div>`;
+  }).join('');
+  const ws = state.weights.slice(-12);
+  $('#view').innerHTML = `
+    <div class="card"><h2>📅 Denne uge</h2><div class="wk">${cells}</div>
+      <div class="row between" style="margin-top:12px;font-size:14px"><span>💪 Træninger: <b>${doneCount} / 7</b></span><span>🔥 Snit: <b>${kcalDays ? r0(kcalSum/kcalDays) : '–'} kcal</b></span></div></div>
+
+    <div class="card"><h2>⚖️ Vægt</h2>
+      <div class="row"><input class="field" id="wIn" type="number" inputmode="decimal" step="0.1" placeholder="fx 64,5" style="margin:0"><button class="btn" onclick="addWeight()">Gem</button></div>
+      <div class="muted" style="margin-top:6px">Vej dig 1 gang om ugen, samme tid og dag.</div>
+      ${ws.length ? weightChart(ws) : ''}
+    </div>
+
+    <div class="card settings"><h2>⚙️ Indstillinger</h2>
+      <div class="grid2">
+        <div><label>Kalorie-mål</label><input class="field" type="number" value="${g.kcal}" onchange="setS('kcal',+this.value)"></div>
+        <div><label>Protein-mål (g)</label><input class="field" type="number" value="${g.protein}" onchange="setS('protein',+this.value)"></div>
+        <div><label>1. dag i seneste menstruation</label><input class="field" type="date" value="${g.cycleStart}" onchange="setS('cycleStart',this.value)"></div>
+        <div><label>Cykluslængde (dage)</label><input class="field" type="number" value="${g.cycleLen}" onchange="setS('cycleLen',+this.value)"></div>
+        <div><label>Start på 4-ugers plan</label><input class="field" type="date" value="${g.programStart}" onchange="setS('programStart',this.value)"></div>
+      </div>
+      <div class="row" style="flex-wrap:wrap;gap:8px">
+        <button class="btn small gray" onclick="exportData()">⬇️ Gem backup</button>
+        <button class="btn small gray" onclick="if(confirm('Slet ALT gemt data på denne telefon?')){localStorage.removeItem(KEY);location.reload()}">🗑️ Nulstil</button>
+      </div>
+      <div class="muted" style="margin-top:8px">Alt gemmes kun på denne telefon. Appen er generel vejledning og erstatter ikke lægens vurdering.</div>
+    </div>`;
+}
+function setS(k, v){ state.settings[k] = v; save(); toast('Gemt'); header(); }
+function addWeight(){ const v = parseFloat(($('#wIn').value||'').replace(',','.')); if (!(v > 30 && v < 200)) { toast('Skriv en gyldig vægt'); return; } state.weights = state.weights.filter(w => w.date !== iso(new Date())); state.weights.push({ date: iso(new Date()), kg: v }); save(); toast('Vægt gemt'); render(); }
+function weightChart(ws){
+  const W = 300, H = 110, pad = 24, vals = ws.map(w => w.kg), mn = Math.min(...vals, 60) - .5, mx = Math.max(...vals) + .5;
+  const x = i => pad + (ws.length === 1 ? (W-2*pad)/2 : i*(W-2*pad)/(ws.length-1)), y = v => 10 + (mx - v)/(mx - mn)*(H-30);
+  const pts = ws.map((w,i) => `${x(i)},${y(w.kg)}`).join(' ');
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;margin-top:10px">
+    <line x1="${pad}" x2="${W-pad}" y1="${y(60)}" y2="${y(60)}" stroke="#10b981" stroke-dasharray="4 4"/><text x="${W-pad}" y="${y(60)-4}" font-size="9" text-anchor="end" fill="#10b981">60 kg</text>
+    <polyline points="${pts}" fill="none" stroke="#0f766e" stroke-width="2.5" stroke-linejoin="round"/>
+    ${ws.map((w,i) => `<circle cx="${x(i)}" cy="${y(w.kg)}" r="3.5" fill="#0f766e"/><text x="${x(i)}" y="${y(w.kg)-7}" font-size="8.5" text-anchor="middle" fill="#334155">${String(w.kg).replace('.',',')}</text><text x="${x(i)}" y="${H-3}" font-size="7.5" text-anchor="middle" fill="#94a3b8">${w.date.slice(8)}/${+w.date.slice(5,7)}</text>`).join('')}
+  </svg>`;
+}
+function exportData(){ const b = new Blob([JSON.stringify(state)], { type:'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'min-uge-backup-' + iso(new Date()) + '.json'; a.click(); }
+
+render();
+</script>
+</body>
+</html>
