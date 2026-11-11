@@ -83,6 +83,9 @@
   .entry .t b { display: block; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .entry .k { text-align: right; font-size: 14px; font-weight: 600; }
   .entry .k span { display: block; font-size: 12px; color: var(--muted); font-weight: 400; }
+  .scanbox { position: relative; border-radius: 16px; overflow: hidden; background: #0f172a; aspect-ratio: 4/3; margin-bottom: 10px; }
+  .scanbox video { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .scanbox i { position: absolute; left: 12%; right: 12%; top: 50%; height: 2px; background: #f43f5e; box-shadow: 0 0 10px #f43f5e; }
   .del { color: #94a3b8; font-size: 18px; padding: 4px; }
   .star { font-size: 18px; padding: 4px; color: #cbd5e1; } .star.on { color: #f59e0b; }
 
@@ -224,6 +227,7 @@ const PLAN_FOODS = [
   { e:'🍌', name:'Ekstra frugt', kcal:70, p:0.8, note:'Fx banan eller appelsin' },
 ];
 
+const MACRO = {}; // navn -> [kulhydrat, fedt, fibre] pr. 100 g
 // name, emoji, kcal/100g, protein/100g, standardportion (g), portionstekst
 const FOOD_DB = [
   ['Rugbrød','🍞',210,6.5,50,'1 skive'],['Franskbrød / bolle','🥖',260,9,40,'1 skive'],['Havregryn','🥣',370,13,40,'1 portion'],
@@ -548,11 +552,13 @@ state.settings = Object.assign({ kcal:1700, protein:110, auto:true, height:170, 
 state.work = state.work || {};
 state.favs = state.favs || [];
 state.meals = state.meals || [];
+state.scanned = state.scanned || {};
 state.days = state.days || {};
 state.weights = state.weights || [];
 if (!state.settings.programStart) state.settings.programStart = iso(mondayOf(new Date()));
 save();
 loadLearned();
+loadScanned();
 
 function save(){ try { localStorage.setItem(KEY, JSON.stringify(state)); } catch(e){ toast('Hukommelsen er fuld – slet nogle billeder'); } }
 function iso(d){ return d.toLocaleDateString('sv-SE'); }
@@ -666,6 +672,8 @@ function renderFood(){
       <button class="action" onclick="openAdd('plan')"><span class="e">⚡</span><b>Fra min plan</b><span>ét tryk</span></button>
       <button class="action" onclick="openAdd('search')"><span class="e">🔎</span><b>Søg mad</b><span>vælg gram</span></button>
       <button class="action" onclick="openAdd('custom')"><span class="e">✏️</span><b>Skriv selv</b><span>vi regner kcal ud</span></button>
+      <button class="action" onclick="openScan()"><span class="e">📦</span><b>Scan stregkode</b><span>på pakken</span></button>
+      <button class="action" onclick="openAdd('fav')"><span class="e">⭐</span><b>Mine</b><span>favoritter og måltider</span></button>
     </div>
     <div class="card">
       <h2>📝 I dag</h2>
@@ -692,6 +700,63 @@ function addFood(item){
   toast(`${item.e || '✓'} ${r0(item.kcal)} kcal tilføjet`);
   if ($('#overlay .sheet')) { added.push(d.food[d.food.length-1]); picked = null; drawSheet(true); } else closeSheet();
 }
+/* Stregkode */
+function macrosFor(name, g){ const m = MACRO[name]; return m ? { c: m[0]*g/100, fat: m[1]*g/100, fib: m[2]*g/100 } : {}; }
+function loadScanned(){ Object.values(state.scanned || {}).forEach(x => { if (!FOOD_DB.some(f => f[0] === x.r[0])) FOOD_DB.push(x.r); if (x.m) MACRO[x.r[0]] = x.m; }); }
+let scanCtl = null, scanStream = null, scanInt = null, scanBusy = false;
+function openScan(){
+  $('#overlay').innerHTML = `<div class="backdrop" onclick="closeSheet()"></div>
+    <div class="sheet"><div class="grab"></div>
+      <div class="shead"><h3>📦 Scan stregkode</h3><button class="btn small gray" onclick="closeSheet()">Luk</button></div>
+      <div class="scanbox"><video id="scanV" playsinline muted autoplay></video><i></i></div>
+      <div class="muted" id="scanMsg" style="margin-bottom:10px">Starter kameraet… Hold stregkoden vandret i midten.</div>
+      <div class="row"><input class="field" id="scanIn" inputmode="numeric" placeholder="Eller skriv tallene under stregkoden" style="margin:0"><button class="btn" onclick="gotCode($('#scanIn').value)">Slå op</button></div>
+    </div>`;
+  startScan();
+}
+async function startScan(){
+  const v = $('#scanV'), msg = t => { const m = $('#scanMsg'); if (m) m.textContent = t; };
+  scanBusy = false;
+  try {
+    if ('BarcodeDetector' in window) {
+      const det = new BarcodeDetector({ formats: ['ean_13','ean_8','upc_a','upc_e'] });
+      scanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      if (!$('#scanV')) return stopScan();
+      v.srcObject = scanStream; await v.play();
+      scanInt = setInterval(async () => { try { const r = await det.detect(v); if (r.length) gotCode(r[0].rawValue); } catch(e){} }, 250);
+    } else {
+      const { BrowserMultiFormatReader } = await import('https://cdn.jsdelivr.net/npm/@zxing/browser@0.2.1/+esm');
+      if (!$('#scanV')) return;
+      scanCtl = await new BrowserMultiFormatReader().decodeFromConstraints({ video: { facingMode: 'environment' } }, v, (res) => { if (res) gotCode(res.getText()); });
+      if (!$('#scanV')) return stopScan();
+    }
+    msg('Hold stregkoden vandret i midten – den læses automatisk.');
+  } catch (e) { msg('Kameraet kunne ikke startes. Giv adgang til kameraet, eller skriv tallene under stregkoden.'); }
+}
+function stopScan(){ clearInterval(scanInt); scanInt = null; try { scanCtl && scanCtl.stop(); } catch(e){} scanCtl = null; if (scanStream) scanStream.getTracks().forEach(t => t.stop()); scanStream = null; }
+async function gotCode(code){
+  code = String(code || '').replace(/\D/g, ''); if (scanBusy) return;
+  if (code.length < 8) { toast('Skriv hele stregkoden (8–13 cifre)'); return; }
+  scanBusy = true; vibrate(60); stopScan();
+  const m = $('#scanMsg'); if (m) m.textContent = '🔎 Slår ' + code + ' op…';
+  let x = state.scanned[code];
+  if (!x) try {
+    const r = await fetch('https://world.openfoodfacts.org/api/v2/product/' + code + '.json?fields=product_name,product_name_da,brands,nutriments,serving_quantity,serving_size');
+    const d = await r.json(), pr = d.product, n = pr && pr.nutriments;
+    if (d.status === 1 && n && n['energy-kcal_100g'] != null) {
+      const name = ((pr.product_name_da || pr.product_name || 'Vare ' + code).trim() + (pr.brands ? ' (' + pr.brands.split(',')[0].trim() + ')' : '')).slice(0, 50);
+      const sq = +pr.serving_quantity, r1 = v => Math.round((+v || 0)*10)/10;
+      x = { r: [name, '📦', Math.round(n['energy-kcal_100g']), r1(n.proteins_100g), sq > 0 && sq < 1000 ? Math.round(sq) : 100, sq > 0 && sq < 1000 ? ('1 portion' + (pr.serving_size ? ' – ' + pr.serving_size : '')) : '100 g'],
+            m: [r1(n.carbohydrates_100g), r1(n.fat_100g), r1(n.fiber_100g)] };
+      state.scanned[code] = x; save();
+      if (!FOOD_DB.some(f => f[0] === x.r[0])) FOOD_DB.push(x.r); MACRO[x.r[0]] = x.m;
+    }
+  } catch (e) { scanBusy = false; if (m) m.textContent = 'Ingen forbindelse. Prøv igen eller brug "Skriv selv".'; return; }
+  if (!x) { scanBusy = false; if (m) m.innerHTML = `Varen ${code} findes ikke i Open Food Facts endnu. <a href="#" onclick="openAdd('custom');return false">Skriv den selv ›</a>`; return; }
+  addTab = 'search'; searchQ = ''; added = []; sheetPhoto = pendingPhoto; picked = x.r; grams = x.r[4]; drawSheet();
+  toast('📦 ' + x.r[0]);
+}
+
 /* Favoritter, måltider og seneste */
 const FIELDS = ['name','e','g','kcal','p','c','fat','fib'];
 function clean(f){ const o = {}; FIELDS.forEach(k => { if (f[k] != null) o[k] = f[k]; }); return o; }
@@ -755,8 +820,8 @@ $('#cam').onchange = (e) => {
 /* Tilføj-ark */
 let addTab = 'plan', searchQ = '', picked = null, grams = 0, added = [], sheetPhoto = null;
 function openAdd(t){ addTab = t || ((state.favs.length || state.meals.length || yesterdayFood().length) ? 'fav' : 'plan'); picked = null; searchQ = ''; added = []; sheetPhoto = pendingPhoto; drawSheet(); }
-function closeSheet(){ $('#overlay').innerHTML = ''; }
-function cancelSheet(){ pendingPhoto = null; $('#overlay').innerHTML = ''; }
+function closeSheet(){ stopScan(); $('#overlay').innerHTML = ''; }
+function cancelSheet(){ stopScan(); pendingPhoto = null; $('#overlay').innerHTML = ''; }
 function drawSheet(keepScroll){
   const oldSheet = $('#overlay .sheet'), top = keepScroll && oldSheet ? oldSheet.scrollTop : 0;
   let body = '';
@@ -802,7 +867,7 @@ function drawList(){ const q = searchQ.toLowerCase(); $('#sList').innerHTML = li
 function pickFood(name){ picked = FOOD_DB.find(f => f[0] === name); grams = picked[4]; drawSheet(); }
 function stepG(dir){ const st = picked[4] >= 100 ? 25 : 5; grams = Math.max(0, grams + dir*st); $('#gIn').value = grams; calcG(); }
 function calcG(){ const [, , kc, pr] = picked; $('#gCalc').innerHTML = `<b>${r0(kc*grams/100)} kcal</b> · ${(pr*grams/100).toFixed(1).replace('.',',')} g protein`; }
-function addPicked(){ const [name, e, kc, pr] = picked; addFood({ name, e, g: grams, kcal: kc*grams/100, p: pr*grams/100 }); }
+function addPicked(){ const [name, e, kc, pr] = picked; addFood(Object.assign({ name, e, g: grams, kcal: kc*grams/100, p: pr*grams/100 }, macrosFor(name, grams))); }
 function addPlan(i){ const f = PLAN_FOODS[i]; addFood({ name:f.name, e:f.e, kcal:f.kcal, p:f.p }); }
 function addCustom(){
   const name = $('#cName').value.trim().replace(/\s+/g,' '), kcal = parseFloat($('#cKcal').value), p = parseFloat(($('#cP').value||'0').replace(',','.')) || 0;
