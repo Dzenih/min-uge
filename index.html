@@ -104,6 +104,13 @@
   .stepper { display: flex; align-items: center; justify-content: center; gap: 14px; margin: 10px 0; }
   .stepper button { width: 44px; height: 44px; border-radius: 50%; background: #f1f5f9; font-size: 22px; font-weight: 600; }
   .stepper input { width: 90px; text-align: center; font-size: 22px; font-weight: 700; border: none; border-bottom: 2px solid var(--line); padding: 4px; background: transparent; }
+  .parse { margin: -2px 0 10px; }
+  .pl { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 12px; background: #f0fdf4; margin-bottom: 6px; font-size: 14px; }
+  .pl .e { font-size: 22px; } .pl .t { flex: 1; } .pl .v { text-align: right; white-space: nowrap; color: var(--orange); font-weight: 600; }
+  .pl .v small { color: #64748b; font-weight: 500; }
+  .pl.unk { background: #fff7ed; } .pl.tot { background: #ecfeff; }
+  textarea.field { resize: none; font: inherit; }
+  .lbl { font-size: 12px; color: #64748b; } .lbl .field { margin-top: 4px; font-size: 16px; color: inherit; }
   .calc { text-align: center; font-size: 15px; margin-bottom: 12px; }
   .calc b { font-size: 22px; color: var(--orange); }
 
@@ -220,6 +227,222 @@ const FOOD_DB = [
   ['Sodavand','🥤',42,0,330,'1 dåse'],['Kanelsnegl','🥐',400,6,90,'1 stk.'],
 ];
 
+// Ekstra madvarer: navn, emoji, kcal/100g, protein/100g, standardportion (g), portionstekst
+FOOD_DB.push(
+  ['Skummetmælk','🥛',35,3.5,200,'1 glas'],['Sødmælk','🥛',64,3.4,200,'1 glas'],['A38 / ymer','🥛',62,3.5,200,'1 skål'],
+  ['Proteinyoghurt / -pudding','🥛',70,10,200,'1 bæger'],['Proteindrik / shake','🥤',65,9,250,'1 flaske'],
+  ['Kaffe, sort','☕',2,0.1,200,'1 kop'],['Café latte','☕',50,3.3,250,'1 kop'],['Cappuccino','☕',40,2.5,200,'1 kop'],
+  ['Te','🍵',1,0,250,'1 kop'],['Kakao','☕',80,3.4,250,'1 kop'],['Juice','🧃',45,0.5,200,'1 glas'],['Smoothie','🥤',60,1,300,'1 glas'],
+  ['Vand','💧',0,0,250,'1 glas'],['Cola zero / light','🥤',0.3,0,330,'1 dåse'],['Energidrik','🥤',45,0,250,'1 dåse'],
+  ['Hvidvin / rosé','🥂',80,0.1,150,'1 glas'],['Cider','🍺',50,0,330,'1 flaske'],
+  ['Havregrød','🥣',70,2.5,300,'1 skål'],['Müsli / granola','🥣',400,10,50,'1 portion'],['Cornflakes','🥣',370,7,30,'1 portion'],
+  ['Risengrød','🍚',120,3.5,300,'1 skål'],['Grovbolle','🥯',250,9,70,'1 stk.'],['Knækbrød','🍘',370,10,12,'1 stk.'],
+  ['Pitabrød','🫓',270,9,70,'1 stk.'],['Tortilla / wrap','🌯',300,8,60,'1 stk.'],['Toastbrød','🍞',260,8,25,'1 skive'],
+  ['Croissant','🥐',410,8,60,'1 stk.'],['Wienerbrød','🥐',430,6,80,'1 stk.'],['Kage','🍰',400,5,70,'1 stykke'],
+  ['Småkage','🍪',480,6,15,'1 stk.'],['Is','🍨',210,3.5,100,'2 kugler'],['Slik','🍬',340,5,50,'1 lille pose'],['Popcorn','🍿',480,10,25,'1 skål'],
+  ['Mælkechokolade','🍫',540,7,25,'1 lille bar'],
+  ['Leverpostej','🥪',230,11,20,'1 lag'],['Rullepølse','🥪',200,18,15,'1 skive'],['Skinke / hamburgerryg','🥪',105,19,20,'2 skiver'],
+  ['Spegepølse / salami','🥪',450,18,10,'2 skiver'],['Makrel i tomat','🐟',170,14,40,'1 lag'],['Smøreost','🧀',250,7,20,'1 lag'],
+  ['Feta','🧀',260,15,30,'1 portion'],['Mozzarella','🧀',250,18,60,'½ kugle'],['Parmesan','🧀',400,35,10,'1 spsk.'],
+  ['Creme fraiche 18%','🥛',190,3,30,'2 spsk.'],
+  ['Kyllingelår','🍗',200,24,130,'1 stk.'],['Kalkun','🦃',135,29,110,'1 portion'],['Oksebøf','🥩',180,27,150,'1 bøf'],
+  ['Flæskesteg','🥩',250,20,120,'1 portion'],['Frikadeller','🧆',230,14,100,'2 stk.'],['Medisterpølse','🌭',280,14,100,'1 portion'],
+  ['Pølse','🌭',270,12,60,'1 stk.'],['Bacon','🥓',470,35,20,'2 skiver'],['Rejer','🦐',90,20,100,'1 portion'],['Sild','🐟',220,15,50,'1 stykke'],
+  ['Rødspætte','🐟',90,18,150,'1 portion'],['Paneret fisk','🐟',220,12,150,'1 filet'],['Fiskefrikadeller','🐟',190,11,100,'2 stk.'],
+  ['Tofu','🧊',120,13,100,'1 portion'],['Nuggets','🍗',270,15,120,'6 stk.'],
+  ['Hvide ris, kogt','🍚',130,2.7,150,'1 portion'],['Quinoa, kogt','🍚',120,4.4,150,'1 portion'],['Nudler, kogte','🍜',140,5,180,'1 portion'],
+  ['Couscous, kogt','🍚',110,3.8,150,'1 portion'],['Søde kartofler','🍠',90,1.6,150,'1 portion'],['Pommes frites','🍟',290,3.4,120,'1 portion'],
+  ['Kartoffelmos','🥔',100,2,200,'1 portion'],['Kartoffelsalat','🥔',150,2,150,'1 portion'],
+  ['Bønner (kidney / sorte)','🫘',110,7.5,100,'1 portion'],['Grønne bønner','🫛',30,2,100,'1 portion'],['Ærter','🫛',80,5.4,100,'1 portion'],
+  ['Majs','🌽',85,3,80,'1 portion'],['Tomat','🍅',18,0.9,100,'1 stk.'],['Agurk','🥒',12,0.7,100,'¼ agurk'],['Peberfrugt','🫑',30,1,100,'½ stk.'],
+  ['Spinat','🥬',23,3,50,'1 håndfuld'],['Blomkål','🥦',25,2,100,'1 portion'],['Champignon','🍄',25,3,80,'1 portion'],['Løg','🧅',40,1,50,'½ stk.'],
+  ['Squash','🥒',17,1.2,100,'1 portion'],['Kål','🥬',30,1.5,100,'1 portion'],['Grøntsager, blandede','🥗',35,2,150,'1 portion'],
+  ['Pære','🍐',55,0.4,150,'1 stk.'],['Vindruer','🍇',70,0.7,100,'1 håndfuld'],['Melon','🍉',30,0.6,200,'1 skive'],['Jordbær','🍓',35,0.7,150,'1 skål'],
+  ['Mango','🥭',60,0.8,150,'½ stk.'],['Rosiner','🍇',300,3,25,'1 lille æske'],['Dadler','🌴',280,2,30,'3 stk.'],['Nødder, blandede','🥜',600,18,25,'1 lille håndfuld'],
+  ['Lasagne','🍝',160,9,350,'1 portion'],['Kødsauce','🍝',120,10,150,'1 portion'],['Chili con carne','🌶️',115,9,350,'1 portion'],
+  ['Pastasalat','🥗',160,6,250,'1 portion'],['Kyllingesalat','🥗',130,12,300,'1 portion'],['Caesarsalat','🥗',170,9,300,'1 portion'],
+  ['Sushi','🍣',150,6,250,'8 stk.'],['Wok med kød/kylling','🥘',120,9,400,'1 portion'],['Suppe','🍲',50,2.5,350,'1 skål'],
+  ['Kebab / shawarma','🥙',220,12,350,'1 portion'],['Durum','🌯',230,12,400,'1 stk.'],['Sandwich','🥪',230,11,200,'1 stk.'],
+  ['Smørrebrød','🥪',200,9,120,'1 stk.'],['Burrito','🌯',200,9,350,'1 stk.'],['Tacos','🌮',210,9,180,'2 stk.'],['Omelet','🍳',150,11,150,'1 portion'],
+  ['Røræg','🍳',150,10,120,'1 portion'],['Pandekager','🥞',220,6,80,'2 stk.'],['Boller i karry','🍛',140,9,400,'1 portion'],
+  ['Gryderet','🍲',110,9,400,'1 portion'],['Poke bowl','🥗',140,8,450,'1 skål'],['Varm ret (kantine)','🍽️',140,8,400,'1 tallerken'],
+  ['Mayonnaise','🥫',700,1,15,'1 spsk.'],['Remoulade','🥫',600,1,15,'1 spsk.'],['Ketchup','🥫',110,1.5,15,'1 spsk.'],['Pesto','🌿',450,5,15,'1 spsk.'],
+  ['Dressing','🥗',300,1,20,'1 portion'],['Brun sovs','🥣',70,2,75,'1 portion'],['Flødesovs','🥣',150,2,75,'1 portion'],['Bearnaise','🥣',500,1,30,'1 portion'],
+  ['Quorn / vegetarisk','🌱',110,14,100,'1 portion'],['Sweet chili sauce','🌶️',220,0.5,15,'1 spsk.'],['Soyasauce','🥢',60,8,10,'1 spsk.'],
+  ['Honning','🍯',300,0.4,10,'1 tsk.'],['Syltetøj','🍓',150,0.4,15,'1 spsk.'],['Nutella','🍫',540,6,15,'1 spsk.'],['Sukker','🍬',400,0,5,'1 tsk.'],
+);
+
+// Ord, appen genkender. Ord på 4+ bogstaver matcher også bøjninger (kartof → kartofler).
+const ALIAS = {
+  'Rugbrød':'rugbrød|rugbrod|brød','Franskbrød / bolle':'franskbrød|hvidt brød|hvedebrød|bolle|boller|hvedebolle','Havregryn':'havregryn|gryn|oats',
+  'Kefir':'kefir','Skyr naturel':'skyr','Græsk yoghurt 2%':'yoghurt|youghurt|yogurt|græsk yoghurt','Letmælk':'mælk|letmælk|minimælk',
+  'Æg':'æg|æggene|aeg|kogt æg|spejlæg','Kyllingebryst, stegt':'kylling|kyllingebryst|kyllingefilet|kyllingestrimler|kyllingeinderfilet',
+  'Laks':'laks|lakse|røget laks','Torsk':'torsk|fisk|hvid fisk|sej','Tun i vand':'tun|tunfisk|tun i vand',
+  'Hakket oksekød 8–12%':'hakket|hakket kød|hakket oksekød|oksekød|kødfars|fars','Svinemørbrad':'mørbrad|svinemørbrad|svinekød|kotelet|nakkekotelet',
+  'Kyllingepålæg':'kyllingepålæg|kalkunpålæg','Ost 30+':'ost|osten|skiveost|cheddar|gouda','Hytteost':'hytteost|cottage',
+  'Kartofler, kogte':'kartof|kogte kartofler|nye kartofler','Fuldkornsris, kogt':'fuldkornsris|brune ris|brun ris','Pasta, kogt':'pasta|spaghetti|penne|makaroni|fusilli|tagliatelle',
+  'Bulgur, kogt':'bulgur','Linser, kogte':'linse|linser|dal','Kikærter':'kikært','Broccoli':'broccoli|brocoli|broccolien','Gulerod':'gulerod|gulerød',
+  'Salat, agurk, tomat':'salat|grøn salat|blandet salat','Avocado':'avocado|avokado','Æble':'æble','Banan':'banan','Bær':'bær|blåbær|hindbær|brombær|frosne bær',
+  'Kiwi':'kiwi','Appelsin':'appelsin|clementin|mandarin','Mandler':'mandel|mandler','Paranød':'paranød','Chiafrø':'chia',
+  'Græskarkerner':'græskarkerne|kerner|solsikkekerne','Peanutbutter':'peanutbutter|peanut butter|jordnøddesmør','Olivenolie':'olie|olivenolie|rapsolie',
+  'Smør':'smør|plantesmør|bregott|kærgården|lurpak','Hummus':'hummus','Proteinbar':'proteinbar|bar|barre','Wheyprotein':'whey|proteinpulver|protein pulver',
+  'Mørk chokolade':'chokolade|mørk chokolade','Pizza':'pizza','Burger':'burger|hamburger|cheeseburger','Chips':'chips','Rødvin':'vin|rødvin',
+  'Øl':'øl|pilsner|fadøl','Sodavand':'sodavand|cola|fanta|sprite','Kanelsnegl':'kanelsnegl|snegl',
+  'Skummetmælk':'skummetmælk|skummet','Sødmælk':'sødmælk','A38 / ymer':'a38|ymer|surmælk|tykmælk','Proteinyoghurt / -pudding':'proteinyoghurt|protein yoghurt|proteinpudding|protein pudding',
+  'Proteindrik / shake':'shake|proteinshake|proteindrik|protein drik|proteinmælk','Kaffe, sort':'kaffe|sort kaffe|espresso|americano','Café latte':'latte|café latte|caffe latte|kaffe latte|chai latte',
+  'Cappuccino':'cappuccino|flat white','Te':'te|the|grøn te','Kakao':'kakao|kakaomælk|cocio','Juice':'juice|most|appelsinjuice|æblejuice','Smoothie':'smoothie',
+  'Vand':'vand|danskvand|postevand','Cola zero / light':'cola zero|pepsi max|coke zero|light|zero','Energidrik':'energidrik|red bull|monster',
+  'Hvidvin / rosé':'hvidvin|rosé|rose|bobler|champagne|cava|prosecco','Cider':'cider',
+  'Havregrød':'grød|havregrød|overnight oats','Müsli / granola':'müsli|musli|mysli|granola','Cornflakes':'cornflakes|cheerios|morgenmadsprodukt','Risengrød':'risengrød',
+  'Grovbolle':'grovbolle|grov bolle|fuldkornsbolle|rundstykke','Knækbrød':'knækbrød|riskiks|wasa','Pitabrød':'pita|pitabrød','Tortilla / wrap':'tortilla|wrap',
+  'Toastbrød':'toast|toastbrød','Croissant':'croissant','Wienerbrød':'wienerbrød|tebirkes|spandauer|kringle|wienerbasse','Kage':'kage|lagkage|brownie|muffin|kagestykke|cheesecake',
+  'Småkage':'småkage|cookie|kiks','Is':'is|isen|isvaffel|softice|ispind','Slik':'slik|vingummi|lakrids|bolsjer|matador mix','Popcorn':'popcorn','Mælkechokolade':'mælkechokolade|marabou|chokoladebar',
+  'Leverpostej':'leverpostej|postej','Rullepølse':'rullepølse','Skinke / hamburgerryg':'skinke|hamburgerryg|pålæg','Spegepølse / salami':'spegepølse|salami|pepperoni',
+  'Makrel i tomat':'makrel','Smøreost':'smøreost|flødeost|philadelphia','Feta':'feta','Mozzarella':'mozzarella','Parmesan':'parmesan',
+  'Creme fraiche 18%':'creme fraiche|cremefraiche|crème fraiche|cremefraiche','Kyllingelår':'kyllingelår|kyllingeoverlår','Kalkun':'kalkun',
+  'Oksebøf':'bøf|oksebøf|steak|entrecote|culotte','Flæskesteg':'flæskesteg|svinesteg|steg','Frikadeller':'frikadelle|kødbolle',
+  'Medisterpølse':'medister','Pølse':'pølse|hotdog|grillpølse','Bacon':'bacon','Rejer':'reje','Sild':'sild','Rødspætte':'rødspætte',
+  'Paneret fisk':'paneret fisk|fiskefilet|fish and chips','Fiskefrikadeller':'fiskefrikadelle','Tofu':'tofu','Nuggets':'nuggets',
+  'Hvide ris, kogt':'ris|risen|hvide ris|jasminris|basmati','Quinoa, kogt':'quinoa','Nudler, kogte':'nudle|nudler|ramen','Couscous, kogt':'couscous',
+  'Søde kartofler':'søde kartof|sød kartof|sweet potato','Pommes frites':'pommes|fritter|frites','Kartoffelmos':'kartoffelmos|mos','Kartoffelsalat':'kartoffelsalat',
+  'Bønner (kidney / sorte)':'bønner|kidneybønner|sorte bønner|bønne','Grønne bønner':'grønne bønner|haricots','Ærter':'ærter|ærte','Majs':'majs',
+  'Tomat':'tomat','Agurk':'agurk','Peberfrugt':'peberfrugt|peber frugt','Spinat':'spinat','Blomkål':'blomkål','Champignon':'champignon|svampe|svamp',
+  'Løg':'løg','Squash':'squash|courgette|zucchini','Kål':'kål|hvidkål|rødkål|grønkål|spidskål','Grøntsager, blandede':'grøntsager|grønt|wokgrønt',
+  'Pære':'pære','Vindruer':'vindrue|druer','Melon':'melon|vandmelon','Jordbær':'jordbær','Mango':'mango','Rosiner':'rosin','Dadler':'dadel|dadler',
+  'Nødder, blandede':'nødder|valnød|cashew|hasselnød|nøddemix|studenterhavre',
+  'Lasagne':'lasagne','Kødsauce':'kødsauce|kødsovs|bolognese','Chili con carne':'chili|chili con carne','Pastasalat':'pastasalat','Kyllingesalat':'kyllingesalat',
+  'Caesarsalat':'caesar|cæsar|caesarsalat','Sushi':'sushi','Wok med kød/kylling':'wok|stirfry|stir fry','Suppe':'suppe|bouillon',
+  'Kebab / shawarma':'kebab|shawarma|gyros','Durum':'durum|dürüm','Sandwich':'sandwich|panini','Smørrebrød':'smørrebrød|håndmad','Burrito':'burrito',
+  'Tacos':'taco','Omelet':'omelet|æggekage','Røræg':'røræg','Pandekager':'pandekage|pancake','Boller i karry':'boller i karry|karry',
+  'Gryderet':'gryderet|stuvning','Poke bowl':'bowl|poke','Varm ret (kantine)':'kantine|varm ret|varm mad|dagens ret',
+  'Mayonnaise':'mayo|mayonnaise','Remoulade':'remoulade','Ketchup':'ketchup','Pesto':'pesto','Dressing':'dressing','Brun sovs':'sovs|sauce|brun sovs',
+  'Flødesovs':'flødesovs|flødesauce','Bearnaise':'bearnaise','Honning':'honning','Quorn / vegetarisk':'quorn|quorn bøf|veggiebøf|grøntsagsbøf|plantefars|vegetarisk fars|vegetarisk','Sweet chili sauce':'sweet chili|chilisauce|chili sauce','Soyasauce':'soya|soja|soyasauce|sojasauce','Syltetøj':'syltetøj|marmelade','Nutella':'nutella','Sukker':'sukker',
+};
+// Vægt pr. stk. når du skriver antal (fx "10 mandler", "3 kartofler")
+const PIECE = { 'Æg':60,'Mandler':1.2,'Paranød':5,'Nødder, blandede':1.5,'Kartofler, kogte':75,'Avocado':150,'Vindruer':5,'Jordbær':15,'Dadler':10,
+  'Sushi':31,'Frikadeller':50,'Fiskefrikadeller':50,'Tacos':90,'Pandekager':40,'Kyllingepålæg':10,'Skinke / hamburgerryg':10,'Bacon':10,
+  'Spegepølse / salami':5,'Mørk chokolade':10,'Nuggets':20,'Mango':300,'Peberfrugt':200,'Løg':100,'Agurk':400,'Rejer':8,'Ost 30+':20 };
+const UNITS = [
+  [/^(g|gr|gram)$/, 1], [/^(kg|kilo)$/, 1000], [/^ml$/, 1], [/^cl$/, 10], [/^dl$/, 100], [/^(l|liter)$/, 1000],
+  [/^(spsk|spiseske|spiseskefuld|ss)$/, 15], [/^(tsk|teske|ts)$/, 5],
+  [/^(håndfuld|håndfulde|håndfuldt|hånd)$/, 'hand'],
+  [/^(stk|styk|stykke|stykker|skive|skiver|portion|portioner|port|bæger|bægre|dåse|dåser|glas|kop|kopper|krus|flaske|flasker|skål|skåle|tallerken|tallerkner|scoop|barer|pose|poser|slice|kugle|kugler|bøtte|æske|filet|fileter|x)$/, 'n'],
+];
+const NUMW = { en:1, et:1, 'én':1, 'ét':1, to:2, tre:3, fire:4, fem:5, seks:6, syv:7, otte:8, ni:9, ti:10, halv:.5, halvt:.5, halve:.5, par:2, lidt:.5, nogle:3, '½':.5, '¼':.25, '¾':.75 };
+const STOP = /\b(jeg|spiste|fik|havde|drak|til|morgenmad|frokost|aftensmad|middag|snack|mellemmåltid|i|på|kantinen|kantine|en|et|og|lidt|med|af|samt|noget|nogle|ca|cirka|omkring|stor|store|lille|små|hjemmelavet|stegt|kogt|kogte|grov|grove|groft|fuld|fra)\b/g;
+
+let MATCHERS = [];
+function loadLearned(){ (state.learned || []).forEach(f => { if (!FOOD_DB.some(x => x[0] === f[0])) FOOD_DB.push(f); ALIAS[f[0]] = f[6]; }); buildMatchers(); }
+function buildMatchers(){
+  MATCHERS = [];
+  FOOD_DB.forEach(f => (ALIAS[f[0]] || f[0].toLowerCase().split(/[ ,/(]/)[0]).split('|').forEach(a => {
+    a = a.trim(); if (!a) return;
+    const tail = a.length >= 4 ? '[a-zæøåéü]*' : '(?![a-zæøåéü])';
+    MATCHERS.push({ f, len: a.length, re: new RegExp('(^|[^a-zæøåéü0-9])(' + a.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + tail + ')', 'g') });
+  }));
+  MATCHERS.sort((x, y) => y.len - x.len);
+}
+
+function parseQty(txt){
+  // finder sidste tal + enhed i et stykke tekst
+  const toks = txt.toLowerCase().replace(/(\d)([a-zæøå½])/g, '$1 $2').replace(/(\d),(\d)/g, '$1.$2').split(/\s+/).filter(Boolean);
+  let num = null, unit = null;
+  for (let i = 0; i < toks.length; i++) {
+    let t = toks[i], n = null;
+    const m = t.match(/^(\d+(?:\.\d+)?)(½)?$/);
+    if (m) n = +m[1] + (m[2] ? .5 : 0);
+    else if (t === 'et' && toks[i+1] === 'par') { n = 2; i++; }
+    else if (t in NUMW) n = NUMW[t];
+    if (n !== null) { num = (t === 'halv' || t === 'halvt' || t === 'halve') && num ? num * .5 : n; unit = null;
+      const nx = toks[i+1]; if (nx) { const u = UNITS.find(([re]) => re.test(nx)); if (u) { unit = u[1]; i++; } } continue; }
+    const u = UNITS.find(([re]) => re.test(t)); if (u && num === null) { num = 1; unit = u[1]; }
+  }
+  return { num, unit };
+}
+function gramsFor(f, q){
+  const portion = f[4], piece = PIECE[f[0]];
+  if (q.num === null) return portion;
+  if (typeof q.unit === 'number') return q.num * q.unit;
+  if (q.unit === 'hand') return q.num * (/håndfuld/.test(f[5]) ? portion : 30);
+  if (q.unit === 'n') return q.num * (piece || portion);
+  if (q.num >= 20) return q.num;              // "150 kylling" = gram
+  return q.num * (piece || portion);
+}
+function parseMeal(text){
+  const items = [], unknown = [];
+  let prevSep = '';
+  text.split(/(\n|,(?!\d)|;|\+|\.(?!\d)|\bog\b|\bmed\b|\bsamt\b|\bplus\b)/i).forEach((seg, si) => {
+    if (si % 2) { prevSep = seg.toLowerCase(); return; }
+    const s = seg.toLowerCase(); if (!s.trim()) return;
+    const hits = [], used = new Array(s.length).fill(false);
+    MATCHERS.forEach(m => { m.re.lastIndex = 0; let r;
+      while ((r = m.re.exec(s))) { const st = r.index + r[1].length, en = st + r[2].length;
+        if (used.slice(st, en).some(Boolean) || hits.some(h => h.f === m.f)) continue;
+        used.fill(true, st, en); hits.push({ f: m.f, st, en }); } });
+    if (!hits.length) {
+      const rest = s.replace(/\d+([.,]\d+)?/g, ' ').replace(STOP, ' ').split(/\s+/).filter(w => w && !UNITS.some(([re]) => re.test(w)) && !(w in NUMW)).join(' ').trim();
+      if (rest.length >= 2) unknown.push({ q: rest, qty: parseQty(s) });
+      return;
+    }
+    hits.sort((a, b) => a.st - b.st);
+    hits.forEach((h, i) => {
+      const before = s.slice(i ? hits[i-1].en : 0, h.st), after = s.slice(h.en, i < hits.length-1 ? hits[i+1].st : s.length);
+      let q = parseQty(before); if (q.num === null && i === hits.length-1) q = parseQty(after);
+      let g = gramsFor(h.f, q);
+      if (prevSep === 'med' && /mælk/i.test(h.f[0]) && typeof q.unit !== 'number') g = (q.num || 1) * 50;   // mælk i kaffe/te
+      items.push({ f: h.f, g, kcal: h.f[2]*g/100, p: h.f[3]*g/100 });
+    });
+  });
+  return { items, unknown };
+}
+
+/* Skriv selv: live-beregning */
+let cManual = false, lookupBusy = {};
+function customBody(){
+  return `<textarea class="field" id="cName" rows="3" placeholder="Skriv hvad du spiste, fx: 2 æg, 1 skive rugbrød og 150 g kylling med ris" oninput="cParse()"></textarea>
+    <div id="cParse" class="parse"><div class="muted">Skriv mængder som gram, stk., skiver, spsk., dl, glas, kop … Uden mængde bruges en normal portion.</div></div>
+    <div class="grid2"><label class="lbl">kcal<input class="field" id="cKcal" type="number" inputmode="numeric" oninput="cManual=true;cNote()"></label>
+      <label class="lbl">protein (g)<input class="field" id="cP" type="number" inputmode="decimal" oninput="cManual=true;cNote()"></label></div>
+    <div id="cNote" class="muted" style="margin:-4px 0 10px"></div>
+    <button class="btn full" onclick="addCustom()">Tilføj</button>`;
+}
+function fmtG(g){ return g >= 1000 ? (g/1000).toFixed(1).replace('.',',') + ' kg' : r0(g) + ' g'; }
+function cParse(){
+  const box = $('#cParse'); if (!box) return;
+  const { items, unknown } = parseMeal($('#cName').value);
+  const kcal = items.reduce((a, x) => a + x.kcal, 0), p = items.reduce((a, x) => a + x.p, 0);
+  box.innerHTML = items.map(x => `<div class="pl"><span class="e">${x.f[1]}</span><span class="t"><b>${esc(x.f[0])}</b> · ${fmtG(x.g)}</span><span class="v">${r0(x.kcal)} kcal<br><small>${x.p.toFixed(1).replace('.',',')} g prot.</small></span></div>`).join('')
+    + unknown.map((u, i) => `<div class="pl unk"><span class="e">❓</span><span class="t"><b>"${esc(u.q)}"</b> kender jeg ikke</span>
+        <button class="btn small" onclick="lookup(${i})" ${lookupBusy[u.q] ? 'disabled' : ''}>${lookupBusy[u.q] ? 'Søger…' : '🔎 Slå op'}</button></div>`).join('')
+    + (items.length ? `<div class="pl tot"><span class="t"><b>I alt</b></span><span class="v"><b>${r0(kcal)} kcal</b><br><small>${p.toFixed(1).replace('.',',')} g protein</small></span></div>` : '')
+    || '<div class="muted">Skriv mængder som gram, stk., skiver, spsk., dl, glas, kop … Uden mængde bruges en normal portion.</div>';
+  cParse.last = { items, unknown };
+  if (!cManual) { $('#cKcal').value = items.length ? r0(kcal) : ''; $('#cP').value = items.length ? Math.round(p*10)/10 : ''; }
+  cNote();
+}
+function cNote(){
+  const n = $('#cNote'); if (!n) return; const u = cParse.last && cParse.last.unknown.length;
+  n.innerHTML = cManual ? 'Du har rettet tallene selv. <a href="#" onclick="cManual=false;cParse();return false">↺ Brug beregningen</a>'
+    : u ? 'Det ukendte er ikke talt med. Tryk "Slå op", eller ret tallene selv.' : 'Tallene er beregnet – du kan rette dem, hvis du ved bedre.';
+}
+async function lookup(i){
+  const u = cParse.last.unknown[i]; if (!u) return; const q = u.q;
+  lookupBusy[q] = true; cParse();
+  try {
+    const r = await fetch('https://world.openfoodfacts.org/cgi/search.pl?search_simple=1&action=process&json=1&page_size=20&fields=product_name,nutriments&search_terms=' + encodeURIComponent(q));
+    const d = await r.json();
+    const hit = (d.products || []).find(x => x.product_name && x.nutriments && x.nutriments['energy-kcal_100g'] > 0 && x.nutriments.proteins_100g != null);
+    if (!hit) { toast('Fandt ikke "' + q + '" – skriv tallene selv'); }
+    else {
+      const name = hit.product_name.trim().slice(0, 40), f = [name, '🌐', Math.round(hit.nutriments['energy-kcal_100g']), Math.round(hit.nutriments.proteins_100g*10)/10, 100, '100 g', q];
+      state.learned = (state.learned || []).filter(x => x[6] !== q).concat([f]); save();
+      FOOD_DB.push(f); ALIAS[name] = q; buildMatchers();
+      toast(`🌐 ${name}: ${f[2]} kcal / 100 g – husket`);
+    }
+  } catch (e) { toast('Ingen forbindelse – skriv tallene selv'); }
+  delete lookupBusy[q]; cParse();
+}
+
 // Ugeskema: index 0 = søndag
 const SCHEDULE = {
   1:{ type:'walk', e:'🚶‍♀️', title:'Let gang', sub:'Gangbånd, roligt · 20 min (valgfri)', segs:[['Rolig gang', 20*60, '#38bdf8']] },
@@ -308,6 +531,7 @@ state.days = state.days || {};
 state.weights = state.weights || [];
 if (!state.settings.programStart) state.settings.programStart = iso(mondayOf(new Date()));
 save();
+loadLearned();
 
 function save(){ try { localStorage.setItem(KEY, JSON.stringify(state)); } catch(e){ toast('Hukommelsen er fuld – slet nogle billeder'); } }
 function iso(d){ return d.toLocaleDateString('sv-SE'); }
@@ -416,7 +640,7 @@ function renderFood(){
       <button class="action" onclick="snap()"><span class="e">📷</span><b>Tag billede</b><span>og vælg hvad det er</span></button>
       <button class="action" onclick="openAdd('plan')"><span class="e">⚡</span><b>Fra min plan</b><span>ét tryk</span></button>
       <button class="action" onclick="openAdd('search')"><span class="e">🔎</span><b>Søg mad</b><span>vælg gram</span></button>
-      <button class="action" onclick="openAdd('custom')"><span class="e">✏️</span><b>Skriv selv</b><span>navn og kcal</span></button>
+      <button class="action" onclick="openAdd('custom')"><span class="e">✏️</span><b>Skriv selv</b><span>vi regner kcal ud</span></button>
     </div>
     <div class="card">
       <h2>📝 I dag</h2>
@@ -477,10 +701,7 @@ function drawSheet(){
     body = `<input class="field" id="sIn" placeholder="Søg fx kylling, æg, pasta…" value="${esc(searchQ)}" oninput="searchQ=this.value;drawList()">
       <div id="sList">${listHtml(res)}</div>`;
   } else {
-    body = `<input class="field" id="cName" placeholder="Hvad spiste du? Fx 'Pastasalat i kantinen'">
-      <div class="grid2"><input class="field" id="cKcal" type="number" inputmode="numeric" placeholder="kcal (ca.)"><input class="field" id="cP" type="number" inputmode="decimal" placeholder="protein g (valgfri)"></div>
-      <div class="muted" style="margin:-4px 0 10px">Tip: et normalt varmt måltid er ofte 450–650 kcal. Gæt hellere end at lade være.</div>
-      <button class="btn full" onclick="addCustom()">Tilføj</button>`;
+    body = customBody();
   }
   $('#overlay').innerHTML = `<div class="backdrop" onclick="cancelSheet()"></div>
     <div class="sheet"><div class="grab"></div>
@@ -490,6 +711,7 @@ function drawSheet(){
       ${body}
     </div>`;
   if (picked) calcG();
+  if (addTab === 'custom' && !picked) { cManual = false; $('#cName').focus(); }
   if (addTab === 'search' && !picked) { const i = $('#sIn'); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }
 }
 function listHtml(res){ return res.length ? res.map(f => `<button class="opt" onclick="pickFood('${esc(f[0])}')"><span class="e">${f[1]}</span><span class="t"><b>${esc(f[0])}</b><span>${f[5]} (${f[4]} g) ≈ ${r0(f[2]*f[4]/100)} kcal · ${(f[3]*f[4]/100).toFixed(1).replace('.',',')} g protein</span></span><span class="plus">›</span></button>`).join('') : '<div class="muted">Ingen match – brug "Skriv selv".</div>'; }
@@ -500,9 +722,11 @@ function calcG(){ const [, , kc, pr] = picked; $('#gCalc').innerHTML = `<b>${r0(
 function addPicked(){ const [name, e, kc, pr] = picked; addFood({ name, e, g: grams, kcal: kc*grams/100, p: pr*grams/100 }); }
 function addPlan(i){ const f = PLAN_FOODS[i]; addFood({ name:f.name, e:f.e, kcal:f.kcal, p:f.p }); }
 function addCustom(){
-  const name = $('#cName').value.trim(), kcal = parseFloat($('#cKcal').value), p = parseFloat(($('#cP').value||'0').replace(',','.')) || 0;
-  if (!name || !(kcal >= 0)) { toast('Skriv navn og kcal'); return; }
-  addFood({ name, e:'✏️', kcal, p });
+  const name = $('#cName').value.trim().replace(/\s+/g,' '), kcal = parseFloat($('#cKcal').value), p = parseFloat(($('#cP').value||'0').replace(',','.')) || 0;
+  if (!name) { toast('Skriv hvad du spiste'); return; }
+  if (!(kcal >= 0)) { toast('Jeg kunne ikke beregne det – skriv kcal selv'); return; }
+  const it = (cParse.last && cParse.last.items) || [];
+  addFood({ name: name.length > 70 ? name.slice(0, 68) + '…' : name, e: it.length ? it[0].f[1] : '✏️', kcal, p });
 }
 
 /* ================= TRÆNING ================= */
