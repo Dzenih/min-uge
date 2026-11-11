@@ -86,6 +86,11 @@
   .scanbox { position: relative; border-radius: 16px; overflow: hidden; background: #0f172a; aspect-ratio: 4/3; margin-bottom: 10px; }
   .scanbox video { width: 100%; height: 100%; object-fit: cover; display: block; }
   .scanbox i { position: absolute; left: 12%; right: 12%; top: 50%; height: 2px; background: #f43f5e; box-shadow: 0 0 10px #f43f5e; }
+  .chipm { background:#f1f5f9; border-radius:99px; padding:4px 10px; }
+  .actg { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px; }
+  .actg button { background:#f1f5f9; border-radius:14px; padding:10px 4px; font-size:13px; } .actg button span { display:block; font-size:26px; }
+  .actg button.on { background:#ccfbf1; outline:2px solid #0f766e; }
+  .adj { margin-top:10px; font-size:13px; background: rgba(255,255,255,.75); border-radius: 12px; padding: 8px 10px; }
   .del { color: #94a3b8; font-size: 18px; padding: 4px; }
   .star { font-size: 18px; padding: 4px; color: #cbd5e1; } .star.on { color: #f59e0b; }
 
@@ -216,15 +221,15 @@ const DAYNAMES = ['Søndag','Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lør
 const SHORT = ['Man','Tir','Ons','Tor','Fre','Lør','Søn'];
 
 const PLAN_FOODS = [
-  { e:'🥣', name:'Kefir-skål med frø og paranød', kcal:270, p:15, note:'250 g kefir, chia, græskar- og solsikkekerner, bær, 1 paranød' },
-  { e:'🥤', name:'Proteinshake', kcal:120, p:24, note:'30 g whey med vand' },
-  { e:'☕', name:'Kaffe med mælk (1 kop)', kcal:20, p:1.7, note:'ca. 50 ml letmælk' },
-  { e:'🥪', name:'Frokost: rugbrød + kylling/fisk', kcal:400, p:35, note:'2 skiver rugbrød, 110 g protein, grønt, 1 tsk. olie' },
-  { e:'🍎', name:'Æble + mandler', kcal:100, p:2.5, note:'1 æble og 10 g mandler' },
-  { e:'🍽️', name:'Aftensmad: laks/kylling + kartofler', kcal:450, p:38, note:'140 g protein, 120 g kartofler/ris, grønt, 1 tsk. olie' },
-  { e:'🥝', name:'Kiwi', kcal:45, p:0.8, note:'Aftenens kiwi' },
-  { e:'🥛', name:'Skyr (150 g)', kcal:95, p:16, note:'God snack ved sen hjemkomst' },
-  { e:'🍌', name:'Ekstra frugt', kcal:70, p:0.8, note:'Fx banan eller appelsin' },
+  { e:'🥣', name:'Kefir-skål med frø og paranød', c:22, fat:13, fib:7, kcal:270, p:15, note:'250 g kefir, chia, græskar- og solsikkekerner, bær, 1 paranød' },
+  { e:'🥤', name:'Proteinshake', c:3, fat:1.5, fib:0, kcal:120, p:24, note:'30 g whey med vand' },
+  { e:'☕', name:'Kaffe med mælk (1 kop)', c:2.4, fat:0.8, fib:0, kcal:20, p:1.7, note:'ca. 50 ml letmælk' },
+  { e:'🥪', name:'Frokost: rugbrød + kylling/fisk', c:38, fat:11, fib:9, kcal:400, p:35, note:'2 skiver rugbrød, 110 g protein, grønt, 1 tsk. olie' },
+  { e:'🍎', name:'Æble + mandler', c:15, fat:5.5, fib:3.6, kcal:100, p:2.5, note:'1 æble og 10 g mandler' },
+  { e:'🍽️', name:'Aftensmad: laks/kylling + kartofler', c:32, fat:17, fib:6, kcal:450, p:38, note:'140 g protein, 120 g kartofler/ris, grønt, 1 tsk. olie' },
+  { e:'🥝', name:'Kiwi', c:10, fat:0.4, fib:2.3, kcal:45, p:0.8, note:'Aftenens kiwi' },
+  { e:'🥛', name:'Skyr (150 g)', c:6, fat:0.3, fib:0, kcal:95, p:16, note:'God snack ved sen hjemkomst' },
+  { e:'🍌', name:'Ekstra frugt', c:16, fat:0.3, fib:2, kcal:70, p:0.8, note:'Fx banan eller appelsin' },
 ];
 
 const MACRO = {}; // navn -> [kulhydrat, fedt, fibre] pr. 100 g
@@ -354,7 +359,7 @@ const NUMW = { en:1, et:1, 'én':1, 'ét':1, to:2, tre:3, fire:4, fem:5, seks:6,
 const STOP = /\b(jeg|spiste|fik|havde|drak|til|morgenmad|frokost|aftensmad|middag|snack|mellemmåltid|i|på|kantinen|kantine|en|et|og|lidt|med|af|samt|noget|nogle|ca|cirka|omkring|stor|store|lille|små|hjemmelavet|stegt|kogt|kogte|grov|grove|groft|fuld|fra)\b/g;
 
 let MATCHERS = [];
-function loadLearned(){ (state.learned || []).forEach(f => { if (!FOOD_DB.some(x => x[0] === f[0])) FOOD_DB.push(f); ALIAS[f[0]] = f[6]; }); buildMatchers(); }
+function loadLearned(){ (state.learned || []).forEach(f => { if (!FOOD_DB.some(x => x[0] === f[0])) FOOD_DB.push(f); ALIAS[f[0]] = f[6]; if (f[7]) MACRO[f[0]] = f[7]; }); buildMatchers(); }
 function buildMatchers(){
   MATCHERS = [];
   FOOD_DB.forEach(f => (ALIAS[f[0]] || f[0].toLowerCase().split(/[ ,/(]/)[0]).split('|').forEach(a => {
@@ -457,6 +462,7 @@ async function lookup(i){
     if (!hit) { toast('Fandt ikke "' + q + '" – skriv tallene selv'); }
     else {
       const name = hit.product_name.trim().slice(0, 40), f = [name, '🌐', Math.round(hit.nutriments['energy-kcal_100g']), Math.round(hit.nutriments.proteins_100g*10)/10, 100, '100 g', q];
+      f[7] = [hit.nutriments.carbohydrates_100g, hit.nutriments.fat_100g, hit.nutriments.fiber_100g].map(v => Math.round((+v||0)*10)/10); MACRO[name] = f[7];
       state.learned = (state.learned || []).filter(x => x[6] !== q).concat([f]); save();
       FOOD_DB.push(f); ALIAS[name] = q; buildMatchers();
       toast(`🌐 ${name}: ${f[2]} kcal / 100 g – husket`);
@@ -465,6 +471,7 @@ async function lookup(i){
   delete lookupBusy[q]; cParse();
 }
 
+Object.assign(MACRO, {"Rugbrød":[40,3,7],"Franskbrød / bolle":[50,3,3],"Havregryn":[60,7,10],"Kefir":[4,2.5,0],"Skyr naturel":[4,0.2,0],"Græsk yoghurt 2%":[4,2,0],"Letmælk":[4.7,1.5,0],"Æg":[0.5,10,0],"Kyllingebryst, stegt":[0,3.5,0],"Laks":[0,13,0],"Torsk":[0,0.7,0],"Tun i vand":[0,1,0],"Hakket oksekød 8–12%":[0,13,0],"Svinemørbrad":[0,4,0],"Kyllingepålæg":[2,2,0],"Ost 30+":[0,17,0],"Hytteost":[2.5,4,0],"Kartofler, kogte":[17,0.1,1.8],"Fuldkornsris, kogt":[26,1,1.8],"Pasta, kogt":[30,1,1.5],"Bulgur, kogt":[19,0.3,4.5],"Linser, kogte":[17,0.4,8],"Kikærter":[20,2.5,6],"Broccoli":[3,0.4,3],"Gulerod":[8,0.2,3],"Salat, agurk, tomat":[3,0.2,1.2],"Avocado":[9,19,7],"Æble":[12,0.2,2.4],"Banan":[21,0.3,2],"Bær":[9,0.4,4],"Kiwi":[13,0.5,3],"Appelsin":[10,0.2,2.2],"Mandler":[9,51,12],"Paranød":[4,67,7.5],"Chiafrø":[8,31,34],"Græskarkerner":[10,49,6],"Peanutbutter":[16,50,6],"Olivenolie":[0,100,0],"Smør":[0.6,82,0],"Hummus":[14,23,6],"Proteinbar":[30,12,5],"Wheyprotein":[8,6,0],"Mørk chokolade":[35,42,11],"Pizza":[30,11,2],"Burger":[24,12,1.5],"Chips":[52,33,4],"Rødvin":[2.6,0,0],"Øl":[3.5,0,0],"Sodavand":[10.5,0,0],"Kanelsnegl":[50,20,2],"Skummetmælk":[5,0.1,0],"Sødmælk":[4.6,3.5,0],"A38 / ymer":[4,1.5,0],"Proteinyoghurt / -pudding":[6,0.5,0],"Proteindrik / shake":[6,1,0],"Kaffe, sort":[0,0,0],"Café latte":[4.5,2,0],"Cappuccino":[3.5,1.8,0],"Te":[0.2,0,0],"Kakao":[11,2.5,0.5],"Juice":[10,0.1,0.2],"Smoothie":[13,0.3,1],"Vand":[0,0,0],"Cola zero / light":[0,0,0],"Energidrik":[11,0,0],"Hvidvin / rosé":[2.5,0,0],"Cider":[5,0,0],"Havregrød":[11,1.4,1.5],"Müsli / granola":[64,12,7],"Cornflakes":[84,1,3],"Risengrød":[18,4,0.2],"Grovbolle":[42,5,6],"Knækbrød":[60,7,15],"Pitabrød":[55,1.5,2.5],"Tortilla / wrap":[50,7,3],"Toastbrød":[48,3.5,3],"Croissant":[45,21,2],"Wienerbrød":[50,23,1.5],"Kage":[50,20,1.5],"Småkage":[65,22,2],"Is":[25,11,0.5],"Slik":[80,1,0],"Popcorn":[55,24,10],"Mælkechokolade":[57,31,2],"Leverpostej":[6,19,0.5],"Rullepølse":[1,14,0],"Skinke / hamburgerryg":[1,3,0],"Spegepølse / salami":[1,38,0],"Makrel i tomat":[3,12,0],"Smøreost":[4,23,0],"Feta":[1,21,0],"Mozzarella":[1,18,0],"Parmesan":[0,29,0],"Creme fraiche 18%":[3.5,18,0],"Kyllingelår":[0,13,0],"Kalkun":[0,2,0],"Oksebøf":[0,8,0],"Flæskesteg":[0,18,0],"Frikadeller":[7,16,0.5],"Medisterpølse":[2,24,0],"Pølse":[3,23,0],"Bacon":[1,36,0],"Rejer":[0,1.5,0],"Sild":[13,13,0],"Rødspætte":[0,2,0],"Paneret fisk":[17,12,1],"Fiskefrikadeller":[11,12,0.5],"Tofu":[2,7,1],"Nuggets":[17,16,1],"Hvide ris, kogt":[28,0.3,0.4],"Quinoa, kogt":[21,1.9,2.8],"Nudler, kogte":[26,2,1],"Couscous, kogt":[22,0.2,1.4],"Søde kartofler":[20,0.1,3],"Pommes frites":[36,14,3],"Kartoffelmos":[14,4,1.2],"Kartoffelsalat":[13,10,1],"Bønner (kidney / sorte)":[16,0.5,6],"Grønne bønner":[4,0.2,3],"Ærter":[10,0.4,5],"Majs":[15,1.2,2.5],"Tomat":[3,0.2,1.2],"Agurk":[2,0.1,0.5],"Peberfrugt":[5,0.3,1.8],"Spinat":[1.5,0.4,2.2],"Blomkål":[3,0.3,2],"Champignon":[1,0.3,1.5],"Løg":[8,0.1,1.7],"Squash":[2.5,0.3,1],"Kål":[5,0.2,2.5],"Grøntsager, blandede":[5,0.3,2.5],"Pære":[12,0.1,3],"Vindruer":[16,0.2,0.9],"Melon":[7,0.2,0.5],"Jordbær":[6,0.4,2],"Mango":[14,0.4,1.6],"Rosiner":[70,0.5,4],"Dadler":[66,0.4,7],"Nødder, blandede":[15,52,7],"Lasagne":[15,7,1.5],"Kødsauce":[6,6,1.5],"Chili con carne":[10,4,3.5],"Pastasalat":[20,6,1.5],"Kyllingesalat":[6,8,1.5],"Caesarsalat":[8,12,1.5],"Sushi":[28,2,0.6],"Wok med kød/kylling":[9,5,1.5],"Suppe":[6,2,1],"Kebab / shawarma":[20,10,1.5],"Durum":[24,10,1.5],"Sandwich":[26,8,2.5],"Smørrebrød":[20,9,3.5],"Burrito":[24,7,2.5],"Tacos":[22,9,2.5],"Omelet":[1.5,11,0],"Røræg":[2,11,0],"Pandekager":[28,9,1],"Boller i karry":[9,7,1],"Gryderet":[8,4,1.5],"Poke bowl":[18,4,1.5],"Varm ret (kantine)":[15,5,1.5],"Mayonnaise":[1.5,77,0],"Remoulade":[7,63,0.5],"Ketchup":[25,0.2,0.5],"Pesto":[6,45,1.5],"Dressing":[10,28,0.3],"Brun sovs":[8,3,0.3],"Flødesovs":[6,13,0.2],"Bearnaise":[2,55,0],"Quorn / vegetarisk":[4,2.5,6],"Sweet chili sauce":[52,0.3,1],"Soyasauce":[5,0.1,0.8],"Honning":[82,0,0],"Syltetøj":[37,0.1,1],"Nutella":[57.5,31,3.4],"Sukker":[100,0,0]});
 // Ugeskema: index 0 = søndag
 const SCHEDULE = {
   1:{ type:'walk', e:'🚶‍♀️', title:'Let gang', sub:'Gangbånd, roligt · 20 min (valgfri)', segs:[['Rolig gang', 20*60, '#38bdf8']] },
@@ -566,7 +573,7 @@ function mondayOf(d){ const x = new Date(d); const w = (x.getDay()+6)%7; x.setDa
 function day(k = iso(new Date())){ return state.days[k] || (state.days[k] = { food:[], sets:{}, done:false, checks:{}, water:0 }); }
 function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function r0(n){ return Math.round(n); }
-function totals(k){ const d = day(k); return d.food.reduce((a,f) => ({ kcal:a.kcal+f.kcal, p:a.p+f.p }), { kcal:0, p:0 }); }
+function totals(k){ const d = day(k); return d.food.reduce((a,f) => ({ kcal:a.kcal+f.kcal, p:a.p+f.p, c:a.c+(f.c||0), fat:a.fat+(f.fat||0), fib:a.fib+(f.fib||0), miss:a.miss+(f.c==null?1:0) }), { kcal:0, p:0, c:0, fat:0, fib:0, miss:0 }); }
 function weekInfo(){
   const start = new Date(state.settings.programStart + 'T12:00:00');
   const diff = Math.floor((mondayOf(new Date()) - mondayOf(start)) / (7*864e5));
@@ -639,8 +646,10 @@ function renderToday(){
     <button class="hero t-${sch.type}" style="width:100%;text-align:left" onclick="tab='train';trainDay=${new Date().getDay()};render()">
       <div class="row between"><span class="big">${sch.e}</span>${d.done ? '<span class="btn small" style="background:#0f766e">✓ Gennemført</span>' : '<span class="btn small gray">Start ›</span>'}</div>
       <h2>${sch.title}</h2><div style="font-size:14px">${sch.sub}</div>
+      ${adjustFor(k) ? `<div class="adj">${adjustFor(k).msg}</div>` : ''}
     </button>
     ${suggestCard(wd)}
+    ${extraCard(k)}
     ${workAt(wd)==='office' ? `<div class="card" style="background:#fffbeb"><h2>🚗 Kontordag</h2><div style="font-size:14px">Kefir-skålen før afgang · shaken på formiddagen · frokost senest kl. 11–12 · skyr eller æg inden for 1 time efter hjemkomst.</div></div>`
       : `<div class="card" style="background:#f0fdf4"><h2>🏡 Hjemmedag</h2><div style="font-size:14px">Morgenmad i ro inden kl. 9 · træn gerne formiddag eller i frokostpausen · frokost lige efter træning${LIGHT.includes(sch.type) ? ' · ekstra: 20 min rask gang på gangbåndet i en pause' : ''}.</div></div>`}
     ${goalCard(k)}
@@ -665,7 +674,8 @@ function renderFood(){
   $('#view').innerHTML = `
     <div class="card">
       <div class="stat"><div class="row between"><span>🔥 ${r0(t.kcal)} af ${g.kcal} kcal</span><b>${r0(g.kcal - t.kcal)} tilbage</b></div><div class="bar"><div style="width:${Math.min(100,t.kcal/g.kcal*100)}%;background:${t.kcal>g.kcal?'#e11d48':'#f97316'}"></div></div></div>
-      <div class="stat" style="margin:0"><div class="row between"><span>💪 ${r0(t.p)} af ${g.protein} g protein</span><b>${r0(Math.max(0,g.protein - t.p))} g mangler</b></div><div class="bar"><div style="width:${Math.min(100,t.p/g.protein*100)}%;background:#0f766e"></div></div></div>
+      <div class="stat"><div class="row between"><span>💪 ${r0(t.p)} af ${g.protein} g protein</span><b>${r0(Math.max(0,g.protein - t.p))} g mangler</b></div><div class="bar"><div style="width:${Math.min(100,t.p/g.protein*100)}%;background:#0f766e"></div></div></div>
+      ${macroBlock(t)}
     </div>
     <div class="grid2" style="margin-bottom:12px">
       <button class="action" onclick="snap()"><span class="e">📷</span><b>Tag billede</b><span>og vælg hvad det er</span></button>
@@ -700,6 +710,18 @@ function addFood(item){
   toast(`${item.e || '✓'} ${r0(item.kcal)} kcal tilføjet`);
   if ($('#overlay .sheet')) { added.push(d.food[d.food.length-1]); picked = null; drawSheet(true); } else closeSheet();
 }
+/* Makroer */
+function macroBlock(t){
+  const kc = t.c*4 + t.fat*9 + t.p*4 || 1, pct = v => Math.round(v/kc*100);
+  return `<div class="stat"><div class="row between"><span>🌾 ${r0(t.fib)} af 25 g fibre</span><b>${t.fib >= 25 ? '✓' : r0(25 - t.fib) + ' g mangler'}</b></div><div class="bar"><div style="width:${Math.min(100,t.fib/25*100)}%;background:#65a30d"></div></div></div>
+    <div class="row" style="gap:6px;flex-wrap:wrap;font-size:13px">
+      <span class="chipm">🍞 Kulhydrat <b>${r0(t.c)} g</b> · ${pct(t.c*4)}%</span>
+      <span class="chipm">🥑 Fedt <b>${r0(t.fat)} g</b> · ${pct(t.fat*9)}%</span>
+      <span class="chipm">💪 Protein ${pct(t.p*4)}%</span></div>
+    ${t.miss ? `<div class="muted" style="margin-top:4px;font-size:12px">${t.miss} ting mangler tal for kulhydrat/fedt/fibre (fx egne tal).</div>` : ''}
+    ${t.kcal > 300 && t.fat*9/kc > .4 ? `<div style="font-size:13px;margin-top:6px">💡 Meget fedt i dag – vælg magert protein og mere grønt til næste måltid.</div>` : ''}`;
+}
+
 /* Stregkode */
 function macrosFor(name, g){ const m = MACRO[name]; return m ? { c: m[0]*g/100, fat: m[1]*g/100, fib: m[2]*g/100 } : {}; }
 function loadScanned(){ Object.values(state.scanned || {}).forEach(x => { if (!FOOD_DB.some(f => f[0] === x.r[0])) FOOD_DB.push(x.r); if (x.m) MACRO[x.r[0]] = x.m; }); }
@@ -866,15 +888,16 @@ function listHtml(res){ return res.length ? res.map(f => `<button class="opt" on
 function drawList(){ const q = searchQ.toLowerCase(); $('#sList').innerHTML = listHtml(FOOD_DB.filter(f => f[0].toLowerCase().includes(q))); }
 function pickFood(name){ picked = FOOD_DB.find(f => f[0] === name); grams = picked[4]; drawSheet(); }
 function stepG(dir){ const st = picked[4] >= 100 ? 25 : 5; grams = Math.max(0, grams + dir*st); $('#gIn').value = grams; calcG(); }
-function calcG(){ const [, , kc, pr] = picked; $('#gCalc').innerHTML = `<b>${r0(kc*grams/100)} kcal</b> · ${(pr*grams/100).toFixed(1).replace('.',',')} g protein`; }
+function calcG(){ const [name, , kc, pr] = picked, m = macrosFor(name, grams); $('#gCalc').innerHTML = `<b>${r0(kc*grams/100)} kcal</b> · ${(pr*grams/100).toFixed(1).replace('.',',')} g protein` + (m.c != null ? `<div class="muted" style="font-size:13px">🍞 ${r0(m.c)} g kulh. · 🥑 ${r0(m.fat)} g fedt · 🌾 ${r0(m.fib)} g fibre</div>` : ''); }
 function addPicked(){ const [name, e, kc, pr] = picked; addFood(Object.assign({ name, e, g: grams, kcal: kc*grams/100, p: pr*grams/100 }, macrosFor(name, grams))); }
-function addPlan(i){ const f = PLAN_FOODS[i]; addFood({ name:f.name, e:f.e, kcal:f.kcal, p:f.p }); }
+function addPlan(i){ const f = PLAN_FOODS[i]; addFood({ name:f.name, e:f.e, kcal:f.kcal, p:f.p, c:f.c, fat:f.fat, fib:f.fib }); }
 function addCustom(){
   const name = $('#cName').value.trim().replace(/\s+/g,' '), kcal = parseFloat($('#cKcal').value), p = parseFloat(($('#cP').value||'0').replace(',','.')) || 0;
   if (!name) { toast('Skriv hvad du spiste'); return; }
   if (!(kcal >= 0)) { toast('Jeg kunne ikke beregne det – skriv kcal selv'); return; }
   const it = (cParse.last && cParse.last.items) || [];
-  addFood({ name: name.length > 70 ? name.slice(0, 68) + '…' : name, e: it.length ? it[0].f[1] : '✏️', kcal, p });
+  const mac = (!cManual && it.length && !cParse.last.unknown.length) ? it.reduce((a,x) => { const m = macrosFor(x.f[0], x.g); if (!m.c && m.c !== 0) a.none = true; else { a.c += m.c; a.fat += m.fat; a.fib += m.fib; } return a; }, { c:0, fat:0, fib:0 }) : null;
+  addFood(Object.assign({ name: name.length > 70 ? name.slice(0, 68) + '…' : name, e: it.length ? it[0].f[1] : '✏️', kcal, p }, mac && !mac.none ? { c:mac.c, fat:mac.fat, fib:mac.fib } : {}));
 }
 
 /* ================= TRÆNING ================= */
@@ -897,13 +920,16 @@ function figure(id){
 function full(o){ const r = Object.assign({}, o); r.kr = r.kr || r.kl; r.fr = r.fr || r.fl; r.er = r.er || r.el; r.hr = r.hr || r.hl; return r; }
 
 function renderTrain(){
-  const now = new Date().getDay(), key = keyForWeekday(trainDay), d = day(key), sch = schFor(trainDay), w = weekInfo(), moved = srcFor(trainDay) !== trainDay;
+  const now = new Date().getDay(), key = keyForWeekday(trainDay), d = day(key), sch = schFor(trainDay), w0 = weekInfo(), moved = srcFor(trainDay) !== trainDay, adj = adjustFor(key);
+  const w = adj && adj.lighter ? Object.assign({}, w0, { sets: Math.min(2, w0.sets) }) : w0;
   const order = [1,2,3,4,5,6,0];
   let html = `<div class="days">${order.map((wd,i) => { const dd = state.days[keyForWeekday(wd)]; return `<button class="${wd===trainDay?'on':''} ${wd===now?'today':''}" onclick="trainDay=${wd};openEx=null;render()">${SHORT[i]}<span class="ok">${dd && dd.done ? '✅' : schFor(wd).e}</span>${srcFor(wd)!==wd?'<i class="sw">⇄</i>':''}</button>`; }).join('')}</div>
     ${workToggle(trainDay)}${suggestCard(trainDay)}
     <div class="hero t-${sch.type}"><div class="big">${sch.e}</div><h2>${sch.title}</h2><div style="font-size:14px">${DAYNAMES[trainDay]} · ${sch.sub}</div>
       ${moved ? `<div class="moved">⇄ Ændret denne uge · planen var ${SCHEDULE[trainDay].e} ${SCHEDULE[trainDay].title}</div>` : ''}
-      <button class="btn small swapbtn" onclick="openSwap()">🔄 ${moved ? 'Ændr' : 'Byt dag'}</button></div>`;
+      ${adj ? `<div class="adj">${adj.msg}${adj.covered && !d.done ? `<div><button class="btn small" style="margin-top:6px" onclick="setDone('${key}',true)">✓ Marker som klaret</button></div>` : ''}</div>` : ''}
+      <button class="btn small swapbtn" onclick="openSwap()">🔄 ${moved ? 'Ændr' : 'Byt dag'}</button></div>
+    ${extraCard(key)}`;
 
   if (sch.type === 'str') {
     const ids = PROGRAMS[sch.prog];
@@ -921,7 +947,7 @@ function renderTrain(){
   } else if (sch.type === 'rest') {
     html += timerCard(STRETCHES, 'Stræk-program', key);
   } else {
-    html += timerCard(segsFor(srcFor(trainDay), w), 'Timer', key);
+    html += timerCard(adj && adj.factor ? scaleSegs(segsFor(srcFor(trainDay), w), adj.factor) : segsFor(srcFor(trainDay), w), adj && adj.factor ? 'Forkortet timer' : 'Timer', key);
     if (srcFor(trainDay) === 6) html += `<div class="card" style="background:#f0fdf4"><b>❄️ Vinter</b><div style="font-size:14px">Mørkt, glat eller meget koldt? Lav samme intervaller på gangbåndet. Husk refleks og lys udenfor.</div></div>`;
   }
   html += d.done
@@ -1004,6 +1030,8 @@ function goalFor(k = iso(new Date())){
   let tips = [];
   if (sch.type === 'str') tips.push('🍌 Efter styrke: banan eller skyr inden for 1 time');
   if (['row','run'].includes(sch.type)) tips.push('🍞 Kondi: lidt ekstra kulhydrat, fx en skive rugbrød mere');
+  const exb = extrasOf(k).reduce((a,x) => a + burnOf(x, w), 0);
+  if (exb > 0) { const add = Math.round(exb/2/10)*10; kcal += add; why.push(`➕ Ekstra aktivitet +${add}`); if (exb >= 250) tips.push('🍽️ Du har forbrændt ekstra – spis et lille mellemmåltid med protein, fx skyr eller æg'); }
   if (ph && ph.name === 'Lutealfase') { kcal += 125; why.push('🌙 Lutealfase +125'); tips.push('🥛 Lutealfase: skyr med bær er en god ekstra snack'); }
   if (ph && ph.name === 'Menstruation') tips.push('🩸 Menstruation: jernrigt (æg, linser, kød) med C-vitamin');
   if (rate > 0.75) { kcal += 150; why.push(`⚖️ Hurtigt vægttab (${rate.toFixed(1).replace('.',',')} kg/uge) +150`); tips.push('⚠️ Du taber dig hurtigere end anbefalet – spis lidt mere for at passe på stofskiftet'); }
@@ -1029,6 +1057,75 @@ function segsFor(wd, w){
     s.push(['Nedkøling: gang', 300, '#86efac']); return s;
   }
   return [['Gang', 1800, '#38bdf8']];
+}
+
+/* ================= EKSTRA AKTIVITET ================= */
+const ACT = {
+  walk:{ e:'🚶‍♀️', n:'Gåtur', met:3.5, int:1 }, run:{ e:'🏃‍♀️', n:'Løb', met:9, int:2 }, bike:{ e:'🚴‍♀️', n:'Cykling', met:6, int:1.5 },
+  row:{ e:'🚣‍♀️', n:'Romaskine', met:7, int:1.6 }, swim:{ e:'🏊‍♀️', n:'Svømning', met:7, int:1.6 }, dance:{ e:'💃', n:'Dans / hold', met:5.5, int:1.5 },
+  yoga:{ e:'🧘‍♀️', n:'Yoga / stræk', met:2.5, int:0, stretch:true }, str:{ e:'🏋️‍♀️', n:'Styrke', met:5, int:0, strength:true }, house:{ e:'🧹', n:'Have / rengøring', met:3.5, int:.7 },
+  other:{ e:'⭐', n:'Andet', met:4, int:1 } };
+const INTENS = [['Rolig', .8], ['Normal', 1], ['Hård', 1.3]];
+function extrasOf(k){ return (state.days[k] || {}).extra || []; }
+function burnOf(x, w){ const a = ACT[x.t] || ACT.other; return Math.round((a.met*x.i - 1) * w * x.min/60); }
+function planMin(k){ const sch = schForKey(k), wd = wdOfKey(k), src = keyForWeekday(wd) === k ? srcFor(wd) : wd;
+  return ['walk','row','run'].includes(sch.type) ? Math.round(segsFor(src, weekInfo()).reduce((a,x) => a+x[1], 0)/60) : 0; }
+function adjustFor(k){
+  const xs = extrasOf(k); if (!xs.length) return null;
+  const sch = schForKey(k), d = state.days[k] || {}, names = xs.map(x => (ACT[x.t]||ACT.other).n.toLowerCase() + ' ' + x.min + ' min').join(' + ');
+  const cardio = xs.reduce((a,x) => a + x.min * (ACT[x.t]||ACT.other).int * x.i, 0);
+  const hardMin = xs.reduce((a,x) => a + (x.i >= 1 && (ACT[x.t]||ACT.other).met >= 5 ? x.min : 0), 0);
+  if (d.done) return { msg:`➕ Ekstra i dag: ${names}. Flot – alt er klaret! 🎉` };
+  if (['walk','row','run'].includes(sch.type)) {
+    const pm = planMin(k), eff = Math.round(cardio / ({ walk:1, row:1.3, run:1.5 }[sch.type])), rem = pm - eff;
+    if (rem <= 5) return { covered:true, msg:`✅ Din ${names} dækker dagens ${sch.title.toLowerCase()} (${pm} min). Du kan markere den som klaret – eller tage 10 min stræk.` };
+    if (eff >= 5) return { factor: rem/pm, msg:`➕ Du har lavet ${names}. Resten i dag: ca. <b>${rem} min</b> i stedet for ${pm} – timeren er forkortet.` };
+    return { msg:`➕ Ekstra i dag: ${names}. Planen er uændret.` };
+  }
+  if (sch.type === 'str') {
+    if (xs.some(x => (ACT[x.t]||{}).strength && x.min >= 20)) return { covered:true, msg:`✅ Du har allerede lavet styrke i dag (${names}). Marker ${sch.title} som klaret, eller gem den til en anden dag med 🔄.` };
+    const tips = [];
+    const ws = weekInfo().sets;
+    if (hardMin >= 45) tips.push(ws > 2 ? `du har bevæget dig meget – tag <b>2 sæt</b> pr. øvelse i stedet for ${ws} og spring romaskine-opvarmningen over` : 'du har bevæget dig meget – spring romaskine-opvarmningen over og tag øvelserne i roligt tempo');
+    else if (cardio >= 10) tips.push('du er varm – romaskine-opvarmningen kan nøjes med 2 min');
+    if (sch.prog === 'B' && cardio >= 20) tips.push('spring den rolige gåtur bagefter over – den har du allerede');
+    return { lighter: hardMin >= 45 && ws > 2, msg:`➕ Du har lavet ${names}. ${tips.length ? 'Til resten af dagen: ' + tips.join(', ') + '.' : 'Styrken står stadig – den giver noget andet end kondition.'}` };
+  }
+  // hviledag
+  if (xs.every(x => (ACT[x.t]||{}).stretch)) return { covered:true, msg:`✅ Din ${names} dækker dagens stræk. God restitution! 🌿` };
+  return { msg:`➕ Du har lavet ${names} på en hviledag – fint, men hold resten af dagen roligt og tag 10 min stræk i aften. Kroppen bygger op, når den hviler.` };
+}
+function scaleSegs(segs, f){ return segs.map(x => [x[0], Math.max(30, Math.round(x[1]*f/10)*10), x[2]]); }
+let exT = 'walk', exMin = 30, exI = 1, exKey = null;
+function openExtra(k){ exKey = k; drawExtra(); }
+function drawExtra(){
+  const w = curWeight(exKey), b = burnOf({ t:exT, min:exMin, i:exI }, w), xs = extrasOf(exKey);
+  $('#overlay').innerHTML = `<div class="backdrop" onclick="closeSheet()"></div>
+    <div class="sheet"><div class="grab"></div>
+      <div class="shead"><h3>➕ Ekstra aktivitet</h3><button class="btn small" onclick="closeSheet()">${xs.length ? 'Færdig ✓' : 'Luk'}</button></div>
+      <div class="muted" style="margin-bottom:10px">${DAYNAMES[wdOfKey(exKey)]} · fx en gåtur, cykeltur til byen eller et hold. Planen for resten af dagen tilpasser sig.</div>
+      ${xs.length ? `<div class="added">${xs.map(x => `<span class="chip">${(ACT[x.t]||ACT.other).e} ${x.min} min<button onclick="delExtra('${x.id}')" aria-label="Slet">✕</button></span>`).join('')}</div>` : ''}
+      <div class="actg">${Object.entries(ACT).map(([id,a]) => `<button class="${exT===id?'on':''}" onclick="exT='${id}';drawExtra()"><span>${a.e}</span>${a.n}</button>`).join('')}</div>
+      <label>Minutter</label>
+      <div class="stepper"><button onclick="exMin=Math.max(5,exMin-5);drawExtra()">−</button><input type="number" inputmode="numeric" value="${exMin}" onchange="exMin=Math.max(1,+this.value||0);drawExtra()"><button onclick="exMin+=5;drawExtra()">+</button></div>
+      <div class="row" style="gap:6px;justify-content:center;margin:-4px 0 10px">${[15,30,45,60].map(m => `<button class="btn small ${exMin===m?'':'gray'}" onclick="exMin=${m};drawExtra()">${m}</button>`).join('')}</div>
+      <div class="wtog">${INTENS.map(([l,v]) => `<button class="${exI===v?'on':''}" onclick="exI=${v};drawExtra()">${l}</button>`).join('')}</div>
+      <div class="calc">≈ <b>${b} kcal</b> forbrændt · dagens mål stiger ca. ${Math.round(b/2/10)*10} kcal</div>
+      <button class="btn full" onclick="addExtra()">Tilføj ${ACT[exT].e} ${exMin} min</button>
+    </div>`;
+}
+function addExtra(){
+  const d = day(exKey); d.extra = d.extra || [];
+  d.extra.push({ id: Date.now().toString(36), t: exT, min: exMin, i: exI, time: new Date().toLocaleTimeString('da-DK', { hour:'2-digit', minute:'2-digit' }) });
+  save(); vibrate(40); toast(`${ACT[exT].e} ${exMin} min tilføjet – planen er opdateret`); render(); drawExtra();
+}
+function delExtra(id){ const d = day(exKey); d.extra = (d.extra || []).filter(x => x.id !== id); save(); render(); drawExtra(); }
+function extraCard(k){
+  const xs = extrasOf(k), w = curWeight(k), tot = xs.reduce((a,x) => a + burnOf(x, w), 0);
+  return `<div class="card"><div class="row between"><h2 style="margin:0">➕ Ekstra aktivitet</h2><button class="btn small ghost" onclick="openExtra('${k}')">＋ Tilføj</button></div>
+    ${xs.length ? `<div style="margin-top:8px">${xs.map(x => `<div class="entry"><div class="thumb">${(ACT[x.t]||ACT.other).e}</div><div class="t"><b>${(ACT[x.t]||ACT.other).n} · ${x.min} min</b><span class="muted">${x.time || ''} · ${INTENS.find(i => i[1]===x.i)[0].toLowerCase()}</span></div><div class="k">${burnOf(x, w)} kcal</div></div>`).join('')}
+      <div class="muted">I alt ≈ ${tot} kcal · ca. halvdelen er lagt oveni dagens mål.</div></div>`
+    : `<div class="muted" style="margin-top:6px">Har du gået en tur, cyklet eller andet ud over planen? Log det her.</div>`}</div>`;
 }
 
 /* Interval-timer */
@@ -1091,7 +1188,7 @@ function tapSet(key, id, s, sets){
   d.sets[id][s] = !d.sets[id][s]; save();
   if (d.sets[id][s]) {
     vibrate(40);
-    const ids = PROGRAMS[schFor(trainDay).prog], w = weekInfo();
+    const ids = PROGRAMS[schFor(trainDay).prog], aj = adjustFor(key), w = aj && aj.lighter ? { sets: Math.min(2, weekInfo().sets) } : weekInfo();
     const allDone = ids.every(x => (d.sets[x]||[]).filter(Boolean).length >= (x==='row'?1:w.sets));
     if (allDone) { setDone(key, true); return; }
     if (id !== 'row') startRest(60, 'Pause');
