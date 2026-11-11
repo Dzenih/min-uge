@@ -90,6 +90,12 @@
   .sheet { position: fixed; left: 0; right: 0; bottom: 0; max-height: 88vh; overflow-y: auto; background: #fff; border-radius: 22px 22px 0 0; z-index: 41; padding: 10px 16px calc(18px + env(safe-area-inset-bottom)); max-width: 560px; margin: 0 auto; }
   .sheet .grab { width: 40px; height: 5px; border-radius: 9px; background: #cbd5e1; margin: 0 auto 10px; }
   .sheet h3 { margin: 0 0 10px; font-size: 19px; }
+  .hero { position: relative; }
+  .swapbtn { position: absolute; top: 14px; right: 14px; background: rgba(255,255,255,.85); color: #0f172a; }
+  .moved { margin-top: 8px; font-size: 12px; background: rgba(255,255,255,.6); border-radius: 99px; padding: 4px 10px; display: inline-block; }
+  .days button { position: relative; } .days .sw { position: absolute; top: 2px; right: 4px; font-style: normal; font-size: 10px; color: #7c3aed; }
+  .sh { margin: 14px 0 8px; font-size: 14px; color: #475569; }
+  .opt.sel { border-color: var(--teal); background: #f0fdfa; }
   .shead { display: flex; align-items: center; justify-content: space-between; gap: 10px; } .shead h3 { margin: 0 0 10px; } .shead .btn { margin-bottom: 10px; }
   .added { background: #ecfdf5; border-radius: 14px; padding: 10px; margin-bottom: 10px; }
   .added .sum { font-size: 14px; margin-bottom: 6px; } .added .sum b { color: var(--orange); }
@@ -574,7 +580,7 @@ function fmt(s){ s = Math.max(0, Math.ceil(s)); return Math.floor(s/60) + ':' + 
 function header(){
   const now = new Date();
   $('#hdrDate').textContent = now.toLocaleDateString('da-DK', { weekday:'long', day:'numeric', month:'long' });
-  const w = weekInfo(), sch = SCHEDULE[now.getDay()];
+  const w = weekInfo(), sch = schFor(now.getDay());
   const titles = { today:'Hej! 👋', food:'Mad i dag', train:'Træning', week:'Min uge' };
   $('#hdrTitle').textContent = titles[tab];
   const work = [1,2,3].includes(now.getDay());
@@ -596,7 +602,7 @@ function ring(val, goal, color, size=130){
 
 /* ================= I DAG ================= */
 function renderToday(){
-  const k = iso(new Date()), d = day(k), t = totals(k), g = state.settings, sch = SCHEDULE[new Date().getDay()];
+  const k = iso(new Date()), d = day(k), t = totals(k), g = state.settings, sch = schFor(new Date().getDay());
   const left = g.kcal - t.kcal, over = left < 0;
   const ph = cyclePhase();
   const checks = [['d3b','💊','D3 + B-vitamin'],['c','🍋','C-brus'],['coll','✨','Collagen'],['sleep','😴','7–8 timers søvn'],['stretch','🧘‍♀️','Stræk 5 min'],['iron','🩸','Jern (hvis aftalt)']];
@@ -761,10 +767,12 @@ function figure(id){
 function full(o){ const r = Object.assign({}, o); r.kr = r.kr || r.kl; r.fr = r.fr || r.fl; r.er = r.er || r.el; r.hr = r.hr || r.hl; return r; }
 
 function renderTrain(){
-  const now = new Date().getDay(), key = keyForWeekday(trainDay), d = day(key), sch = SCHEDULE[trainDay], w = weekInfo();
+  const now = new Date().getDay(), key = keyForWeekday(trainDay), d = day(key), sch = schFor(trainDay), w = weekInfo(), moved = srcFor(trainDay) !== trainDay;
   const order = [1,2,3,4,5,6,0];
-  let html = `<div class="days">${order.map((wd,i) => { const dd = state.days[keyForWeekday(wd)]; return `<button class="${wd===trainDay?'on':''} ${wd===now?'today':''}" onclick="trainDay=${wd};openEx=null;render()">${SHORT[i]}<span class="ok">${dd && dd.done ? '✅' : SCHEDULE[wd].e}</span></button>`; }).join('')}</div>
-    <div class="hero t-${sch.type}"><div class="big">${sch.e}</div><h2>${sch.title}</h2><div style="font-size:14px">${DAYNAMES[trainDay]} · ${sch.sub}</div></div>`;
+  let html = `<div class="days">${order.map((wd,i) => { const dd = state.days[keyForWeekday(wd)]; return `<button class="${wd===trainDay?'on':''} ${wd===now?'today':''}" onclick="trainDay=${wd};openEx=null;render()">${SHORT[i]}<span class="ok">${dd && dd.done ? '✅' : schFor(wd).e}</span>${srcFor(wd)!==wd?'<i class="sw">⇄</i>':''}</button>`; }).join('')}</div>
+    <div class="hero t-${sch.type}"><div class="big">${sch.e}</div><h2>${sch.title}</h2><div style="font-size:14px">${DAYNAMES[trainDay]} · ${sch.sub}</div>
+      ${moved ? `<div class="moved">⇄ Ændret denne uge · planen var ${SCHEDULE[trainDay].e} ${SCHEDULE[trainDay].title}</div>` : ''}
+      <button class="btn small swapbtn" onclick="openSwap()">🔄 ${moved ? 'Ændr' : 'Byt dag'}</button></div>`;
 
   if (sch.type === 'str') {
     const ids = PROGRAMS[sch.prog];
@@ -782,8 +790,8 @@ function renderTrain(){
   } else if (sch.type === 'rest') {
     html += timerCard(STRETCHES, 'Stræk-program', key);
   } else {
-    html += timerCard(segsFor(trainDay, w), 'Timer', key);
-    if (trainDay === 6) html += `<div class="card" style="background:#f0fdf4"><b>❄️ Vinter</b><div style="font-size:14px">Mørkt, glat eller meget koldt? Lav samme intervaller på gangbåndet. Husk refleks og lys udenfor.</div></div>`;
+    html += timerCard(segsFor(srcFor(trainDay), w), 'Timer', key);
+    if (srcFor(trainDay) === 6) html += `<div class="card" style="background:#f0fdf4"><b>❄️ Vinter</b><div style="font-size:14px">Mørkt, glat eller meget koldt? Lav samme intervaller på gangbåndet. Husk refleks og lys udenfor.</div></div>`;
   }
   html += d.done
     ? `<button class="btn full gray" onclick="setDone('${key}',false)">✅ Gennemført – fortryd</button>`
@@ -791,6 +799,30 @@ function renderTrain(){
   $('#view').innerHTML = html;
   if (timer.run && timer.key === key) tickUI();
 }
+function srcFor(wd){ const v = (state.swaps || {})[keyForWeekday(wd)]; return v == null ? wd : v; }
+function schFor(wd){ return SCHEDULE[srcFor(wd)]; }
+function setSrc(wd, src){ state.swaps = state.swaps || {}; const k = keyForWeekday(wd); if (src === wd) delete state.swaps[k]; else state.swaps[k] = src; }
+function openSwap(){
+  const order = [1,2,3,4,5,6,0], me = trainDay, cur = schFor(me);
+  const others = order.filter(wd => wd !== me).map(wd => { const sc = schFor(wd), i = order.indexOf(wd);
+    return `<button class="opt" onclick="swapDays(${me},${wd})"><span class="e">${sc.e}</span><span class="t"><b>${DAYNAMES[wd]}: ${sc.title}</b><span>${cur.e} ${cur.title} flytter til ${DAYNAMES[wd].toLowerCase()}</span></span><span class="plus">⇄</span></button>`; }).join('');
+  const all = order.map(src => { const sc = SCHEDULE[src];
+    return `<button class="opt ${srcFor(me)===src?'sel':''}" onclick="pickWorkout(${me},${src})"><span class="e">${sc.e}</span><span class="t"><b>${sc.title}</b><span>${sc.sub}</span></span><span class="plus">${srcFor(me)===src?'✓':'＋'}</span></button>`; }).join('');
+  $('#overlay').innerHTML = `<div class="backdrop" onclick="closeSheet()"></div>
+    <div class="sheet"><div class="grab"></div>
+      <div class="shead"><h3>🔄 ${DAYNAMES[me]}: skift træning</h3><button class="btn small gray" onclick="closeSheet()">Luk</button></div>
+      <div class="muted" style="margin-bottom:10px">Ændringen gælder kun denne uge. Næste uge følger du planen igen.</div>
+      ${srcFor(me) !== me ? `<button class="btn full gray" style="margin-bottom:12px" onclick="resetSwap(${me})">↺ Tilbage til planen (${SCHEDULE[me].e} ${SCHEDULE[me].title})</button>` : ''}
+      <h4 class="sh">⇄ Byt med en anden dag</h4>${others}
+      <h4 class="sh">Eller vælg bare en træning til ${DAYNAMES[me].toLowerCase()}</h4>${all}
+    </div>`;
+}
+function swapDays(a, b){
+  const sa = srcFor(a), sb = srcFor(b); setSrc(a, sb); setSrc(b, sa); save(); closeSheet(); openEx = null;
+  toast(`⇄ Byttet: ${SHORT[(a+6)%7]} ${SCHEDULE[sb].e} · ${SHORT[(b+6)%7]} ${SCHEDULE[sa].e}`); render();
+}
+function pickWorkout(wd, src){ setSrc(wd, src); save(); closeSheet(); openEx = null; toast(`${SCHEDULE[src].e} ${DAYNAMES[wd]}: ${SCHEDULE[src].title}`); render(); }
+function resetSwap(wd){ setSrc(wd, wd); save(); closeSheet(); openEx = null; toast('↺ Tilbage til planen'); render(); }
 function keyForWeekday(wd){ const m = mondayOf(new Date()); m.setDate(m.getDate() + ((wd+6)%7)); return iso(m); }
 function segsFor(wd, w){
   if (wd === 1) return [['Rolig gang', 20*60, '#38bdf8']];
@@ -865,7 +897,7 @@ function tapSet(key, id, s, sets){
   d.sets[id][s] = !d.sets[id][s]; save();
   if (d.sets[id][s]) {
     vibrate(40);
-    const ids = PROGRAMS[SCHEDULE[trainDay].prog], w = weekInfo();
+    const ids = PROGRAMS[schFor(trainDay).prog], w = weekInfo();
     const allDone = ids.every(x => (d.sets[x]||[]).filter(Boolean).length >= (x==='row'?1:w.sets));
     if (allDone) { setDone(key, true); return; }
     if (id !== 'row') startRest(60, 'Pause');
@@ -894,7 +926,7 @@ function renderWeek(){
   const cells = order.map((wd,i) => {
     const k = keyForWeekday(wd), dd = state.days[k], t = dd ? totals(k) : { kcal:0, p:0 };
     if (dd && dd.done) doneCount++; if (t.kcal > 0) { kcalSum += t.kcal; kcalDays++; }
-    return `<div class="d ${k===today?'today':''}"><b>${SHORT[i]}</b><span class="e">${dd && dd.done ? '✅' : SCHEDULE[wd].e}</span><div class="mini"><div style="height:${Math.min(100, t.kcal/g.kcal*100)}%;background:${t.kcal>g.kcal*1.05?'#e11d48':'#f97316'}"></div></div>${t.kcal ? r0(t.kcal) : '–'}</div>`;
+    return `<div class="d ${k===today?'today':''}"><b>${SHORT[i]}</b><span class="e">${dd && dd.done ? '✅' : schFor(wd).e}</span><div class="mini"><div style="height:${Math.min(100, t.kcal/g.kcal*100)}%;background:${t.kcal>g.kcal*1.05?'#e11d48':'#f97316'}"></div></div>${t.kcal ? r0(t.kcal) : '–'}</div>`;
   }).join('');
   const ws = state.weights.slice(-12);
   $('#view').innerHTML = `
