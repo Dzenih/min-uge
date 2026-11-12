@@ -692,6 +692,12 @@ function setPeriod(v){
   state.periods = state.periods.filter(p => Math.abs(new Date(p+'T12:00:00') - t) > 10*864e5); state.periods.push(v); state.periods.sort();
   state.settings.cycleStart = state.periods[state.periods.length-1]; save();
 }
+function editLastPeriod(v){
+  if (!v) return;
+  const last = lastPeriod();
+  if (last) state.periods = state.periods.filter(p => p !== last);
+  setPeriod(v);
+}
 function logPeriodToday(){ setPeriod(iso(new Date())); closeSheet(); const n = nextPeriod(); toast(`🩸 Registreret · næste ca. ${dk(n.date)}`); render(); }
 function cyclePhase(k = iso(new Date())){
   const cs = lastPeriod(k); if (!cs) return null;
@@ -771,6 +777,7 @@ function renderToday(){
       <h2>${sch.title}</h2><div style="font-size:14px">${sch.sub}</div>
       ${adjustFor(k) ? `<div class="adj">${adjustFor(k).msg}</div>` : ''}
     </button>
+    ${energyCard(k)}
     ${suggestCard(wd)}
     ${extraCard(k)}
     ${workAt(wd)==='office' ? `<div class="card"><h2>🚗 Kontordag</h2><div style="font-size:14px">Kefir-skålen før afgang · shaken på formiddagen · frokost senest kl. 11–12 · skyr eller æg inden for 1 time efter hjemkomst.</div></div>`
@@ -1438,6 +1445,7 @@ function renderWeek(){
   const ws = state.weights.slice(-12);
   $('#view').innerHTML = `
     ${statsCard()}
+    ${energyWeekCard()}
     <div class="card"><h2>📅 Denne uge</h2><div class="wk">${cells}</div>
       <div class="row between" style="margin-top:12px;font-size:14px"><span>💪 Træninger: <b>${doneCount} / 7</b></span><span>🔥 Snit: <b>${kcalDays ? r0(kcalSum/kcalDays) : '–'} kcal</b></span></div>
       <div class="muted" style="margin-top:6px">Tryk 🏢/🏡 for at skifte mellem kontor og hjemme – forslag og mål opdateres.</div></div>
@@ -1465,6 +1473,39 @@ function addDays(d, n){ const x = new Date(d); x.setDate(x.getDate() + n); retur
 function weekActive(mon){ let n = 0, m = 0; for (let i = 0; i < 7; i++) { const k = iso(addDays(mon, i)); if (isActive(k)) n++; m += activeMin(k); } return { n, m }; }
 function streak(){ let mon = mondayOf(new Date()), c = weekActive(mon).n >= 3 ? 1 : 0; for (let i = 0; i < 104; i++) { mon = addDays(mon, -7); if (weekActive(mon).n >= 3) c++; else break; } return c; }
 function hm(m){ return m >= 60 ? `${Math.floor(m/60)} t ${m%60} min` : `${m} min`; }
+/* ================= ENERGIBALANCE ================= */
+function trainBurn(k){ const d = state.days[k]; if (!d || !d.done) return 0; const sch = schForKey(k), w = curWeight(k);
+  if (sch.type === 'str') return burnOf({ t:'str', min:35, i:1 }, w);
+  if (sch.type === 'walk') return burnOf({ t:'walk', min:planMin(k), i:1.1 }, w);
+  if (sch.type === 'row') return burnOf({ t:'row', min:planMin(k), i:.85 }, w);
+  if (sch.type === 'run') return burnOf({ t:'run', min:planMin(k), i:.7 }, w);
+  return 0; }
+function energy(k){ const G = goalFor(k), w = curWeight(k), bmr = G.bmr, neat = Math.round(bmr*.45);
+  const train = trainBurn(k), extra = extrasOf(k).reduce((a,x) => a + burnOf(x, w), 0), burn = bmr + neat + train + extra, intake = r0(totals(k).kcal);
+  return { bmr, neat, train, extra, burn, intake, bal: intake - burn }; }
+function fmt(n){ return Math.abs(r0(n)).toLocaleString('da-DK'); }
+function balText(b){ return b < 0 ? `${fmt(b)} kcal underskud` : b > 0 ? `${fmt(b)} kcal overskud` : 'i balance'; }
+function energyCard(k){ const E = energy(k), max = Math.max(E.burn, E.intake, 1), today = k === iso(new Date());
+  const bar = (v, c) => `<div class="bar" style="height:10px"><div style="width:${Math.min(100, v/max*100)}%;background:${c}"></div></div>`;
+  const warn = E.bal < -700 && !today ? '<div class="muted" style="margin-top:8px">⚠️ Over 700 kcal underskud – det kan sænke stofskiftet. Spis lidt mere.</div>'
+    : today && E.bal < -700 ? '<div class="muted" style="margin-top:8px">Dagen er ikke slut – husk at spise dine måltider 🍽️</div>' : '';
+  return `<div class="card"><h2>⚖️ Energibalance ${today ? '<span class="muted" style="font-weight:400">i dag</span>' : ''}</h2>
+    <div class="stat"><div class="row between"><span>🍽️ Indtag</span><b>${fmt(E.intake)} kcal</b></div>${bar(E.intake, '#0a0a0a')}</div>
+    <div class="stat"><div class="row between"><span>🔥 Forbrænding</span><b>${fmt(E.burn)} kcal</b></div>${bar(E.burn, '#ff5a1f')}</div>
+    <div class="why"><span>Hvile ${fmt(E.bmr)}</span><span>Hverdag ${fmt(E.neat)}</span>${E.train ? `<span>Træning ${fmt(E.train)}</span>` : ''}${E.extra ? `<span>Ekstra ${fmt(E.extra)}</span>` : ''}</div>
+    <div class="row between" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)"><span>${today ? 'Status lige nu' : 'Resultat'}</span><b>${E.bal > 0 ? '+' : E.bal < 0 ? '−' : ''}${fmt(E.bal)} kcal</b></div>
+    <div class="muted">${balText(E.bal)}${today ? ' · forbrænding er estimeret for hele dagen' : ''}</div>${warn}</div>`; }
+function energyWeekCard(){ const wds = [1,2,3,4,5,6,0], todayK = iso(new Date());
+  const ks = wds.map(keyForWeekday), Es = ks.map(k => k <= todayK && (state.days[k] || {}).food?.length ? energy(k) : null);
+  const done = Es.filter((E,i) => E && ks[i] < todayK), sum = done.reduce((a,E) => a + E.bal, 0), mx = Math.max(300, ...done.map(E => Math.abs(E.bal)));
+  return `<div class="card"><h2>⚖️ Energibalance – uge</h2>
+    <div style="display:flex;gap:6px;align-items:center;height:120px;margin:6px 0">${Es.map((E,i) => { const h = E ? Math.abs(E.bal)/mx*50 : 0;
+      return `<div style="flex:1;height:120px;position:relative;text-align:center">
+        <div style="position:absolute;left:20%;right:20%;${E && E.bal >= 0 ? `bottom:60px;height:${h}px;background:#a3a3a3` : `top:60px;height:${h}px;background:#0a0a0a`};border-radius:4px;${ks[i] === todayK ? 'opacity:.3' : ''}"></div>
+        <div style="position:absolute;left:0;right:0;top:59px;border-top:1px solid var(--line)"></div></div>`; }).join('')}</div>
+    <div style="display:flex;gap:6px">${Es.map((E,i) => `<div style="flex:1;text-align:center;font-size:11px"><b>${SHORT[i]}</b><div class="muted">${E ? (E.bal > 0 ? '+' : E.bal < 0 ? '−' : '') + fmt(E.bal) : '–'}</div></div>`).join('')}</div>
+    <div class="row between" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)"><span>I alt (${done.length} afsluttede dage)</span><b>${sum > 0 ? '+' : sum < 0 ? '−' : ''}${fmt(sum)} kcal</b></div>
+    <div class="muted">${done.length ? `Snit ${balText(sum/done.length)} pr. dag · ca. ${(Math.abs(sum)/7700).toFixed(2).replace('.',',')} kg ${sum < 0 ? 'fedt forbrændt' : 'oplagret'}` : 'Log mad for at se din balance'} · sort = underskud, grå = overskud · i dag er lys, fordi dagen ikke er slut</div></div>`; }
 function statsCard(){
   const w = weekActive(mondayOf(new Date())), st = streak(), goal = 5, pct = Math.min(1, w.n/goal);
   return `<div class="card statc">
@@ -1550,7 +1591,7 @@ function renderSettings(){
 
     <div class="gtitle">Menstruation</div>
     <div class="group">
-      ${srow('Seneste startede', `<input type="date" value="${lastPeriod() || ''}" max="${iso(new Date())}" onchange="setPeriod(this.value);toast('Gemt');render()">`)}
+      ${srow('Seneste startede', `<input type="date" value="${lastPeriod() || ''}" max="${iso(new Date())}" onchange="editLastPeriod(this.value);toast('Gemt · '+dk(new Date(this.value+'T12:00:00')));render()">`)}
       ${srow('Cykluslængde', c.n ? `<b>${c.len}</b><em>dage</em>` : num('cycleLen', g.cycleLen, 'dage', false, 'render()'), c.n ? `Beregnet ud fra dine ${c.n + 1} seneste` : 'Bliver beregnet, når du har registreret 2+')}
       <div class="srow"><span>Næste menstruation</span><span class="sv"><b>${n ? periodLine(false) : '–'}</b></span></div>
       ${n ? `<div class="srow"><span>Ægløsning ca.</span><span class="sv">${dk(n.ov)}</span></div>` : ''}
