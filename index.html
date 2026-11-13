@@ -1492,11 +1492,21 @@ function hm(m){ return m >= 60 ? `${Math.floor(m/60)} t ${m%60} min` : `${m} min
 /* ================= APPLE SUNDHED (via iPhone-genvej + udklipsholder) ================= */
 function hOf(k){ const d = state.days[k]; return d && d.health; }
 function hNum(v){ v = String(v || '').replace(/[^\d.,]/g, ''); const m = v.match(/[.,](\d{1,2})$/); const dec = m ? m[1] : ''; if (m) v = v.slice(0, -m[0].length); v = v.replace(/[.,]/g, ''); return parseFloat(v + (dec ? '.' + dec : '')) || 0; }
-function parseHealth(txt){ const out = []; String(txt).split(/\n|;;/).forEach(line => { if (!/minuge/i.test(line)) return; const g = k => { const m = line.match(new RegExp(k + '\\s*[=:]\\s*([\\d.,\\s]+?)(?=\\s+[a-zæøå]+\\s*[=:]|$)', 'i')); return m ? hNum(m[1]) : 0; };
-  const dm = line.match(/date\s*[=:]\s*(\d{4}-\d{2}-\d{2})/i); out.push({ date: dm ? dm[1] : iso(new Date()), steps: Math.round(g('steps')), active: Math.round(g('active')) }); }); return out.filter(x => x.steps > 0 || x.active > 0); }
-function saveHealth(list, src){ list.forEach(x => { const d = day(x.date); d.health = { steps: x.steps || (d.health && d.health.steps) || 0, active: x.active || 0, at: new Date().toTimeString().slice(0,5), src }; });
+function hDate(line){ let m = line.match(/(\d{4})-(\d{1,2})-(\d{1,2})/); if (m) return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
+  m = line.match(/(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{2,4})/); if (m) { const y = m[3].length === 2 ? '20' + m[3] : m[3]; return `${y}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`; }
+  const mo = ['jan','feb','mar','apr','maj','jun','jul','aug','sep','okt','nov','dec']; m = line.match(/(\d{1,2})\.?\s+([a-zæøå]{3})[a-zæøå.]*\s+(\d{4})/i);
+  if (m) { const n = mo.indexOf(m[2].toLowerCase()); if (n >= 0) return `${m[3]}-${String(n+1).padStart(2,'0')}-${m[1].padStart(2,'0')}`; } return null; }
+function parseHealth(txt){ const by = {}, today = iso(new Date()), oldest = iso(addDays(new Date(), -31));
+  String(txt).split(/\n|;;/).forEach(line => { if (!/minuge/i.test(line)) return;
+    const g = k => { const m = line.match(new RegExp(k + '\\s*[=:]\\s*(\\d[\\d.,\\s]*\\d|\\d)', 'i')); return m ? Math.round(hNum(m[1])) : 0; };
+    const dm = line.match(/date\s*[=:]\s*(.+?)(?=\s+(?:steps|active)\s*[=:]|$)/i); const d = dm ? hDate(dm[1]) : today;
+    if (!d || d > today || d < oldest) return; const o = by[d] || (by[d] = { date: d, steps: 0, active: 0 });
+    const st = g('steps'), ac = g('active'); if (st) o.steps = st; if (ac) o.active = ac; });
+  return Object.values(by).filter(x => x.steps > 0 || x.active > 0).sort((a, b) => a.date < b.date ? -1 : 1); }
+function saveHealth(list, src){ list.forEach(x => { const d = day(x.date), o = d.health || {}; d.health = { steps: x.steps || o.steps || 0, active: x.active || o.active || 0, at: new Date().toTimeString().slice(0,5), src }; });
   state.lastHealth = new Date().toISOString(); delete state.hPending; save(); closeSheet(); render();
-  const t = list[list.length-1]; toast(`⌚ ${t.steps ? fmt(t.steps) + ' skridt' : ''}${t.steps && t.active ? ' · ' : ''}${t.active ? fmt(t.active) + ' kcal aktiv' : ''} gemt`); }
+  const t = list[list.length-1]; if (list.length > 1) { toast(`⌚ ${list.length} dage opdateret fra Apple Sundhed`); return; }
+  toast(`⌚ ${t.steps ? fmt(t.steps) + ' skridt' : ''}${t.steps && t.active ? ' · ' : ''}${t.active ? fmt(t.active) + ' kcal aktiv' : ''} gemt`); }
 function runShortcut(){ state.hPending = Date.now(); save(); location.href = 'shortcuts://run-shortcut?name=' + encodeURIComponent(state.settings.hsName || 'Min uge sundhed'); }
 async function pasteHealth(){ let txt = ''; try { txt = await navigator.clipboard.readText(); } catch(e) { toast('Tillad "Indsæt" for at hente data'); return; }
   const l = parseHealth(txt); if (!l.length) { toast('Fandt ingen sundhedsdata – kør genvejen først'); return; } saveHealth(l, 'apple'); }
@@ -1663,14 +1673,15 @@ function renderSettings(){
       ${srow('Genvejens navn', `<input type="text" value="${esc(g.hsName || 'Min uge sundhed')}" style="text-align:right;width:190px;max-width:55vw" onchange="setS('hsName',this.value.trim()||'Min uge sundhed')">`)}
       <div class="srow"><span>Senest hentet</span><span class="sv">${state.lastHealth ? dk(new Date(state.lastHealth), { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }) : 'Aldrig'}</span></div>
       <button class="srow act" onclick="openHealth()">⌚ Hent skridt og bevægelse nu</button></div>
-    <div class="gnote"><b>Sådan laver du genvejen (1 gang):</b><br>
+    <div class="gnote"><b>Sådan laver du genvejen (1 gang) – henter de sidste 7 dage:</b><br>
       1. Åbn appen <b>Genveje</b> → <b>+</b> → kald den <b>${esc(g.hsName || 'Min uge sundhed')}</b>.<br>
-      2. Tilføj <b>Find sundhedsprøver</b> (Find Health Samples): Type = <b>Skridt</b>, Startdato = <b>i dag</b>.<br>
-      3. Tilføj <b>Beregn statistik</b>: <b>Sum</b> af sundhedsprøverne.<br>
-      4. Gentag trin 2–3 med Type = <b>Aktiv energi</b>.<br>
-      5. Tilføj <b>Tekst</b> og skriv: <code>minuge steps=</code>[Statistik] <code>active=</code>[Statistik 2] – indsæt de to resultater som variabler.<br>
-      6. Tilføj <b>Kopiér til udklipsholder</b>.<br>
-      Første gang spørger iPhone om adgang til Sundhed – tryk Tillad. Derefter: tryk ⌚ i appen → genvejen kører → tryk "◀ Min uge" øverst → <b>Indsæt data</b>.</div>
+      2. Tilføj <b>Find sundhedsprøver</b> (Find Health Samples): Type = <b>Skridt</b>, Startdato = <b>inden for de seneste 7 dage</b>, Gruppér efter = <b>Dag</b>.<br>
+      3. Tilføj <b>Gentag med hver</b> (Repeat with Each) og læg en <b>Tekst</b> ind i løkken: <code>minuge date=</code>[Gentag-element → Startdato] <code>steps=</code>[Gentag-element → Værdi].<br>
+      4. Gentag trin 2–3 med Type = <b>Aktiv energi</b> og <code>active=</code> i stedet for <code>steps=</code>.<br>
+      5. Tilføj <b>Tekst</b> med begge [Gentag-resultater] (hver på sin linje) → <b>Kopiér til udklipsholder</b>.<br>
+      Tip: Tryk på Startdato i trin 3 og vælg datoformat <b>ISO 8601</b> eller <i>Kort</i> – appen forstår begge.<br>
+      Første gang spørger iPhone om adgang til Sundhed – tryk Tillad.<br><br>
+      <b>Automatisk hver dag:</b> Genveje → <b>Automatisering</b> → <b>+</b> → <b>Tidspunkt</b> (fx 21:00, dagligt) → <b>Kør straks</b> → vælg genvejen. Så ligger dataene klar, og du trykker bare ⌚ → <b>Indsæt data</b> næste gang du åbner appen. Glemmer du en dag, bliver den udfyldt næste gang.</div>
 
     <div class="gtitle">Dine data</div>
     <div class="group">
