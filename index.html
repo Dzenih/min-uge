@@ -1180,8 +1180,11 @@ function goalFor(k = iso(new Date())){
   let tips = [];
   if (sch.type === 'str') tips.push('🍌 Efter styrke: banan eller skyr inden for 1 time');
   if (['row','run'].includes(sch.type)) tips.push('🍞 Kondi: lidt ekstra kulhydrat, fx en skive rugbrød mere');
-  const exb = extrasOf(k).reduce((a,x) => a + burnOf(x, w), 0);
-  if (exb > 0) { const add = Math.round(exb/2/10)*10; kcal += add; why.push(`➕ Ekstra aktivitet +${add}`); if (exb >= 250) tips.push('🍽️ Du har forbrændt ekstra – spis et lille mellemmåltid med protein, fx skyr eller æg'); }
+  const exb = extrasOf(k).reduce((a,x) => a + burnOf(x, w), 0), H = hOf(k);
+  if (H && H.active > 0) { let delta = H.active - (bmr*.45 + burn); if (k === iso(new Date())) delta = Math.max(0, delta);
+    const add = Math.max(-150, Math.min(500, Math.round(delta/2/10)*10)); if (add) { kcal += add; why.push(`⌚ Målt bevægelse${H.steps ? ' (' + fmt(H.steps) + ' skridt)' : ''} ${add > 0 ? '+' : '−'}${Math.abs(add)}`); }
+    if (delta >= 250) tips.push('🍽️ Du har bevæget dig meget i dag – spis et lille mellemmåltid med protein'); }
+  else if (exb > 0) { const add = Math.round(exb/2/10)*10; kcal += add; why.push(`➕ Ekstra aktivitet +${add}`); if (exb >= 250) tips.push('🍽️ Du har forbrændt ekstra – spis et lille mellemmåltid med protein, fx skyr eller æg'); }
   if (ph && ph.name === 'Lutealfase') { kcal += 125; why.push('🌙 Lutealfase +125'); tips.push('🥛 Lutealfase: skyr med bær er en god ekstra snack'); }
   if (ph && ph.name === 'Menstruation') tips.push('🩸 Menstruation: jernrigt (æg, linser, kød) med C-vitamin');
   if (rate > 0.75) { kcal += 150; why.push(`⚖️ Hurtigt vægttab (${rate.toFixed(1).replace('.',',')} kg/uge) +150`); tips.push('⚠️ Du taber dig hurtigere end anbefalet – spis lidt mere for at passe på stofskiftet'); }
@@ -1463,6 +1466,7 @@ function renderWeek(){
     ${statsCard()}
     ${weightCard()}
     ${energyWeekCard()}
+    ${stepsWeekCard()}
     <div class="card"><h2>📅 Denne uge</h2><div class="wk">${cells}</div>
       <div class="row between" style="margin-top:12px;font-size:14px"><span>💪 Træninger: <b>${doneCount} / 7</b></span><span>🔥 Snit: <b>${kcalDays ? r0(kcalSum/kcalDays) : '–'} kcal</b></span></div>
       <div class="muted" style="margin-top:6px">Tryk 🏢/🏡 for at skifte mellem kontor og hjemme – forslag og mål opdateres.</div></div>
@@ -1480,11 +1484,41 @@ function renderWeek(){
 const MET = { walk:3.8, str:5, row:6, run:6.5, rest:2.5 };
 function durOf(k){ const sch = schForKey(k); return sch.type === 'str' ? (sch.prog === 'B' ? 65 : 35) : sch.type === 'rest' ? 10 : planMin(k) || 30; }
 function activeMin(k){ const d = state.days[k]; if (!d) return 0; return (d.done ? durOf(k) : 0) + extrasOf(k).reduce((a,x) => a + x.min, 0); }
-function isActive(k){ const d = state.days[k]; return !!d && (d.done || extrasOf(k).reduce((a,x) => a + x.min, 0) >= 20); }
+function isActive(k){ const d = state.days[k]; return !!d && (d.done || (d.health && d.health.steps >= 8000) || extrasOf(k).reduce((a,x) => a + x.min, 0) >= 20); }
 function addDays(d, n){ const x = new Date(d); x.setDate(x.getDate() + n); return x; }
 function weekActive(mon){ let n = 0, m = 0; for (let i = 0; i < 7; i++) { const k = iso(addDays(mon, i)); if (isActive(k)) n++; m += activeMin(k); } return { n, m }; }
 function streak(){ let mon = mondayOf(new Date()), c = weekActive(mon).n >= 3 ? 1 : 0; for (let i = 0; i < 104; i++) { mon = addDays(mon, -7); if (weekActive(mon).n >= 3) c++; else break; } return c; }
 function hm(m){ return m >= 60 ? `${Math.floor(m/60)} t ${m%60} min` : `${m} min`; }
+/* ================= APPLE SUNDHED (via iPhone-genvej + udklipsholder) ================= */
+function hOf(k){ const d = state.days[k]; return d && d.health; }
+function hNum(v){ v = String(v || '').replace(/[^\d.,]/g, ''); const m = v.match(/[.,](\d{1,2})$/); const dec = m ? m[1] : ''; if (m) v = v.slice(0, -m[0].length); v = v.replace(/[.,]/g, ''); return parseFloat(v + (dec ? '.' + dec : '')) || 0; }
+function parseHealth(txt){ const out = []; String(txt).split(/\n|;;/).forEach(line => { if (!/minuge/i.test(line)) return; const g = k => { const m = line.match(new RegExp(k + '\\s*[=:]\\s*([\\d.,\\s]+?)(?=\\s+[a-zæøå]+\\s*[=:]|$)', 'i')); return m ? hNum(m[1]) : 0; };
+  const dm = line.match(/date\s*[=:]\s*(\d{4}-\d{2}-\d{2})/i); out.push({ date: dm ? dm[1] : iso(new Date()), steps: Math.round(g('steps')), active: Math.round(g('active')) }); }); return out.filter(x => x.steps > 0 || x.active > 0); }
+function saveHealth(list, src){ list.forEach(x => { const d = day(x.date); d.health = { steps: x.steps || (d.health && d.health.steps) || 0, active: x.active || 0, at: new Date().toTimeString().slice(0,5), src }; });
+  state.lastHealth = new Date().toISOString(); delete state.hPending; save(); closeSheet(); render();
+  const t = list[list.length-1]; toast(`⌚ ${t.steps ? fmt(t.steps) + ' skridt' : ''}${t.steps && t.active ? ' · ' : ''}${t.active ? fmt(t.active) + ' kcal aktiv' : ''} gemt`); }
+function runShortcut(){ state.hPending = Date.now(); save(); location.href = 'shortcuts://run-shortcut?name=' + encodeURIComponent(state.settings.hsName || 'Min uge sundhed'); }
+async function pasteHealth(){ let txt = ''; try { txt = await navigator.clipboard.readText(); } catch(e) { toast('Tillad "Indsæt" for at hente data'); return; }
+  const l = parseHealth(txt); if (!l.length) { toast('Fandt ingen sundhedsdata – kør genvejen først'); return; } saveHealth(l, 'apple'); }
+function manualHealth(){ const st = hNum($('#hS').value), ac = hNum($('#hA').value); if (!(st > 0 || ac > 0)) { toast('Skriv skridt eller aktiv energi'); return; } saveHealth([{ date: iso(new Date()), steps: Math.round(st), active: Math.round(ac) }], 'manual'); }
+function openHealth(){ const H = hOf(iso(new Date()));
+  $('#overlay').innerHTML = `<div class="backdrop" onclick="closeSheet()"></div><div class="sheet"><div class="grab"></div>
+    <div class="shead"><h3>⌚ Bevægelse i dag</h3><button class="btn small gray" onclick="closeSheet()">Luk</button></div>
+    <button class="btn full" onclick="runShortcut()">1 · Kør genvejen "${esc(state.settings.hsName || 'Min uge sundhed')}"</button>
+    <button class="btn full ghost" style="margin-top:8px" onclick="pasteHealth()">2 · 📋 Indsæt data fra genvejen</button>
+    <div class="muted" style="margin:8px 0 14px;text-align:center">Har du ikke lavet genvejen? Se ⚙️ Indstillinger → Apple Sundhed.</div>
+    <div class="muted" style="margin-bottom:6px">Eller skriv tallene fra Fitness-appen:</div>
+    <div class="row" style="gap:6px"><input class="field" id="hS" type="number" inputmode="numeric" placeholder="Skridt" value="${H && H.steps || ''}" style="margin:0"><input class="field" id="hA" type="number" inputmode="numeric" placeholder="Aktiv kcal" value="${H && H.active || ''}" style="margin:0"><button class="btn" onclick="manualHealth()">Gem</button></div>
+    <div class="muted" style="margin-top:6px">Aktiv kcal = den røde "Bevægelse"-ring i Fitness. Når den er målt, erstatter den appens skøn for hverdag og træning.</div></div>`; }
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && state.hPending && Date.now() - state.hPending < 5*60e3) { delete state.hPending; save(); openHealth(); toast('Tryk "Indsæt data" for at hente tallene'); } });
+function stepsWeekCard(){ const wds = [1,2,3,4,5,6,0], ks = wds.map(keyForWeekday), st = ks.map(k => (hOf(k) || {}).steps || 0); if (!st.some(Boolean)) return '';
+  const goal = 8000, mx = Math.max(goal, ...st), n = st.filter(Boolean).length, avg = n ? st.reduce((a,b) => a+b, 0)/n : 0;
+  return `<div class="card"><h2>👟 Skridt – uge</h2>
+    <div style="display:flex;gap:6px;align-items:flex-end;height:90px;margin:8px 0 4px;position:relative"><div style="position:absolute;left:0;right:0;bottom:${goal/mx*90}px;border-top:1px dashed #a3a3a3"></div>
+      ${st.map(v => `<div style="flex:1;height:${v/mx*90}px;background:${v >= goal ? '#0a0a0a' : '#c4c4c4'};border-radius:6px 6px 2px 2px"></div>`).join('')}</div>
+    <div style="display:flex;gap:6px">${st.map((v,i) => `<div style="flex:1;text-align:center;font-size:11px"><b>${SHORT[i]}</b><div class="muted">${v ? (v/1000).toFixed(1).replace('.',',') + 'k' : '–'}</div></div>`).join('')}</div>
+    <div class="muted" style="margin-top:8px">Snit ${fmt(avg)} skridt · stiplet = 8.000 · sort = mål nået</div></div>`; }
+
 /* ================= ENERGIBALANCE ================= */
 function trainBurn(k){ const d = state.days[k]; if (!d || !d.done) return 0; const sch = schForKey(k), w = curWeight(k);
   if (sch.type === 'str') return burnOf({ t:'str', min:35, i:1 }, w);
@@ -1492,9 +1526,10 @@ function trainBurn(k){ const d = state.days[k]; if (!d || !d.done) return 0; con
   if (sch.type === 'row') return burnOf({ t:'row', min:planMin(k), i:.85 }, w);
   if (sch.type === 'run') return burnOf({ t:'run', min:planMin(k), i:.7 }, w);
   return 0; }
-function energy(k){ const G = goalFor(k), w = curWeight(k), bmr = G.bmr, neat = Math.round(bmr*.45);
-  const train = trainBurn(k), extra = extrasOf(k).reduce((a,x) => a + burnOf(x, w), 0), burn = bmr + neat + train + extra, intake = r0(totals(k).kcal);
-  return { bmr, neat, train, extra, burn, intake, bal: intake - burn }; }
+function energy(k){ const G = goalFor(k), w = curWeight(k), bmr = G.bmr, neat = Math.round(bmr*.45), H = hOf(k), intake = r0(totals(k).kcal);
+  if (H && H.active > 0) { const burn = bmr + H.active; return { bmr, measured: H.active, steps: H.steps, at: H.at, neat:0, train:0, extra:0, burn, intake, bal: intake - burn }; }
+  const train = trainBurn(k), extra = extrasOf(k).reduce((a,x) => a + burnOf(x, w), 0), burn = bmr + neat + train + extra;
+  return { bmr, neat, train, extra, burn, intake, bal: intake - burn, steps: H && H.steps }; }
 function fmt(n){ return Math.abs(r0(n)).toLocaleString('da-DK'); }
 function balText(b){ return b < 0 ? `${fmt(b)} kcal underskud` : b > 0 ? `${fmt(b)} kcal overskud` : 'i balance'; }
 function energyCard(k){ const E = energy(k), max = Math.max(E.burn, E.intake, 1), today = k === iso(new Date());
@@ -1504,9 +1539,10 @@ function energyCard(k){ const E = energy(k), max = Math.max(E.burn, E.intake, 1)
   return `<div class="card"><h2>⚖️ Energibalance ${today ? '<span class="muted" style="font-weight:400">i dag</span>' : ''}</h2>
     <div class="stat"><div class="row between"><span>🍽️ Indtag</span><b>${fmt(E.intake)} kcal</b></div>${bar(E.intake, '#0a0a0a')}</div>
     <div class="stat"><div class="row between"><span>🔥 Forbrænding</span><b>${fmt(E.burn)} kcal</b></div>${bar(E.burn, '#ff5a1f')}</div>
-    <div class="why"><span>Hvile ${fmt(E.bmr)}</span><span>Hverdag ${fmt(E.neat)}</span>${E.train ? `<span>Træning ${fmt(E.train)}</span>` : ''}${E.extra ? `<span>Ekstra ${fmt(E.extra)}</span>` : ''}</div>
+    <div class="why"><span>Hvile ${fmt(E.bmr)}</span>${E.measured ? `<span>⌚ Aktiv ${fmt(E.measured)}</span>` : `<span>Hverdag ${fmt(E.neat)}</span>`}${E.steps ? `<span>👟 ${fmt(E.steps)} skridt</span>` : ''}${E.train ? `<span>Træning ${fmt(E.train)}</span>` : ''}${E.extra ? `<span>Ekstra ${fmt(E.extra)}</span>` : ''}</div>
     <div class="row between" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)"><span>${today ? 'Status lige nu' : 'Resultat'}</span><b>${E.bal > 0 ? '+' : E.bal < 0 ? '−' : ''}${fmt(E.bal)} kcal</b></div>
-    <div class="muted">${balText(E.bal)}${today ? ' · forbrænding er estimeret for hele dagen' : ''}</div>${warn}</div>`; }
+    <div class="muted">${balText(E.bal)}${E.measured ? ` · målt af Apple Sundhed${today && E.at ? ' kl. ' + E.at : ''}` : today ? ' · forbrænding er estimeret for hele dagen' : ''}</div>${warn}
+    <button class="btn small ghost" style="margin-top:10px" onclick="openHealth()">⌚ ${E.measured || E.steps ? 'Opdater fra Apple Sundhed' : 'Hent skridt fra Apple Watch'}</button></div>`; }
 function energyWeekCard(){ const wds = [1,2,3,4,5,6,0], todayK = iso(new Date());
   const ks = wds.map(keyForWeekday), Es = ks.map(k => k <= todayK && (state.days[k] || {}).food?.length ? energy(k) : null);
   const done = Es.filter((E,i) => E && ks[i] < todayK), sum = done.reduce((a,E) => a + E.bal, 0), mx = Math.max(300, ...done.map(E => Math.abs(E.bal)));
@@ -1621,6 +1657,20 @@ function renderSettings(){
 
     <div class="gtitle">Træningsplan</div>
     <div class="group">${srow('Start på 4-ugers plan', `<input type="date" value="${g.programStart}" onchange="setS('programStart',this.value);render()">`, `Du er i uge ${weekInfo().n}`)}</div>
+
+    <div class="gtitle">Apple Watch / Sundhed</div>
+    <div class="group">
+      ${srow('Genvejens navn', `<input type="text" value="${esc(g.hsName || 'Min uge sundhed')}" style="text-align:right;width:190px;max-width:55vw" onchange="setS('hsName',this.value.trim()||'Min uge sundhed')">`)}
+      <div class="srow"><span>Senest hentet</span><span class="sv">${state.lastHealth ? dk(new Date(state.lastHealth), { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }) : 'Aldrig'}</span></div>
+      <button class="srow act" onclick="openHealth()">⌚ Hent skridt og bevægelse nu</button></div>
+    <div class="gnote"><b>Sådan laver du genvejen (1 gang):</b><br>
+      1. Åbn appen <b>Genveje</b> → <b>+</b> → kald den <b>${esc(g.hsName || 'Min uge sundhed')}</b>.<br>
+      2. Tilføj <b>Find sundhedsprøver</b> (Find Health Samples): Type = <b>Skridt</b>, Startdato = <b>i dag</b>.<br>
+      3. Tilføj <b>Beregn statistik</b>: <b>Sum</b> af sundhedsprøverne.<br>
+      4. Gentag trin 2–3 med Type = <b>Aktiv energi</b>.<br>
+      5. Tilføj <b>Tekst</b> og skriv: <code>minuge steps=</code>[Statistik] <code>active=</code>[Statistik 2] – indsæt de to resultater som variabler.<br>
+      6. Tilføj <b>Kopiér til udklipsholder</b>.<br>
+      Første gang spørger iPhone om adgang til Sundhed – tryk Tillad. Derefter: tryk ⌚ i appen → genvejen kører → tryk "◀ Min uge" øverst → <b>Indsæt data</b>.</div>
 
     <div class="gtitle">Dine data</div>
     <div class="group">
