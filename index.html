@@ -1505,17 +1505,21 @@ function streak(){ let mon = mondayOf(new Date()), c = weekActive(mon).n >= 3 ? 
 function hm(m){ return m >= 60 ? `${Math.floor(m/60)} t ${m%60} min` : `${m} min`; }
 /* ================= APPLE SUNDHED (via iPhone-genvej + udklipsholder) ================= */
 function hOf(k){ const d = state.days[k]; return d && d.health; }
-function hNum(v){ v = String(v || '').replace(/[^\d.,]/g, ''); const m = v.match(/[.,](\d{1,2})$/); const dec = m ? m[1] : ''; if (m) v = v.slice(0, -m[0].length); v = v.replace(/[.,]/g, ''); return parseFloat(v + (dec ? '.' + dec : '')) || 0; }
+function hNum(v){ v = String(v || '').replace(/[^\d.,]/g, ''); const m = v.match(/[.,](\d+)$/); let dec = '';
+  if (m && m[1].length !== 3) { dec = m[1]; v = v.slice(0, -m[0].length); } v = v.replace(/[.,]/g, ''); return parseFloat(v + (dec ? '.' + dec : '')) || 0; }
 function hDate(line){ let m = line.match(/(\d{4})-(\d{1,2})-(\d{1,2})/); if (m) return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
   m = line.match(/(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{2,4})/); if (m) { const y = m[3].length === 2 ? '20' + m[3] : m[3]; return `${y}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`; }
   const mo = ['jan','feb','mar','apr','maj','jun','jul','aug','sep','okt','nov','dec']; m = line.match(/(\d{1,2})\.?\s+([a-zæøå]{3})[a-zæøå.]*\s+(\d{4})/i);
   if (m) { const n = mo.indexOf(m[2].toLowerCase()); if (n >= 0) return `${m[3]}-${String(n+1).padStart(2,'0')}-${m[1].padStart(2,'0')}`; } return null; }
-function parseHealth(txt){ const by = {}, today = iso(new Date()), oldest = iso(addDays(new Date(), -31));
+function parseHealth(txt){ const by = {}, today = iso(new Date()), oldest = iso(addDays(new Date(), -31)), und = { steps: [], active: [] };
+  const put = (d, st, ac) => { if (!d || d > today || d < oldest) return; const o = by[d] || (by[d] = { date: d, steps: 0, active: 0 }); if (st) o.steps = st; if (ac) o.active = ac; };
   String(txt).split(/\n|;;/).forEach(line => { if (!/minuge/i.test(line)) return;
     const g = k => { const m = line.match(new RegExp(k + '\\s*[=:]\\s*(\\d[\\d.,\\s]*\\d|\\d)', 'i')); return m ? Math.round(hNum(m[1])) : 0; };
-    const dm = line.match(/date\s*[=:]\s*(.+?)(?=\s+(?:steps|active)\s*[=:]|$)/i); const d = dm ? hDate(dm[1]) : today;
-    if (!d || d > today || d < oldest) return; const o = by[d] || (by[d] = { date: d, steps: 0, active: 0 });
-    const st = g('steps'), ac = g('active'); if (st) o.steps = st; if (ac) o.active = ac; });
+    const st = g('steps'), ac = g('active'), dm = line.match(/date\s*[=:]\s*(.*?)(?=\s*(?:steps|active)\s*[=:]|$)/i);
+    if (!dm) return put(today, st, ac); const d = hDate(dm[1]); if (d) return put(d, st, ac);
+    if (st) und.steps.push(st); if (ac) und.active.push(ac); });
+  // Lines without a usable date come oldest → newest, the last one being today
+  ['steps', 'active'].forEach(k => { const a = und[k]; a.forEach((v, i) => put(iso(addDays(new Date(), i - a.length + 1)), k === 'steps' ? v : 0, k === 'active' ? v : 0)); });
   return Object.values(by).filter(x => x.steps > 0 || x.active > 0).sort((a, b) => a.date < b.date ? -1 : 1); }
 function saveHealth(list, src){ list.forEach(x => { const d = day(x.date), o = d.health || {}; d.health = { steps: x.steps || o.steps || 0, active: x.active || o.active || 0, at: new Date().toTimeString().slice(0,5), src }; });
   state.lastHealth = new Date().toISOString(); delete state.hPending; save(); closeSheet(); render();
