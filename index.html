@@ -1553,7 +1553,8 @@ function openGuide(){ const nm = esc(state.settings.hsName || 'Min uge sundhed')
     <div class="gstep" style="background:#0a0a0a;color:#fff"><div class="gnum" style="background:#fff;color:#0a0a0a">⏰</div><div><b>Valgfrit: kør den automatisk hver aften</b><div style="opacity:.8">Genveje → <b>Automatisering</b> (nederst) → <b>＋</b> → <b>Tidspunkt</b> → 21:00, Dagligt → <b>Kør straks</b> → Næste → vælg <b>${nm}</b>.</div></div></div>
     <div class="muted" style="margin-top:10px">Hedder noget lidt anderledes på din telefon, så søg bare på ordet. Driller det, kan du altid skrive tallene fra Fitness-appen ind i hånden.</div></div>`; }
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && state.hPending && Date.now() - state.hPending < 5*60e3) { delete state.hPending; save(); openHealth(); toast('Tryk "Indsæt data" for at hente tallene'); } });
-function stepsWeekCard(){ const wds = [1,2,3,4,5,6,0], ks = wds.map(keyForWeekday), st = ks.map(k => (hOf(k) || {}).steps || 0); if (!st.some(Boolean)) return '';
+function stepsWeekCard(){ const wds = [1,2,3,4,5,6,0], ks = wds.map(keyForWeekday), st = ks.map(k => (hOf(k) || {}).steps || 0);
+  if (!st.some(Boolean)) return `<div class="card"><h2>👟 Skridt – uge</h2><div class="muted" style="margin:6px 0 12px">Ingen skridt endnu. Hent dem fra Apple Watch / iPhone, så kommer ugens søjler her.</div><button class="btn full" onclick="openHealth()">⌚ Hent skridt</button></div>`;
   const goal = 8000, mx = Math.max(goal, ...st), n = st.filter(Boolean).length, avg = n ? st.reduce((a,b) => a+b, 0)/n : 0;
   return `<div class="card"><h2>👟 Skridt – uge</h2>
     <div style="display:flex;gap:6px;align-items:flex-end;height:90px;margin:8px 0 4px;position:relative"><div style="position:absolute;left:0;right:0;bottom:${goal/mx*90}px;border-top:1px dashed #a3a3a3"></div>
