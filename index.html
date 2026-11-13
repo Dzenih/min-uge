@@ -279,6 +279,8 @@
   .srow.act { font-weight:600; justify-content:flex-start; gap:8px; } .srow.act small { display:inline; margin-left:auto; }
   .srow.red { color:#e11d48; }
   .gnote { font-size:12px; color:var(--muted); margin:8px 8px 0; line-height:1.45; }
+  .tile { flex:1; background:#f5f5f5; border-radius:14px; padding:9px 10px; display:flex; flex-direction:column; gap:2px; min-width:0; }
+  .tile .muted { font-size:11px; } .tile b { font-size:15px; white-space:nowrap; }
 </style>
 </head>
 <body>
@@ -1414,6 +1416,7 @@ function measureCard(){
     ${b ? `<div style="margin-top:10px;font-size:14px">Seneste (${new Date(b.date+'T12:00:00').toLocaleDateString('da-DK',{day:'numeric',month:'short'})}): talje <b>${f(b.waist)} cm</b>${b.hip ? ` · hofte <b>${f(b.hip)} cm</b>` : ''}
       ${ms.length > 1 ? `<br>Siden start: talje <b style="color:${b.waist<=a.waist?'#0a0a0a':'#e11d48'}">${b.waist-a.waist>0?'+':''}${f(b.waist-a.waist)} cm</b>${a.hip && b.hip ? ` · hofte ${b.hip-a.hip>0?'+':''}${f(b.hip-a.hip)} cm` : ''}` : ''}
       <br><span class="muted">Talje/højde: ${(b.waist/hgt).toFixed(2).replace('.',',')} ${b.waist/hgt < .5 ? '✓ under 0,5 (sundt)' : '– sundt er under 0,5'}</span></div>
+      ${ms.length > 1 ? measureChart(ms) : ''}
       ${ms.length > 1 ? `<div class="muted" style="font-size:12px;margin-top:4px">Falder taljen, mens vægten står stille, bygger du muskler – det er godt for stofskiftet 💪</div>` : ''}` : ''}
   </div>`;
 }
@@ -1469,6 +1472,7 @@ function renderWeek(){
     ${moodWeekCard()}
     ${progressCard()}
     ${measureCard()}
+    ${photosCard()}
 
   `;
 }
@@ -1635,7 +1639,8 @@ function backupNag(){
     <div class="muted" style="margin:4px 0 8px">Gem en kopi i Filer/iCloud, så du aldrig mister dine data.</div><button class="btn small" onclick="exportData()">⬇️ Gem backup</button></div>`;
 }
 async function exportData(){
-  const name = 'min-uge-backup-' + iso(new Date()) + '.json', json = JSON.stringify(state), file = new File([json], name, { type:'application/json' });
+  let photos = []; try { photos = await pAll(); } catch(e) {}
+  const name = 'min-uge-backup-' + iso(new Date()) + '.json', json = JSON.stringify(Object.assign({}, state, { photos })), file = new File([json], name, { type:'application/json' });
   try {
     if (navigator.canShare && navigator.canShare({ files:[file] })) await navigator.share({ files:[file], title:'Min uge – backup' });
     else { const a = document.createElement('a'); a.href = URL.createObjectURL(file); a.download = name; a.click(); }
@@ -1648,43 +1653,114 @@ function importData(inp){
     let o; try { o = JSON.parse(txt); } catch(e) { toast('Filen kan ikke læses'); return; }
     if (!o || !o.days || !o.settings) { toast('Det er ikke en Min uge-backup'); return; }
     if (!confirm(`Gendan backup med ${Object.keys(o.days).length} dage? Det erstatter det, der er på telefonen nu.`)) return;
-    localStorage.setItem(KEY, txt); location.reload();
+    const ps = o.photos || []; delete o.photos;
+    Promise.all(ps.map(p => pPut(p).catch(() => {}))).then(() => { localStorage.setItem(KEY, JSON.stringify(o)); location.reload(); });
   });
 }
 function setS(k, v){ state.settings[k] = v; save(); toast('Gemt'); header(); }
 function setManual(){ const G = goalFor(); state.settings.auto = false; state.settings.kcal = G.kcal; state.settings.protein = G.p; save(); toast('Skriv dine egne mål'); render(); }
 function addWeight(){ const v = parseFloat(($('#wIn').value||'').replace(',','.')); if (!(v > 30 && v < 200)) { toast('Skriv en gyldig vægt'); return; } state.weights = state.weights.filter(w => w.date !== iso(new Date())); state.weights.push({ date: iso(new Date()), kg: v }); save(); toast('Vægt gemt'); render(); }
-function weightCard(){ const ws = state.weights.slice().sort((a,b) => a.date < b.date ? -1 : 1), WG = wGoal(), f = v => String(Math.round(v*10)/10).replace('.',',');
+const T = d => new Date(d+'T12:00:00').getTime(), f1 = v => String(Math.round(v*10)/10).replace('.',',');
+function wSorted(){ return state.weights.slice().sort((a,b) => a.date < b.date ? -1 : 1); }
+function trendOf(ws){ let t = null, pd = null; // tidsvægtet glidende gennemsnit (ca. 10 dage)
+  return ws.map(w => { if (t == null) t = w.kg; else t += (1 - Math.exp(-(T(w.date) - T(pd))/864e5/10)) * (w.kg - t); pd = w.date; return { date:w.date, kg:w.kg, t }; }); }
+function forecast(tr, WG){ const now = Date.now(), pts = tr.filter(p => now - T(p.date) <= 49*864e5); if (pts.length < 2) return null;
+  const span = (T(pts[pts.length-1].date) - T(pts[0].date))/864e5; if (span < 10) return null;
+  const xs = pts.map(p => (T(p.date) - T(pts[0].date))/864e5), mx = xs.reduce((a,b)=>a+b,0)/xs.length, my = pts.reduce((a,p)=>a+p.t,0)/pts.length;
+  const slope = xs.reduce((a,x,i) => a + (x-mx)*(pts[i].t-my), 0) / xs.reduce((a,x) => a + (x-mx)**2, 0), rate = -slope*7, last = pts[pts.length-1].t;
+  let date = null; if (WG && !WG.reached && rate > 0.03) date = addDays(new Date(), Math.round((last - WG.goal)/rate*7));
+  return { rate, date }; }
+function milestones(ws, WG){ if (!ws.length) return []; const st = WG ? WG.st : ws[0], after = ws.filter(w => w.date >= st.date), low = Math.min(st.kg, ...after.map(w => w.kg)), lost = st.kg - low, out = [];
+  const tot = WG ? st.kg - WG.goal : 0, maxKg = Math.max(1, Math.ceil(tot || lost + 1));
+  for (let k = 1; k <= maxKg; k++) out.push({ id:'kg'+k, l:`−${k} kg`, need:k, done: lost >= k - 1e-9 });
+  if (tot > 0) [25,50,75,100].forEach(pc => out.push({ id:'p'+pc, l: pc === 100 ? '🎯 Mål' : `${pc} %`, need: tot*pc/100, done: lost >= tot*pc/100 - 1e-9 }));
+  out.sort((a,b) => a.need - b.need); out.forEach(m => m.rest = Math.max(0, m.need - lost)); return out; }
+function addWeight(){ const v = parseFloat(($('#wIn').value||'').replace(',','.')); if (!(v > 30 && v < 200)) { toast('Skriv en gyldig vægt'); return; }
+  const before = milestones(wSorted(), wGoal()).filter(m => m.done).map(m => m.id);
+  state.weights = state.weights.filter(w => w.date !== iso(new Date())); state.weights.push({ date: iso(new Date()), kg: v }); save(); render();
+  const nw = milestones(wSorted(), wGoal()).filter(m => m.done && !before.includes(m.id)); toast(nw.length ? `🏅 Milepæl: ${nw[nw.length-1].l}! Flot!` : 'Vægt gemt'); }
+function setRange(r){ state.wRange = r; save(); render(); }
+function weightCard(){ const ws = wSorted(), WG = wGoal(), tr = trendOf(ws), last = tr[tr.length-1], FC = forecast(tr, WG), ph = cyclePhase(), rng = state.wRange || '3m';
   const head = WG ? `<div class="row between" style="text-align:center;margin:4px 0 10px">
-      <div><div class="muted">Start</div><b style="font-size:18px">${f(WG.st.kg)}</b></div>
-      <div><div class="muted">Nu</div><b style="font-size:26px">${f(WG.cur)}</b></div>
-      <div><div class="muted">Mål</div><b style="font-size:18px">${f(WG.goal)}</b></div></div>
+      <div><div class="muted">Start</div><b style="font-size:18px">${f1(WG.st.kg)}</b></div>
+      <div><div class="muted">Nu</div><b style="font-size:26px">${f1(WG.cur)}</b></div>
+      <div><div class="muted">Mål</div><b style="font-size:18px">${f1(WG.goal)}</b></div></div>
     <div class="bar" style="height:10px"><div style="width:${WG.pct}%;background:#ff5a1f"></div></div>
-    <div class="row between" style="font-size:13px;margin-top:6px"><span>${WG.reached ? '🎉 Mål nået!' : `${f(WG.left)} kg tilbage · ${Math.round(WG.pct)} %`}</span><span class="muted">${dk(new Date(state.settings.goalDate+'T12:00:00'), { day:'numeric', month:'short', year:'numeric' })}</span></div>
-    ${!WG.reached && ws.length > 1 ? `<div style="font-size:14px;margin-top:8px">${WG.diff <= -0.3 ? '🚀 Du er foran planen – husk at spise nok' : WG.diff >= 0.5 ? `📈 ${f(WG.diff)} kg bag planen – helt normalt, det svinger` : '✅ Du følger planen'}</div>` : ''}`
+    <div class="row between" style="font-size:13px;margin-top:6px"><span>${WG.reached ? '🎉 Mål nået!' : `${f1(WG.left)} kg tilbage · ${Math.round(WG.pct)} %`}</span><span class="muted">Mål: ${dk(new Date(state.settings.goalDate+'T12:00:00'), { day:'numeric', month:'short', year:'numeric' })}</span></div>`
     : `<div class="muted" style="margin-bottom:10px">Sæt et mål, så kan du følge din fremgang. <a href="#" onclick="toggleSettings();return false">Sæt vægtmål ›</a></div>`;
-  return `<div class="card"><div class="row between"><h2>⚖️ Vægt</h2>${WG ? '<a href="#" class="muted" onclick="toggleSettings();return false">Ret mål</a>' : ''}</div>
-    ${head}
+  const stats = tr.length > 1 ? `<div class="row" style="gap:6px;margin-top:12px">
+      <div class="tile"><span class="muted">Trend</span><b>${f1(last.t)} kg</b></div>
+      <div class="tile"><span class="muted">Tempo</span><b>${FC ? (FC.rate > 0.03 ? '−' + f1(FC.rate) : FC.rate < -0.03 ? '+' + f1(-FC.rate) : '±0') + ' kg/uge' : '–'}</b></div>
+      <div class="tile"><span class="muted">Prognose</span><b>${WG && WG.reached ? 'Nået 🎉' : FC && FC.date ? dk(FC.date, { day:'numeric', month:'short' }) + (FC.date.getFullYear() !== new Date().getFullYear() ? ' ' + String(FC.date.getFullYear()).slice(2) : '') : '–'}</b></div></div>
+    <div style="font-size:14px;margin-top:8px">${!FC ? '📊 Prognosen kommer, når du har vejet dig over et par uger.'
+      : WG && !WG.reached && FC.date ? (T(iso(FC.date)) <= T(state.settings.goalDate) + 7*864e5 ? '✅ Med dit nuværende tempo når du målet til tiden' : '📈 Lidt langsommere end planen – helt ok, det skåner stofskiftet')
+      : FC.rate > 0.75 ? '⚠️ Du taber dig hurtigt – spis lidt mere' : FC.rate < -0.1 ? '📈 Trenden går lidt op – det svinger, se på flere uger' : '➖ Trenden står stille'}</div>` : '';
+  const cyc = ph && last && ['Lutealfase','Menstruation'].includes(ph.name) ? `<div class="muted" style="margin-top:6px">${ph.e} ${ph.name}: 0,5–2 kg ekstra væske er normalt nu – kig på trenden, ikke dagens tal.</div>` : '';
+  const ms = milestones(ws, WG), got = ms.filter(m => m.done), nxt = ms.find(m => !m.done);
+  const miles = ws.length ? `<div style="margin-top:12px"><div class="muted" style="margin-bottom:6px">🏅 Milepæle${got.length ? ` · ${got.length} nået` : ''}</div><div class="why">${got.slice(-4).map(m => `<span style="background:#0a0a0a;color:#fff;border-color:#0a0a0a">🏅 ${m.l}</span>`).join('')}${nxt ? `<span>Næste: ${nxt.l} · ${f1(nxt.rest)} kg</span>` : ''}</div></div>` : '';
+  const R = { '1m':31, '3m':92, all:1e5 }[rng], shown = tr.filter(p => Date.now() - T(p.date) <= R*864e5);
+  return `<div class="card" id="wcard"><div class="row between"><h2>⚖️ Vægt</h2>${WG ? '<a href="#" class="muted" onclick="toggleSettings();return false">Ret mål</a>' : ''}</div>
+    ${head}${stats}${cyc}
     <div class="row" style="margin-top:12px"><input class="field" id="wIn" type="number" inputmode="decimal" step="0.1" placeholder="Dagens vægt, fx 64,5" style="margin:0"><button class="btn" onclick="addWeight()">Gem</button></div>
-    <div class="muted" style="margin-top:6px">Vej dig 1 gang om ugen, samme tid og dag – fx om morgenen efter toilettet.</div>
-    ${ws.length ? weightChart(ws.slice(-16), WG) : ''}
-    ${ws.length ? `<div style="margin-top:8px">${ws.slice(-5).reverse().map((w,i,a) => { const prev = ws[ws.length - 2 - i]; const d = prev ? Math.round((w.kg - prev.kg)*10)/10 : null;
-      return `<div class="row between" style="padding:7px 0;border-top:1px solid var(--line);font-size:14px"><span>${dk(new Date(w.date+'T12:00:00'))}</span><span><b>${f(w.kg)} kg</b> <span class="muted">${d == null ? '' : (d > 0 ? '+' : d < 0 ? '−' : '±') + f(Math.abs(d))}</span> <button class="x" style="border:0;background:none;color:#a3a3a3;font-size:16px" onclick="delWeight('${w.date}')">✕</button></span></div>`; }).join('')}</div>` : ''}
+    <div class="muted" style="margin-top:6px">Vej dig 1–3 gange om ugen om morgenen. Trendlinjen udjævner udsving.</div>
+    ${ws.length ? `<div class="wtog" style="margin-top:12px">${[['1m','1 md.'],['3m','3 md.'],['all','Alt']].map(([k,l]) => `<button class="${rng===k?'on':''}" onclick="setRange('${k}')">${l}</button>`).join('')}</div>
+      ${shown.length ? weightChart(shown, WG, FC) : '<div class="muted" style="margin-top:8px">Ingen vejninger i perioden.</div>'}` : ''}
+    ${miles}
+    ${ws.length ? `<div style="margin-top:10px">${ws.slice(-5).reverse().map((w,i) => { const prev = ws[ws.length - 2 - i]; const d = prev ? Math.round((w.kg - prev.kg)*10)/10 : null;
+      return `<div class="row between" style="padding:7px 0;border-top:1px solid var(--line);font-size:14px"><span>${dk(new Date(w.date+'T12:00:00'))}</span><span><b>${f1(w.kg)} kg</b> <span class="muted">${d == null ? '' : (d > 0 ? '+' : d < 0 ? '−' : '±') + f1(Math.abs(d))}</span> <button style="border:0;background:none;color:#a3a3a3;font-size:16px" onclick="delWeight('${w.date}')">✕</button></span></div>`; }).join('')}</div>` : ''}
   </div>`; }
-function weightChart(ws, WG){
-  const W = 300, H = 120, pad = 24, vals = ws.map(w => w.kg), extra = WG ? [WG.goal, WG.st.kg] : [], mn = Math.min(...vals, ...extra) - .5, mx = Math.max(...vals, ...extra) + .5;
-  const T = d => new Date(d+'T12:00:00').getTime(), t0 = Math.min(T(ws[0].date), WG ? T(WG.st.date) : Infinity), t1 = Math.max(T(ws[ws.length-1].date), Date.now(), t0 + 7*864e5);
-  const X = t => pad + (t - t0)/(t1 - t0)*(W-2*pad), x = i => X(T(ws[i].date)), y = v => 10 + (mx - v)/(mx - mn)*(H-30);
-  const pts = ws.map((w,i) => `${x(i)},${y(w.kg)}`).join(' ');
-  let plan = ''; if (WG) { const ts = T(WG.st.date), te = T(state.settings.goalDate), vAt = t => WG.st.kg - (WG.st.kg - WG.goal) * Math.max(0, Math.min(1, (t - ts)/(te - ts)));
-    plan = `<line x1="${X(ts)}" y1="${y(WG.st.kg)}" x2="${X(t1)}" y2="${y(vAt(t1))}" stroke="#ff5a1f" stroke-width="1.5" stroke-dasharray="3 3"/>`; }
+function cycleBands(t0, t1, X, top, h){ if (!state.periods.length) return ''; let out = '', cur = null, s = null;
+  const flush = e => { if (cur) out += `<rect x="${X(s)}" y="${top}" width="${Math.max(1, X(e) - X(s))}" height="${h}" fill="${cur === 'Menstruation' ? '#fde4e4' : '#efefef'}"/>`; };
+  for (let t = t0; t <= t1 + 864e5; t += 864e5) { const ph = cyclePhase(iso(new Date(t))), n = ph && ['Menstruation','Lutealfase'].includes(ph.name) ? ph.name : null;
+    if (n !== cur) { flush(t); cur = n; s = t; } }
+  flush(t1); return out; }
+function weightChart(tr, WG, FC){
+  const W = 320, H = 150, pad = 26, top = 8, bot = H - 18, vals = tr.flatMap(p => [p.kg, p.t]), ext = WG ? [WG.goal] : [], mn = Math.min(...vals, ...ext) - .4, mx = Math.max(...vals) + .4;
+  const t0 = T(tr[0].date), t1 = Math.max(T(tr[tr.length-1].date), Date.now(), t0 + 7*864e5);
+  const X = t => pad + (t - t0)/(t1 - t0)*(W-2*pad), y = v => top + (mx - v)/(mx - mn)*(bot - top - 4);
+  let plan = ''; if (WG) { const ts = T(WG.st.date), te = T(state.settings.goalDate), vAt = t => WG.st.kg - (WG.st.kg - WG.goal) * Math.max(0, Math.min(1, (t - ts)/(te - ts))), a = Math.max(t0, ts);
+    if (a < t1) plan = `<line x1="${X(a)}" y1="${y(vAt(a))}" x2="${X(t1)}" y2="${y(vAt(t1))}" stroke="#ff5a1f" stroke-width="1.5" stroke-dasharray="3 3"/>`; }
+  const ticks = [0, .5, 1].map(r => t0 + (t1 - t0)*r), few = tr.length <= 8;
   return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;margin-top:10px">
-    ${WG ? `<line x1="${pad}" x2="${W-pad}" y1="${y(WG.goal)}" y2="${y(WG.goal)}" stroke="#a3a3a3" stroke-dasharray="4 4"/><text x="${W-pad}" y="${y(WG.goal)-4}" font-size="9" text-anchor="end" fill="#a3a3a3">Mål ${String(WG.goal).replace('.',',')} kg</text>` : ''}${plan}
-    <polyline points="${pts}" fill="none" stroke="#0a0a0a" stroke-width="2.5" stroke-linejoin="round"/>
-    ${ws.map((w,i) => `<circle cx="${x(i)}" cy="${y(w.kg)}" r="3.5" fill="#0a0a0a"/><text x="${x(i)}" y="${y(w.kg)-7}" font-size="8.5" text-anchor="middle" fill="#404040">${String(w.kg).replace('.',',')}</text><text x="${x(i)}" y="${H-3}" font-size="7.5" text-anchor="middle" fill="#a3a3a3">${w.date.slice(8)}/${+w.date.slice(5,7)}</text>`).join('')}
-  </svg>${WG ? '<div class="muted" style="font-size:11px">Orange stiplet = din plan · grå = mål</div>' : ''}`;
+    ${cycleBands(t0, t1, X, top, bot - top)}
+    ${[mn + .4, (mn+mx)/2, mx - .4].map(v => `<text x="2" y="${y(v)+3}" font-size="8" fill="#a3a3a3">${f1(v)}</text>`).join('')}
+    ${WG ? `<line x1="${pad}" x2="${W-pad}" y1="${y(WG.goal)}" y2="${y(WG.goal)}" stroke="#a3a3a3" stroke-dasharray="4 4"/><text x="${W-pad}" y="${y(WG.goal)-4}" font-size="9" text-anchor="end" fill="#a3a3a3">Mål ${f1(WG.goal)}</text>` : ''}${plan}
+    ${tr.map(p => `<circle cx="${X(T(p.date))}" cy="${y(p.kg)}" r="3" fill="#c4c4c4"/>${few ? `<text x="${X(T(p.date))}" y="${y(p.kg)-6}" font-size="8" text-anchor="middle" fill="#8a8a8a">${f1(p.kg)}</text>` : ''}`).join('')}
+    <polyline points="${tr.map(p => `${X(T(p.date))},${y(p.t)}`).join(' ')}" fill="none" stroke="#0a0a0a" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+    ${ticks.map((t,i) => `<text x="${X(t)}" y="${H-4}" font-size="8" text-anchor="${['start','middle','end'][i]}" fill="#a3a3a3">${dk(new Date(t), { day:'numeric', month:'short' })}</text>`).join('')}
+  </svg><div class="muted" style="font-size:11px;display:flex;flex-wrap:wrap;gap:4px 10px"><span>━ trend</span><span style="color:#a3a3a3">● vejning</span>${WG ? '<span style="color:#ff5a1f">┅ plan</span>' : ''}${state.periods.length ? '<span><i style="display:inline-block;width:9px;height:9px;background:#efefef;border:1px solid #ddd"></i> lutealfase</span><span><i style="display:inline-block;width:9px;height:9px;background:#fde4e4"></i> menstruation</span>' : ''}</div>`;
 }
+function measureChart(ms){ const W = 320, H = 110, pad = 26, vals = ms.flatMap(m => [m.waist, m.hip].filter(Boolean)), mn = Math.min(...vals) - 1, mx = Math.max(...vals) + 1;
+  const t0 = T(ms[0].date), t1 = Math.max(T(ms[ms.length-1].date), t0 + 864e5), X = t => pad + (t - t0)/(t1 - t0)*(W-2*pad), y = v => 8 + (mx - v)/(mx - mn)*(H - 30);
+  const line = (k, c) => { const p = ms.filter(m => m[k]); return p.length ? `<polyline points="${p.map(m => `${X(T(m.date))},${y(m[k])}`).join(' ')}" fill="none" stroke="${c}" stroke-width="2.5" stroke-linejoin="round"/>${p.map(m => `<circle cx="${X(T(m.date))}" cy="${y(m[k])}" r="3" fill="${c}"/><text x="${X(T(m.date))}" y="${y(m[k])-6}" font-size="8" text-anchor="middle" fill="#8a8a8a">${f1(m[k])}</text>`).join('')}` : ''; };
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;margin-top:10px">${line('hip','#a3a3a3')}${line('waist','#0a0a0a')}
+    <text x="${pad}" y="${H-4}" font-size="8" fill="#a3a3a3">${dk(new Date(t0), { day:'numeric', month:'short' })}</text><text x="${W-pad}" y="${H-4}" font-size="8" text-anchor="end" fill="#a3a3a3">${dk(new Date(t1), { day:'numeric', month:'short' })}</text></svg>
+    <div class="muted" style="font-size:11px">━ talje · <span style="color:#a3a3a3">━ hofte</span></div>`; }
 
+/* ================= PROGRESS-BILLEDER (gemmes kun på telefonen, i IndexedDB) ================= */
+function pdb(){ return new Promise((res, rej) => { const r = indexedDB.open('minuge-photos', 1); r.onupgradeneeded = () => r.result.createObjectStore('p', { keyPath:'id' }); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); }
+async function pAll(){ const db = await pdb(); return new Promise(res => { const q = db.transaction('p').objectStore('p').getAll(); q.onsuccess = () => res(q.result.sort((a,b) => a.date < b.date ? -1 : 1)); q.onerror = () => res([]); }); }
+async function pPut(o){ const db = await pdb(); return new Promise((res, rej) => { const t = db.transaction('p', 'readwrite'); t.objectStore('p').put(o); t.oncomplete = res; t.onerror = () => rej(t.error); }); }
+async function pDel(id){ const db = await pdb(); return new Promise(res => { const t = db.transaction('p', 'readwrite'); t.objectStore('p').delete(id); t.oncomplete = res; }); }
+function shrink(file){ return new Promise((res, rej) => { const img = new Image(), u = URL.createObjectURL(file); img.onload = () => { const s = Math.min(1, 1000/Math.max(img.width, img.height)), c = document.createElement('canvas');
+  c.width = Math.round(img.width*s); c.height = Math.round(img.height*s); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(u); res(c.toDataURL('image/jpeg', .8)); }; img.onerror = rej; img.src = u; }); }
+async function addPhoto(inp){ const f = inp.files[0]; inp.value = ''; if (!f) return;
+  try { await pPut({ id:'ph' + Date.now(), date: iso(new Date()), kg: curWeight(), data: await shrink(f) }); toast('📸 Billede gemt på telefonen'); render(); } catch(e) { toast('Kunne ikke gemme billedet'); } }
+function photosCard(){ setTimeout(fillPhotos, 0);
+  return `<div class="card"><div class="row between"><h2>📸 Progress-billeder</h2><button class="btn small" onclick="$('#phIn').click()">＋ Tilføj</button></div>
+    <input type="file" id="phIn" accept="image/*" class="hidden" onchange="addPhoto(this)">
+    <div id="photos"><div class="muted">Indlæser…</div></div>
+    <div class="muted" style="margin-top:8px">🔒 Billederne gemmes kun på din telefon. Tag dem samme sted, i samme lys og tøj hver 4. uge.</div></div>`; }
+async function fillPhotos(){ const el = $('#photos'); if (!el) return; let ps = []; try { ps = await pAll(); } catch(e) {}
+  if (!ps.length) { el.innerHTML = '<div class="muted">Ingen billeder endnu. Vægten fortæller ikke alt – billeder viser forandringen.</div>'; return; }
+  const a = ps[0], b = ps[ps.length-1], cap = p => `${dk(new Date(p.date+'T12:00:00'), { day:'numeric', month:'short', year:'2-digit' })}${p.kg ? ' · ' + f1(p.kg) + ' kg' : ''}`;
+  el.innerHTML = `${ps.length > 1 ? `<div class="row" style="gap:6px;margin-bottom:10px">${[['Først', a], ['Nu', b]].map(([l, p]) => `<div style="flex:1;text-align:center"><img src="${p.data}" style="width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:14px" onclick="viewPhoto('${p.id}')"><div style="font-size:12px;margin-top:4px"><b>${l}</b> <span class="muted">${cap(p)}</span></div></div>`).join('')}</div>` : ''}
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">${ps.slice().reverse().map(p => `<img src="${p.data}" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px" onclick="viewPhoto('${p.id}')">`).join('')}</div>`; }
+async function viewPhoto(id){ const p = (await pAll()).find(x => x.id === id); if (!p) return;
+  $('#overlay').innerHTML = `<div class="backdrop" onclick="closeSheet()"></div><div class="sheet"><div class="grab"></div>
+    <div class="shead"><h3>${dk(new Date(p.date+'T12:00:00'), { day:'numeric', month:'long', year:'numeric' })}${p.kg ? ' · ' + f1(p.kg) + ' kg' : ''}</h3><button class="btn small gray" onclick="closeSheet()">Luk</button></div>
+    <img src="${p.data}" style="width:100%;border-radius:14px;max-height:60vh;object-fit:contain;background:#f2f2f2">
+    <button class="btn full ghost" style="margin-top:10px;color:#e11d48" onclick="if(confirm('Slet billedet?')){pDel('${p.id}').then(()=>{closeSheet();render();toast('Billede slettet')})}">Slet billede</button></div>`; }
 render();
 </script>
 </body>
