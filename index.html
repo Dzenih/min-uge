@@ -1539,15 +1539,18 @@ function openGuide(){ const nm = esc(state.settings.hsName || 'Min uge sundhed')
   const q = w => `<span class="gkey">🔍 ${w}</span>`;
   $('#overlay').innerHTML = `<div class="backdrop" onclick="closeSheet()"></div><div class="sheet"><div class="grab"></div>
     <div class="shead"><h3>📖 Lav genvejen</h3><button class="btn small gray" onclick="closeSheet()">Luk</button></div>
-    <div class="muted" style="margin-bottom:12px">Tager ca. 5 minutter og skal kun gøres én gang. Du tilføjer handlinger ved at trykke i søgefeltet nederst og skrive ordet i 🔍.</div>
+    <a class="btn full" href="Min%20uge%20sundhed.shortcut" download="Min uge sundhed.shortcut" style="display:block;text-align:center;text-decoration:none">⬇️ Hent den færdige genvej</a>
+    <div class="muted" style="margin:8px 0 14px">Tryk på knappen → <b>Tilføj genvej</b> i Genveje. Første gang du kører den, spørger iPhone om adgang til Sundhed – tryk <b>Tillad</b>. Den henter de sidste 7 dage. Virker den ikke, kan du lave den selv herunder.</div>
+    <div class="gtitle" style="margin:4px 0 8px">Lav den selv (ca. 5 min)</div>
+    <div class="muted" style="margin-bottom:12px">Du tilføjer handlinger ved at trykke i søgefeltet nederst og skrive ordet i 🔍.</div>
     ${st(1,'Opret genvejen',`Åbn appen <b>Genveje</b> → tryk <b>＋</b> øverst til højre. Tryk på navnet øverst → <b>Omdøb</b> → skriv <b>${nm}</b>.`)}
-    ${st(2,'Hent skridt',`Søg ${q('sundhed')} → vælg <b>Find sundhedsprøver</b>. Tryk på det blå ord ved <b>Type</b> → vælg <b>Skridt</b>. Tjek at der står <b>Startdato er i dag</b>.`)}
-    ${st(3,'Læg skridtene sammen',`Søg ${q('statistik')} → vælg <b>Beregn statistik</b>. Der skal stå <b>Sum</b>.`)}
-    ${st(4,'Hent aktiv energi',`Gør trin 2 og 3 igen, men vælg Type = <b>Aktiv energi</b>.`)}
-    ${st(5,'Lav teksten',`Søg ${q('tekst')} → vælg <b>Tekst</b>. Skriv <code>minuge steps=</code> → tryk <b>Variabel</b> lige over tastaturet → vælg den <b>første</b> Statistik. Skriv mellemrum og <code>active=</code> → vælg den <b>anden</b> Statistik.<div class="gex">minuge steps=<span>Statistik</span> active=<span>Statistik</span></div>`)}
+    ${st(2,'Hent skridt for 7 dage',`Søg ${q('sundhed')} → vælg <b>Find sundhedsprøver</b>. Tryk på det blå ord ved <b>Type</b> → vælg <b>Skridt</b>. Sæt <b>Startdato</b> til <b>er inden for de seneste 7 dage</b>. Tryk <b>Vis mere</b> → <b>Gruppér efter</b> = <b>Dag</b>.`)}
+    ${st(3,'Én linje pr. dag',`Søg ${q('gentag')} → vælg <b>Gentag med hver</b>. Træk en <b>Tekst</b> ind i løkken og skriv <code>minuge date=</code> → <b>Variabel</b> → <b>Gentag-element</b> → tryk på det → vælg <b>Startdato</b>. Skriv mellemrum og <code>steps=</code> → <b>Gentag-element</b> → <b>Værdi</b>.<div class="gex">minuge date=<span>Startdato</span> steps=<span>Værdi</span></div>`)}
+    ${st(4,'Det samme for aktiv energi',`Gør trin 2 og 3 igen under løkken, men vælg Type = <b>Aktiv energi</b> og skriv <code>active=</code> i stedet for <code>steps=</code>.`)}
+    ${st(5,'Saml linjerne',`Søg ${q('tekst')} → vælg <b>Tekst</b> (helt nederst, uden for løkkerne). Indsæt <b>Gentag-resultater</b> fra første løkke, tryk Enter, og indsæt <b>Gentag-resultater</b> fra anden løkke.`)}
     ${st(6,'Kopiér',`Søg ${q('udklip')} → vælg <b>Kopiér til udklipsholder</b>. Tryk <b>Færdig</b>.`)}
     ${st(7,'Test den',`Tryk på genvejen én gang → <b>Tillad</b> adgang til Sundhed. Gå tilbage hertil → tryk <b>📋 Indsæt data</b>.`)}
-    <div class="gstep" style="background:#0a0a0a;color:#fff"><div class="gnum" style="background:#fff;color:#0a0a0a">⏰</div><div><b>Valgfrit: kør den selv hver aften</b><div style="opacity:.8">Genveje → <b>Automatisering</b> (nederst) → <b>＋</b> → <b>Tidspunkt</b> → 21:00, Dagligt → <b>Kør straks</b> → Næste → vælg <b>${nm}</b>.</div></div></div>
+    <div class="gstep" style="background:#0a0a0a;color:#fff"><div class="gnum" style="background:#fff;color:#0a0a0a">⏰</div><div><b>Valgfrit: kør den automatisk hver aften</b><div style="opacity:.8">Genveje → <b>Automatisering</b> (nederst) → <b>＋</b> → <b>Tidspunkt</b> → 21:00, Dagligt → <b>Kør straks</b> → Næste → vælg <b>${nm}</b>.</div></div></div>
     <div class="muted" style="margin-top:10px">Hedder noget lidt anderledes på din telefon, så søg bare på ordet. Driller det, kan du altid skrive tallene fra Fitness-appen ind i hånden.</div></div>`; }
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && state.hPending && Date.now() - state.hPending < 5*60e3) { delete state.hPending; save(); openHealth(); toast('Tryk "Indsæt data" for at hente tallene'); } });
 function stepsWeekCard(){ const wds = [1,2,3,4,5,6,0], ks = wds.map(keyForWeekday), st = ks.map(k => (hOf(k) || {}).steps || 0); if (!st.some(Boolean)) return '';
@@ -1706,7 +1709,7 @@ function renderSettings(){
       <div class="srow"><span>Senest hentet</span><span class="sv">${state.lastHealth ? dk(new Date(state.lastHealth), { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }) : 'Aldrig'}</span></div>
       <button class="srow act" onclick="openHealth()">⌚ Hent skridt og bevægelse nu</button></div>
     <div class="group" style="margin-top:8px"><button class="srow act" onclick="openGuide()">📖 Sådan laver du genvejen (trin for trin)</button></div>
-    <div class="gnote">Glemmer du at hente en dag, kan du skrive tallene fra Fitness-appen ind i hånden.</div>
+    <div class="gnote">Genvejen henter de sidste 7 dage, så glemte dage bliver udfyldt næste gang.</div>
 
     <div class="gtitle">Dine data</div>
     <div class="group">
