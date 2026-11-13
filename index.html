@@ -677,6 +677,7 @@ state.days = state.days || {};
 state.weights = state.weights || [];
 state.measures = state.measures || [];
 state.periods = state.periods || (state.settings.cycleStart ? [state.settings.cycleStart] : []);
+state.periodEnds = state.periodEnds || {};
 if (!state.settings.programStart) state.settings.programStart = iso(mondayOf(new Date()));
 save();
 loadLearned();
@@ -694,10 +695,16 @@ function weekInfo(){
   const diff = Math.floor((mondayOf(new Date()) - mondayOf(start)) / (7*864e5));
   return WEEKS[((diff % 4) + 4) % 4];
 }
+function median(a){ const s = a.slice().sort((x,y) => x-y), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m-1] + s[m]) / 2; }
 function cycLen(){
   const ps = state.periods.slice().sort(), ds = [];
   for (let i = 1; i < ps.length; i++) { const d = Math.round((new Date(ps[i]+'T12:00:00') - new Date(ps[i-1]+'T12:00:00')) / 864e5); if (d >= 18 && d <= 45) ds.push(d); }
-  return ds.length ? { len: Math.round(ds.slice(-6).reduce((a,b) => a+b, 0) / ds.slice(-6).length), n: ds.slice(-6).length } : { len: +state.settings.cycleLen || 28, n: 0 };
+  const r = ds.slice(-6);
+  return r.length ? { len: Math.round(median(r)), n: r.length } : { len: +state.settings.cycleLen || 28, n: 0 };
+}
+function periodLen(){
+  const ds = state.periods.filter(s => state.periodEnds[s]).sort().map(s => Math.round((new Date(state.periodEnds[s]+'T12:00:00') - new Date(s+'T12:00:00')) / 864e5) + 1).filter(d => d >= 1 && d <= 10).slice(-6);
+  return ds.length ? { len: Math.round(median(ds)), n: ds.length } : { len: 5, n: 0 };
 }
 function lastPeriod(k = iso(new Date())){ const ps = state.periods.filter(p => p <= k).sort(); return ps[ps.length-1] || null; }
 function nextPeriod(){
@@ -705,12 +712,14 @@ function nextPeriod(){
   const len = cycLen().len, t = new Date(iso(new Date())+'T12:00:00'); let n = new Date(cs+'T12:00:00');
   while (n <= t) n.setDate(n.getDate() + len);
   const days = Math.round((n - t) / 864e5), ov = new Date(n); ov.setDate(ov.getDate() - 14);
-  return { date: n, days, ov, late: Math.round((t - new Date(cs+'T12:00:00')) / 864e5) >= len };
+  if (ov < t) ov.setDate(ov.getDate() + len);
+  return { date: n, days, ov, ovDays: Math.round((ov - t) / 864e5), late: Math.round((t - new Date(cs+'T12:00:00')) / 864e5) >= len };
 }
 function dk(d, o = { weekday:'short', day:'numeric', month:'short' }){ return d.toLocaleDateString('da-DK', o); }
 function setPeriod(v){
   if (!v) return; const t = new Date(v+'T12:00:00');
   state.periods = state.periods.filter(p => Math.abs(new Date(p+'T12:00:00') - t) > 10*864e5); state.periods.push(v); state.periods.sort();
+  Object.keys(state.periodEnds).forEach(s => { if (!state.periods.includes(s)) delete state.periodEnds[s]; });
   state.settings.cycleStart = state.periods[state.periods.length-1]; save();
 }
 function editLastPeriod(v){
@@ -720,16 +729,28 @@ function editLastPeriod(v){
   setPeriod(v);
 }
 function logPeriodToday(){ setPeriod(iso(new Date())); closeSheet(); const n = nextPeriod(); toast(`🩸 Registreret · næste ca. ${dk(n.date)}`); render(); }
+function setPeriodEnd(v){
+  const last = lastPeriod(); if (!last) return false;
+  if (!v) { delete state.periodEnds[last]; save(); return true; }
+  const d = Math.round((new Date(v+'T12:00:00') - new Date(last+'T12:00:00')) / 864e5);
+  if (d < 0 || d > 10 || v > iso(new Date())) { toast('Slutdatoen skal være 0–10 dage efter start og ikke i fremtiden'); return false; }
+  state.periodEnds[last] = v; save(); toast('✅ Slut registreret'); return true;
+}
+function endPeriodToday(){ if (setPeriodEnd(iso(new Date()))) { closeSheet(); render(); } }
+function openPeriod(){
+  const last = cycOn() && lastPeriod(); if (!last || state.periodEnds[last]) return null;
+  return Math.round((new Date(iso(new Date())+'T12:00:00') - new Date(last+'T12:00:00')) / 864e5) <= 10 ? last : null;
+}
 function cycOn(){ return state.settings.sex !== 'm' && state.settings.cycle !== false; }
 function cyclePhase(k = iso(new Date())){
   if (!cycOn()) return null; const cs = lastPeriod(k); if (!cs) return null;
-  const len = cycLen().len;
+  const len = cycLen().len, end = state.periodEnds[cs];
   const diff = Math.floor((new Date(k+'T12:00:00') - new Date(cs+'T12:00:00')) / 864e5);
   if (diff < 0) return null;
-  const d = (diff % len) + 1;
-  if (d <= 5) return { d, name:'Menstruation', e:'🩸', c:'#fff', tip:'Let til moderat træning. Spis jernrigt (æg, bønner, linser, kød) med C-vitamin. Spring intervaller over, hvis du er træt.' };
-  if (d <= 13) return { d, name:'Follikelfase', e:'⚡', c:'#fff', tip:'Fuld plan – bedste tid til intervaller og til at gøre øvelserne sværere.' };
-  if (d <= 16) return { d, name:'Ægløsning', e:'🌟', c:'#fff', tip:'Fuld plan. Varm godt op.' };
+  const d = (diff % len) + 1, dOv = len - 13;
+  if (end ? k <= end : d <= periodLen().len) return { d, name:'Menstruation', e:'🩸', c:'#fff', tip:'Let til moderat træning. Spis jernrigt (æg, bønner, linser, kød) med C-vitamin. Spring intervaller over, hvis du er træt.' };
+  if (d <= dOv - 2) return { d, name:'Follikelfase', e:'⚡', c:'#fff', tip:'Fuld plan – bedste tid til intervaller og til at gøre øvelserne sværere.' };
+  if (d <= dOv + 1) return { d, name:'Ægløsning', e:'🌟', c:'#fff', tip:'Fuld plan. Varm godt op.' };
   return { d, name:'Lutealfase', e:'🌙', c:'#fff', tip:'Mere appetit er normalt – læg 100–150 kcal oveni, fx skyr. Lidt mindre kondition er ok.' };
 }
 
@@ -1669,7 +1690,7 @@ function calendarCard(){
   for (let n = 1; n <= dim; n++) {
     const k = iso(new Date(first.getFullYear(), first.getMonth(), n, 12)), d = state.days[k], a = isActive(k), x = extrasOf(k).length, ph = cyclePhase(k);
     if (a) act++; min += activeMin(k); if (d && d.done && schForKey(k).type === 'str') str++;
-    cells += `<span class="${a ? 'a' : x ? 'x' : ''} ${k===today?'t':''} ${k>today?'f':''}">${n}${ph && ph.d <= 5 ? '<i></i>' : ''}${!a && feelOf(k) === 'sick' ? '<em>🤒</em>' : ''}</span>`;
+    cells += `<span class="${a ? 'a' : x ? 'x' : ''} ${k===today?'t':''} ${k>today?'f':''}">${n}${ph && ph.name === 'Menstruation' ? '<i></i>' : ''}${!a && feelOf(k) === 'sick' ? '<em>🤒</em>' : ''}</span>`;
   }
   return `<div class="card"><div class="row between"><h2 style="margin:0">🗓️ ${first.toLocaleDateString('da-DK',{month:'long',year:'numeric'})}</h2>
       <span><button class="btn small gray" onclick="calOff--;render()">‹</button> <button class="btn small gray" ${calOff>=0?'disabled style="opacity:.3"':''} onclick="calOff++;render()">›</button></span></div>
@@ -1705,6 +1726,7 @@ function openQuick(){
         <button onclick="closeSheet();tab='today';render();setTimeout(()=>$('#mood')&&$('#mood').scrollIntoView({behavior:'smooth'}),50)"><span>📓</span>Humør</button>
       </div>
       ${cycOn() ? `<button class="opt ${near ? 'sel' : ''}" onclick="logPeriodToday()"><span class="e">🩸</span><span class="t"><b>Menstruation startede i dag</b><span>${n ? `Forventet ${dk(n.date)} · bruges til at beregne næste` : 'Så kan appen beregne din næste'}</span></span><span class="plus">＋</span></button>` : ''}
+      ${openPeriod() ? `<button class="opt sel" onclick="endPeriodToday()"><span class="e">✅</span><span class="t"><b>Menstruation sluttede i dag</b><span>Bruges til at beregne længden</span></span><span class="plus">＋</span></button>` : ''}
     </div>`;
 }
 function openWeight(){
@@ -1719,13 +1741,14 @@ function openWeight(){
 /* ================= INDSTILLINGER ================= */
 function periodLine(compact){
   const n = nextPeriod(); if (!n) return '';
-  const c = cycLen();
-  return compact ? `<div class="muted" style="margin-top:6px">${n.late ? '🩸 Menstruationen er forventet nu' : `🩸 Næste menstruation ca. <b>${dk(n.date)}</b> (om ${n.days} ${n.days === 1 ? 'dag' : 'dage'})`} · <a href="#" onclick="logPeriodToday();return false">Startet i dag?</a></div>`
-    : `${dk(n.date, { weekday:'short', day:'numeric', month:'short' })} · ${n.late ? 'forventet nu' : `om ${n.days} d.`}`;
+  if (!compact) return `${dk(n.date, { weekday:'short', day:'numeric', month:'short' })} · ${n.late ? 'forventet nu' : `om ${n.days} d.`}`;
+  const open = openPeriod();
+  return `<div class="muted" style="margin-top:6px">${n.late ? '🩸 Menstruationen er forventet nu' : `🩸 Næste menstruation ca. <b>${dk(n.date)}</b> (om ${n.days} ${n.days === 1 ? 'dag' : 'dage'})`} · <a href="#" onclick="${open ? 'endPeriodToday' : 'logPeriodToday'}();return false">${open ? 'Slut i dag?' : 'Startet i dag?'}</a></div>
+    <div class="muted" style="margin-top:2px">🌟 Næste ægløsning ca. <b>${dk(n.ov)}</b> (${n.ovDays === 0 ? 'i dag' : `om ${n.ovDays} ${n.ovDays === 1 ? 'dag' : 'dage'}`})</div>`;
 }
 function srow(label, inner, sub){ return `<label class="srow"><span>${label}${sub ? `<small>${sub}</small>` : ''}</span><span class="sv">${inner}</span></label>`; }
 function renderSettings(){
-  const g = state.settings, G0 = goalFor(), c = cycLen(), n = nextPeriod(), lb = state.lastBackup, ago = lb ? Math.round((new Date(iso(new Date())+'T12:00:00') - new Date(lb+'T12:00:00'))/864e5) : null;
+  const g = state.settings, G0 = goalFor(), c = cycLen(), pl = periodLen(), n = nextPeriod(), lb = state.lastBackup, ago = lb ? Math.round((new Date(iso(new Date())+'T12:00:00') - new Date(lb+'T12:00:00'))/864e5) : null;
   const num = (k, v, u, dis, after='') => `<input type="number" inputmode="decimal" ${dis ? 'disabled' : ''} value="${v}" onchange="setS('${k}',+this.value);${after}"><em>${u}</em>`;
   $('#view').innerHTML = `
     <div class="gtitle">Daglige mål</div>
@@ -1753,10 +1776,13 @@ function renderSettings(){
     <div class="group">
       ${srow('Seneste startede', `<input type="date" value="${lastPeriod() || ''}" max="${iso(new Date())}" onchange="editLastPeriod(this.value);toast('Gemt · '+dk(new Date(this.value+'T12:00:00')));render()">`)}
       ${srow('Cykluslængde', c.n ? `<b>${c.len}</b><em>dage</em>` : num('cycleLen', g.cycleLen, 'dage', false, 'render()'), c.n ? `Beregnet ud fra dine ${c.n + 1} seneste` : 'Bliver beregnet, når du har registreret 2+')}
+      ${srow('Seneste sluttede', `<input type="date" value="${lastPeriod() ? state.periodEnds[lastPeriod()] || '' : ''}" min="${lastPeriod() || ''}" max="${iso(new Date())}" onchange="setPeriodEnd(this.value);render()">`, 'Tom = endnu ikke slut')}
+      ${srow('Menstruationens længde', `<b>${pl.len}</b><em>dage</em>`, pl.n ? `Beregnet ud fra dine ${pl.n} seneste` : 'Standard – bliver beregnet, når du registrerer en slutdato')}
       <div class="srow"><span>Næste menstruation</span><span class="sv"><b>${n ? periodLine(false) : '–'}</b></span></div>
-      ${n ? `<div class="srow"><span>Ægløsning ca.</span><span class="sv">${dk(n.ov)}</span></div>` : ''}
+      ${n ? `<div class="srow"><span>Næste ægløsning</span><span class="sv"><b>${dk(n.ov)}</b> · ${n.ovDays === 0 ? 'i dag' : `om ${n.ovDays} d.`}</span></div>` : ''}
+      ${openPeriod() ? `<button class="srow act" onclick="endPeriodToday()">🩸 Den sluttede i dag</button>` : ''}
       <button class="srow act" onclick="logPeriodToday()">🩸 Den startede i dag</button></div>
-    <div class="gnote">Tip: tryk <b>+</b> → 🩸 hver gang, den starter. Så bliver beregningen mere præcis over tid.</div>` : ''}
+    <div class="gnote">Tip: tryk <b>+</b> → 🩸 når den starter, og igen når den slutter. Så bliver beregningen af cyklus og længde mere præcis over tid.</div>` : ''}
 
     <div class="gtitle">Træningsplan</div>
     <div class="group">${srow('Start på 4-ugers plan', `<input type="date" value="${g.programStart}" onchange="setS('programStart',this.value);render()">`, `Du er i uge ${weekInfo().n}`)}</div>
