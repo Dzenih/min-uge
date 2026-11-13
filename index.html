@@ -104,6 +104,7 @@
   .backdrop { position: fixed; inset: 0; background: rgba(15,23,42,.45); z-index: 40; }
   .sheet { position: fixed; left: 0; right: 0; bottom: 0; max-height: 88vh; overflow-y: auto; background: #fff; border-radius: 22px 22px 0 0; z-index: 41; padding: 10px 16px calc(18px + env(safe-area-inset-bottom)); max-width: 560px; margin: 0 auto; }
   .sheet .grab { width: 40px; height: 5px; border-radius: 9px; background: #d4d4d4; margin: 0 auto 10px; }
+  .sheet.search { height: 82vh; height: 82dvh; }
   .sheet h3 { margin: 0 0 10px; font-size: 19px; }
   .hero { position: relative; }
   .swapbtn { position: absolute; top: 14px; right: 14px; background: rgba(255,255,255,.85); color: #0a0a0a; }
@@ -1027,6 +1028,13 @@ $('#cam').onchange = (e) => {
 let addTab = 'plan', searchQ = '', picked = null, grams = 0, added = [], sheetPhoto = null;
 function openAdd(t){ addTab = t || ((state.favs.length || state.meals.length || yesterdayFood().length) ? 'fav' : 'plan'); picked = null; searchQ = ''; added = []; sheetPhoto = pendingPhoto; drawSheet(); }
 function closeSheet(){ stopScan(); $('#overlay').innerHTML = ''; }
+function fitSheet(){
+  const s = $('#overlay .sheet'), vv = window.visualViewport; if (!s || !vv) return;
+  s.style.maxHeight = vv.height * .88 + 'px';
+  s.style.height = s.classList.contains('search') ? vv.height * .82 + 'px' : '';
+  s.style.bottom = Math.max(0, window.innerHeight - vv.offsetTop - vv.height) + 'px';
+}
+if (window.visualViewport) { visualViewport.addEventListener('resize', fitSheet); visualViewport.addEventListener('scroll', fitSheet); }
 function cancelSheet(){ stopScan(); pendingPhoto = null; $('#overlay').innerHTML = ''; }
 function drawSheet(keepScroll){
   const oldSheet = $('#overlay .sheet'), top = keepScroll && oldSheet ? oldSheet.scrollTop : 0;
@@ -1054,7 +1062,7 @@ function drawSheet(keepScroll){
     body = customBody();
   }
   $('#overlay').innerHTML = `<div class="backdrop" onclick="cancelSheet()"></div>
-    <div class="sheet"><div class="grab"></div>
+    <div class="sheet${addTab === 'search' && !picked ? ' search' : ''}"><div class="grab"></div>
       ${sheetPhoto ? `<img class="photo-prev" src="${sheetPhoto}"><div class="muted" style="margin:-4px 0 10px">📷 ${pendingPhoto ? 'Billedet gemmes sammen med det første, du vælger.' : 'Billedet er gemt. Vælg gerne flere ting.'}</div>` : ''}
       <div class="shead"><h3>${sheetPhoto ? 'Hvad er på billedet?' : 'Tilføj mad'}</h3><button class="btn small" onclick="closeSheet()">${added.length ? 'Færdig ✓' : 'Luk'}</button></div>
       ${added.length ? `<div class="added"><div class="sum">✓ ${added.length} tilføjet · <b>${r0(added.reduce((a,f)=>a+f.kcal,0))} kcal</b> · ${r0(added.reduce((a,f)=>a+(f.p||0),0))} g protein</div>
@@ -1066,6 +1074,7 @@ function drawSheet(keepScroll){
   if (picked) calcG();
   if (addTab === 'custom' && !picked) { cManual = false; $('#cName').focus(); }
   if (top) $('#overlay .sheet').scrollTop = top;
+  fitSheet();
   if (addTab === 'search' && !picked && !searchQ) { const i = $('#sIn'); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }
 }
 function listHtml(res){ return res.length ? res.map(f => `<button class="opt" onclick="pickFood('${esc(f[0])}')"><span class="e">${f[1]}</span><span class="t"><b>${esc(f[0])}</b><span>${f[5]} (${f[4]} g) ≈ ${r0(f[2]*f[4]/100)} kcal · ${(f[3]*f[4]/100).toFixed(1).replace('.',',')} g protein</span></span><span class="plus">›</span></button>`).join('') : '<div class="muted">Ingen match – brug "Skriv selv".</div>'; }
