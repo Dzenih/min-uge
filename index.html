@@ -289,6 +289,11 @@
 .hbar.ok{background:#fff;color:#0a0a0a;border:1px solid #e5e5e5;padding:10px 12px 10px 16px;font-size:14px}
 .hbar.ok small{display:inline-block;white-space:nowrap;margin-left:4px;color:#737373;opacity:1}
 .hbar.ok button{background:#f2f2f2;color:#0a0a0a}
+.gstep{display:flex;gap:12px;background:#f5f5f5;border-radius:16px;padding:12px 14px;margin-bottom:8px;font-size:14px;line-height:1.45}
+.gstep b{font-size:15px}.gnum{flex-shrink:0;width:28px;height:28px;border-radius:50%;background:#0a0a0a;color:#fff;display:grid;place-items:center;font-weight:700;font-size:14px}
+.gkey{display:inline-block;background:#fff;border:1px solid #e5e5e5;border-radius:8px;padding:0 6px;font-weight:600}
+.gex{margin-top:6px;background:#fff;border-radius:10px;padding:8px 10px;font-family:ui-monospace,Menlo,monospace;font-size:13px}
+.gex span{background:#e8e8e8;border-radius:6px;padding:1px 6px;font-family:-apple-system,system-ui,sans-serif;font-weight:600}
 </style>
 </head>
 <body>
@@ -1525,10 +1530,25 @@ function openHealth(){ const H = hOf(iso(new Date()));
     <div class="shead"><h3>⌚ Bevægelse i dag</h3><button class="btn small gray" onclick="closeSheet()">Luk</button></div>
     <button class="btn full" onclick="runShortcut()">1 · Kør genvejen "${esc(state.settings.hsName || 'Min uge sundhed')}"</button>
     <button class="btn full ghost" style="margin-top:8px" onclick="pasteHealth()">2 · 📋 Indsæt data fra genvejen</button>
-    <div class="muted" style="margin:8px 0 14px;text-align:center">Har du ikke lavet genvejen? Se ⚙️ Indstillinger → Apple Sundhed.</div>
+    <button class="btn full gray" style="margin:8px 0 14px" onclick="openGuide()">📖 Har du ikke lavet genvejen? Se hvordan</button>
     <div class="muted" style="margin-bottom:6px">Eller skriv tallene fra Fitness-appen:</div>
     <div class="row" style="gap:6px"><input class="field" id="hS" type="number" inputmode="numeric" placeholder="Skridt" value="${H && H.steps || ''}" style="margin:0"><input class="field" id="hA" type="number" inputmode="numeric" placeholder="Aktiv kcal" value="${H && H.active || ''}" style="margin:0"><button class="btn" onclick="manualHealth()">Gem</button></div>
     <div class="muted" style="margin-top:6px">Aktiv kcal = den røde "Bevægelse"-ring i Fitness. Når den er målt, erstatter den appens skøn for hverdag og træning.</div></div>`; }
+function openGuide(){ const nm = esc(state.settings.hsName || 'Min uge sundhed');
+  const st = (n, t, body) => `<div class="gstep"><div class="gnum">${n}</div><div><b>${t}</b><div>${body}</div></div></div>`;
+  const q = w => `<span class="gkey">🔍 ${w}</span>`;
+  $('#overlay').innerHTML = `<div class="backdrop" onclick="closeSheet()"></div><div class="sheet"><div class="grab"></div>
+    <div class="shead"><h3>📖 Lav genvejen</h3><button class="btn small gray" onclick="closeSheet()">Luk</button></div>
+    <div class="muted" style="margin-bottom:12px">Tager ca. 5 minutter og skal kun gøres én gang. Du tilføjer handlinger ved at trykke i søgefeltet nederst og skrive ordet i 🔍.</div>
+    ${st(1,'Opret genvejen',`Åbn appen <b>Genveje</b> → tryk <b>＋</b> øverst til højre. Tryk på navnet øverst → <b>Omdøb</b> → skriv <b>${nm}</b>.`)}
+    ${st(2,'Hent skridt',`Søg ${q('sundhed')} → vælg <b>Find sundhedsprøver</b>. Tryk på det blå ord ved <b>Type</b> → vælg <b>Skridt</b>. Tjek at der står <b>Startdato er i dag</b>.`)}
+    ${st(3,'Læg skridtene sammen',`Søg ${q('statistik')} → vælg <b>Beregn statistik</b>. Der skal stå <b>Sum</b>.`)}
+    ${st(4,'Hent aktiv energi',`Gør trin 2 og 3 igen, men vælg Type = <b>Aktiv energi</b>.`)}
+    ${st(5,'Lav teksten',`Søg ${q('tekst')} → vælg <b>Tekst</b>. Skriv <code>minuge steps=</code> → tryk <b>Variabel</b> lige over tastaturet → vælg den <b>første</b> Statistik. Skriv mellemrum og <code>active=</code> → vælg den <b>anden</b> Statistik.<div class="gex">minuge steps=<span>Statistik</span> active=<span>Statistik</span></div>`)}
+    ${st(6,'Kopiér',`Søg ${q('udklip')} → vælg <b>Kopiér til udklipsholder</b>. Tryk <b>Færdig</b>.`)}
+    ${st(7,'Test den',`Tryk på genvejen én gang → <b>Tillad</b> adgang til Sundhed. Gå tilbage hertil → tryk <b>📋 Indsæt data</b>.`)}
+    <div class="gstep" style="background:#0a0a0a;color:#fff"><div class="gnum" style="background:#fff;color:#0a0a0a">⏰</div><div><b>Valgfrit: kør den selv hver aften</b><div style="opacity:.8">Genveje → <b>Automatisering</b> (nederst) → <b>＋</b> → <b>Tidspunkt</b> → 21:00, Dagligt → <b>Kør straks</b> → Næste → vælg <b>${nm}</b>.</div></div></div>
+    <div class="muted" style="margin-top:10px">Hedder noget lidt anderledes på din telefon, så søg bare på ordet. Driller det, kan du altid skrive tallene fra Fitness-appen ind i hånden.</div></div>`; }
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && state.hPending && Date.now() - state.hPending < 5*60e3) { delete state.hPending; save(); openHealth(); toast('Tryk "Indsæt data" for at hente tallene'); } });
 function stepsWeekCard(){ const wds = [1,2,3,4,5,6,0], ks = wds.map(keyForWeekday), st = ks.map(k => (hOf(k) || {}).steps || 0); if (!st.some(Boolean)) return '';
   const goal = 8000, mx = Math.max(goal, ...st), n = st.filter(Boolean).length, avg = n ? st.reduce((a,b) => a+b, 0)/n : 0;
@@ -1685,15 +1705,8 @@ function renderSettings(){
       ${srow('Genvejens navn', `<input type="text" value="${esc(g.hsName || 'Min uge sundhed')}" style="text-align:right;width:190px;max-width:55vw" onchange="setS('hsName',this.value.trim()||'Min uge sundhed')">`)}
       <div class="srow"><span>Senest hentet</span><span class="sv">${state.lastHealth ? dk(new Date(state.lastHealth), { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }) : 'Aldrig'}</span></div>
       <button class="srow act" onclick="openHealth()">⌚ Hent skridt og bevægelse nu</button></div>
-    <div class="gnote"><b>Sådan laver du genvejen (1 gang) – henter de sidste 7 dage:</b><br>
-      1. Åbn appen <b>Genveje</b> → <b>+</b> → kald den <b>${esc(g.hsName || 'Min uge sundhed')}</b>.<br>
-      2. Tilføj <b>Find sundhedsprøver</b> (Find Health Samples): Type = <b>Skridt</b>, Startdato = <b>inden for de seneste 7 dage</b>, Gruppér efter = <b>Dag</b>.<br>
-      3. Tilføj <b>Gentag med hver</b> (Repeat with Each) og læg en <b>Tekst</b> ind i løkken: <code>minuge date=</code>[Gentag-element → Startdato] <code>steps=</code>[Gentag-element → Værdi].<br>
-      4. Gentag trin 2–3 med Type = <b>Aktiv energi</b> og <code>active=</code> i stedet for <code>steps=</code>.<br>
-      5. Tilføj <b>Tekst</b> med begge [Gentag-resultater] (hver på sin linje) → <b>Kopiér til udklipsholder</b>.<br>
-      Tip: Tryk på Startdato i trin 3 og vælg datoformat <b>ISO 8601</b> eller <i>Kort</i> – appen forstår begge.<br>
-      Første gang spørger iPhone om adgang til Sundhed – tryk Tillad.<br><br>
-      <b>Automatisk hver dag:</b> Genveje → <b>Automatisering</b> → <b>+</b> → <b>Tidspunkt</b> (fx 21:00, dagligt) → <b>Kør straks</b> → vælg genvejen. Så ligger dataene klar, og du trykker bare ⌚ → <b>Indsæt data</b> næste gang du åbner appen. Glemmer du en dag, bliver den udfyldt næste gang.</div>
+    <div class="group" style="margin-top:8px"><button class="srow act" onclick="openGuide()">📖 Sådan laver du genvejen (trin for trin)</button></div>
+    <div class="gnote">Glemmer du at hente en dag, kan du skrive tallene fra Fitness-appen ind i hånden.</div>
 
     <div class="gtitle">Dine data</div>
     <div class="group">
