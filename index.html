@@ -281,6 +281,14 @@
   .gnote { font-size:12px; color:var(--muted); margin:8px 8px 0; line-height:1.45; }
   .tile { flex:1; background:#f5f5f5; border-radius:14px; padding:9px 10px; display:flex; flex-direction:column; gap:2px; min-width:0; }
   .tile .muted { font-size:11px; } .tile b { font-size:15px; white-space:nowrap; }
+.hbar{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#0a0a0a;color:#fff;border-radius:20px;padding:14px 16px;margin:0 0 12px}
+.hbar b{font-weight:700}.hbar small{display:block;opacity:.65;font-size:12px;margin-top:2px}
+.hbar .hbtns{display:flex;flex-direction:column;gap:6px;flex-shrink:0}
+.hbar button{border:0;border-radius:999px;padding:8px 14px;font:600 13px inherit;font-family:inherit;background:rgba(255,255,255,.14);color:#fff;white-space:nowrap}
+.hbar button.pri{background:#fff;color:#0a0a0a}
+.hbar.ok{background:#fff;color:#0a0a0a;border:1px solid #e5e5e5;padding:10px 12px 10px 16px;font-size:14px}
+.hbar.ok small{display:inline-block;white-space:nowrap;margin-left:4px;color:#737373;opacity:1}
+.hbar.ok button{background:#f2f2f2;color:#0a0a0a}
 </style>
 </head>
 <body>
@@ -762,6 +770,7 @@ function renderToday(){
   const checks = [['d3b','💊','D3 + B-vitamin'],['c','🍋','C-brus'],['coll','✨','Collagen'],['sleep','😴','7–8 timers søvn'],['stretch','🧘‍♀️','Stræk 5 min'],['iron','🩸','Jern (hvis aftalt)']];
   $('#view').innerHTML = `
     ${workToggle(wd)}
+    ${healthBar(k)}
     <div class="card">
       <div class="rings">
         <div class="ring">${ring(t.kcal, g.kcal, over ? '#e11d48' : '#ff5a1f')}<div class="c"><b>${r0(Math.abs(left))}</b><span>${over ? 'kcal over' : 'kcal tilbage'}</span></div></div>
@@ -1542,6 +1551,9 @@ function energy(k){ const G = goalFor(k), w = curWeight(k), bmr = G.bmr, neat = 
   return { bmr, neat, train, extra, burn, intake, bal: intake - burn, steps: H && H.steps }; }
 function fmt(n){ return Math.abs(r0(n)).toLocaleString('da-DK'); }
 function balText(b){ return b < 0 ? `${fmt(b)} kcal underskud` : b > 0 ? `${fmt(b)} kcal overskud` : 'i balance'; }
+function healthBar(k){ const H = hOf(k);
+  if (H && H.src) return `<div class="hbar ok"><span>⌚ <b>${fmt(H.steps || 0)}</b> skridt · <b>${fmt(H.active || 0)}</b> kcal aktiv <small>kl. ${H.at}</small></span><button onclick="pasteHealth()">↻ Opdater</button></div>`;
+  return `<div class="hbar"><div><b>⌚ Hent dagens bevægelse</b><small>Skridt og aktiv energi fra Apple Watch</small></div><div class="hbtns"><button class="pri" onclick="pasteHealth()">📋 Indsæt data</button><button onclick="runShortcut()">Kør genvej</button></div></div>`; }
 function energyCard(k){ const E = energy(k), max = Math.max(E.burn, E.intake, 1), today = k === iso(new Date());
   const bar = (v, c) => `<div class="bar" style="height:10px"><div style="width:${Math.min(100, v/max*100)}%;background:${c}"></div></div>`;
   const warn = E.bal < -700 && !today ? '<div class="muted" style="margin-top:8px">⚠️ Over 700 kcal underskud – det kan sænke stofskiftet. Spis lidt mere.</div>'
