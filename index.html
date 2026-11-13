@@ -715,6 +715,12 @@ function nextPeriod(){
   if (ov < t) ov.setDate(ov.getDate() + len);
   return { date: n, days, ov, ovDays: Math.round((ov - t) / 864e5), late: Math.round((t - new Date(cs+'T12:00:00')) / 864e5) >= len };
 }
+function fertileWindow(){
+  const n = nextPeriod(); if (!n) return null;
+  const t = new Date(iso(new Date())+'T12:00:00'), L = cycLen().len;
+  const inWindow = ov => t >= addDays(ov, -5) && t <= addDays(ov, 1);
+  return { from: addDays(n.ov, -5), to: addDays(n.ov, 1), ov: n.ov, now: inWindow(n.ov) || inWindow(addDays(n.ov, -L)) };
+}
 function dk(d, o = { weekday:'short', day:'numeric', month:'short' }){ return d.toLocaleDateString('da-DK', o); }
 function setPeriod(v){
   if (!v) return; const t = new Date(v+'T12:00:00');
@@ -1744,7 +1750,8 @@ function periodLine(compact){
   if (!compact) return `${dk(n.date, { weekday:'short', day:'numeric', month:'short' })} · ${n.late ? 'forventet nu' : `om ${n.days} d.`}`;
   const open = openPeriod();
   return `<div class="muted" style="margin-top:6px">${n.late ? '🩸 Menstruationen er forventet nu' : `🩸 Næste menstruation ca. <b>${dk(n.date)}</b> (om ${n.days} ${n.days === 1 ? 'dag' : 'dage'})`} · <a href="#" onclick="${open ? 'endPeriodToday' : 'logPeriodToday'}();return false">${open ? 'Slut i dag?' : 'Startet i dag?'}</a></div>
-    <div class="muted" style="margin-top:2px">🌟 Næste ægløsning ca. <b>${dk(n.ov)}</b> (${n.ovDays === 0 ? 'i dag' : `om ${n.ovDays} ${n.ovDays === 1 ? 'dag' : 'dage'}`})</div>`;
+    <div class="muted" style="margin-top:2px">🌟 Næste ægløsning ca. <b>${dk(n.ov)}</b> (${n.ovDays === 0 ? 'i dag' : `om ${n.ovDays} ${n.ovDays === 1 ? 'dag' : 'dage'}`})</div>
+    <div class="muted" style="margin-top:2px">🌱 Frugtbart vindue ${dk(fertileWindow().from)} – ${dk(fertileWindow().to)}${fertileWindow().now ? ' · <b>Du er frugtbar nu</b>' : ''}</div>`;
 }
 function srow(label, inner, sub){ return `<label class="srow"><span>${label}${sub ? `<small>${sub}</small>` : ''}</span><span class="sv">${inner}</span></label>`; }
 function renderSettings(){
@@ -1780,6 +1787,7 @@ function renderSettings(){
       ${srow('Menstruationens længde', `<b>${pl.len}</b><em>dage</em>`, pl.n ? `Beregnet ud fra dine ${pl.n} seneste` : 'Standard – bliver beregnet, når du registrerer en slutdato')}
       <div class="srow"><span>Næste menstruation</span><span class="sv"><b>${n ? periodLine(false) : '–'}</b></span></div>
       ${n ? `<div class="srow"><span>Næste ægløsning</span><span class="sv"><b>${dk(n.ov)}</b> · ${n.ovDays === 0 ? 'i dag' : `om ${n.ovDays} d.`}</span></div>` : ''}
+      ${n ? `<div class="srow"><span>Frugtbart vindue<small>Bedste tid, hvis du vil blive gravid</small></span><span class="sv"><b>${dk(fertileWindow().from)} – ${dk(fertileWindow().to)}</b></span></div>` : ''}
       ${openPeriod() ? `<button class="srow act" onclick="endPeriodToday()">🩸 Den sluttede i dag</button>` : ''}
       <button class="srow act" onclick="logPeriodToday()">🩸 Den startede i dag</button></div>
     <div class="gnote">Tip: tryk <b>+</b> → 🩸 når den starter, og igen når den slutter. Så bliver beregningen af cyklus og længde mere præcis over tid.</div>` : ''}
