@@ -294,6 +294,12 @@
 .gkey{display:inline-block;background:#fff;border:1px solid #e5e5e5;border-radius:8px;padding:0 6px;font-weight:600}
 .gex{margin-top:6px;background:#fff;border-radius:10px;padding:8px 10px;font-family:ui-monospace,Menlo,monospace;font-size:13px}
 .gex span{background:#e8e8e8;border-radius:6px;padding:1px 6px;font-family:-apple-system,system-ui,sans-serif;font-weight:600}
+  .feelc { padding-bottom: 12px; }
+  .feel { display:flex; gap:6px; margin-top:10px; }
+  .feel button { flex:1; border:1px solid var(--line); background:#fff; border-radius:14px; padding:8px 4px; display:flex; flex-direction:column; align-items:center; gap:2px; font:inherit; color:inherit; }
+  .feel button span { font-size:20px; } .feel button b { font-size:12px; text-align:center; line-height:1.2; } .feel button small { font-size:10px; color:#8a8a8a; text-align:center; line-height:1.2; }
+  .feel button.on { background:#0a0a0a; color:#fff; border-color:#0a0a0a; } .feel button.on small { color:#bdbdbd; }
+  .cal span em { position:absolute; font-style:normal; font-size:9px; right:1px; top:-2px; }
 </style>
 </head>
 <body>
@@ -695,7 +701,7 @@ function cycLen(){
 }
 function lastPeriod(k = iso(new Date())){ const ps = state.periods.filter(p => p <= k).sort(); return ps[ps.length-1] || null; }
 function nextPeriod(){
-  const cs = lastPeriod(); if (!cs) return null;
+  const cs = cycOn() && lastPeriod(); if (!cs) return null;
   const len = cycLen().len, t = new Date(iso(new Date())+'T12:00:00'); let n = new Date(cs+'T12:00:00');
   while (n <= t) n.setDate(n.getDate() + len);
   const days = Math.round((n - t) / 864e5), ov = new Date(n); ov.setDate(ov.getDate() - 14);
@@ -714,8 +720,9 @@ function editLastPeriod(v){
   setPeriod(v);
 }
 function logPeriodToday(){ setPeriod(iso(new Date())); closeSheet(); const n = nextPeriod(); toast(`🩸 Registreret · næste ca. ${dk(n.date)}`); render(); }
+function cycOn(){ return state.settings.sex !== 'm' && state.settings.cycle !== false; }
 function cyclePhase(k = iso(new Date())){
-  const cs = lastPeriod(k); if (!cs) return null;
+  if (!cycOn()) return null; const cs = lastPeriod(k); if (!cs) return null;
   const len = cycLen().len;
   const diff = Math.floor((new Date(k+'T12:00:00') - new Date(cs+'T12:00:00')) / 864e5);
   if (diff < 0) return null;
@@ -776,6 +783,7 @@ function renderToday(){
   $('#view').innerHTML = `
     ${workToggle(wd)}
     ${healthBar(k)}
+    ${feelRow(k)}
     <div class="card">
       <div class="rings">
         <div class="ring">${ring(t.kcal, g.kcal, over ? '#e11d48' : '#ff5a1f')}<div class="c"><b>${r0(Math.abs(left))}</b><span>${over ? 'kcal over' : 'kcal tilbage'}</span></div></div>
@@ -1078,7 +1086,9 @@ function renderTrain(){
       ${moved ? `<div class="moved">⇄ Ændret denne uge · planen var ${SCHEDULE[trainDay].e} ${SCHEDULE[trainDay].title}</div>` : ''}
       ${adj ? `<div class="adj">${adj.msg}${adj.covered && !d.done ? `<div><button class="btn small" style="margin-top:6px" onclick="setDone('${key}',true)">✓ Marker som klaret</button></div>` : ''}</div>` : ''}
       <button class="btn small swapbtn" onclick="openSwap()">🔄 ${moved ? 'Ændr' : 'Byt dag'}</button></div>
-    ${extraCard(key)}`;
+    ${key <= iso(new Date()) ? feelRow(key) : ''}${extraCard(key)}`;
+  if (adj && adj.rest && !d.done) { $('#view').innerHTML = html + `<div class="card"><h2>🛌 Hvil i dag</h2><div style="font-size:14px">Ingen sæt og ingen timer i dag. Vil du gerne tage træningen senere på ugen, kan du flytte den.</div>
+    <button class="btn small ghost" style="margin-top:10px" onclick="openSwap()">🔄 Flyt ${sch.title.toLowerCase()} til en anden dag</button></div>`; return; }
 
   if (sch.type === 'str') {
     const ids = PROGRAMS[sch.prog];
@@ -1097,7 +1107,7 @@ function renderTrain(){
   } else if (sch.type === 'rest') {
     html += timerCard(STRETCHES, 'Stræk-program', key);
   } else {
-    html += timerCard(adj && adj.factor ? scaleSegs(segsFor(srcFor(trainDay), w), adj.factor) : segsFor(srcFor(trainDay), w), adj && adj.factor ? 'Forkortet timer' : 'Timer', key);
+    html += timerCard(adj && adj.segs ? adj.segs : adj && adj.factor ? scaleSegs(segsFor(srcFor(trainDay), w), adj.factor) : segsFor(srcFor(trainDay), w), adj && adj.segs ? 'Tilpasset timer' : adj && adj.factor ? 'Forkortet timer' : 'Timer', key);
     if (srcFor(trainDay) === 6) html += `<div class="card"><b>❄️ Vinter</b><div style="font-size:14px">Mørkt, glat eller meget koldt? Lav samme intervaller på gangbåndet. Husk refleks og lys udenfor.</div></div>`;
   }
   html += d.done
@@ -1183,17 +1193,21 @@ function delWeight(d){ const old = state.weights.slice(); state.weights = state.
 function schForKey(k){ const wd = wdOfKey(k); return keyForWeekday(wd) === k ? schFor(wd) : SCHEDULE[wd]; }
 function goalFor(k = iso(new Date())){
   const g = state.settings, w = curWeight(k), h = +g.height || 170, a = +g.age || 31;
-  const bmr = Math.round(10*w + 6.25*h - 5*a - 161), sch = schForKey(k), ph = cyclePhase(k), rate = weightRate(k);
-  const burn = { rest:0, walk:75, str:125, row:150, run:150 }[sch.type] || 0;
+  const bmr = Math.round(10*w + 6.25*h - 5*a + (g.sex === 'm' ? 5 : -161)), sch = schForKey(k), fl = feelOf(k), ph = cyclePhase(k), rate = weightRate(k);
+  let burn = { rest:0, walk:75, str:125, row:150, run:150 }[sch.type] || 0; if (fl === 'sick') burn = 0; else if (fl === 'cold') burn = Math.round(burn/2/5)*5;
   const WG = wGoal(k); let def = 400, defTxt = 'Skånsomt underskud −400';
   if (WG) { if (WG.reached) { def = 0; defTxt = `🎯 Mål nået (${String(WG.goal).replace('.',',')} kg) – vedligehold`; }
     else { def = Math.max(150, Math.min(500, Math.round(WG.need*1100/10)*10)); defTxt = `🎯 Mod ${String(WG.goal).replace('.',',')} kg${WG.need > 0.5 ? ' (maks. tempo)' : ''} −${def}`; } }
+  if (fl === 'sick') { def = 0; defTxt = '🤒 Syg – spis til vedligehold, intet underskud'; }
+  else if (fl === 'cold' && def > 0) { def = Math.round(def/2/10)*10; defTxt = `🤧 Lidt syg – mindre underskud −${def}`; }
   const why = [`Hvilestofskifte ${bmr}`, `Hverdag ×1,45`, defTxt];
   let kcal = bmr*1.45 - def;
   if (burn) { kcal += burn; why.push(`${sch.e} ${sch.title} +${burn}`); }
   let tips = [];
-  if (sch.type === 'str') tips.push('🍌 Efter styrke: banan eller skyr inden for 1 time');
-  if (['row','run'].includes(sch.type)) tips.push('🍞 Kondi: lidt ekstra kulhydrat, fx en skive rugbrød mere');
+  if (fl === 'sick' || fl === 'cold') tips.push('🍲 Syg: varm mad, suppe, protein og rigeligt at drikke – ikke dagen at spare på maden');
+  if (fl === 'cramps') tips.push('🩸 Smerter: varmepude, rolig gang og magnesium (havregryn, mandler, mørk chokolade)');
+  if (sch.type === 'str' && fl !== 'sick') tips.push('🍌 Efter styrke: banan eller skyr inden for 1 time');
+  if (['row','run'].includes(sch.type) && !fl) tips.push('🍞 Kondi: lidt ekstra kulhydrat, fx en skive rugbrød mere');
   const exb = extrasOf(k).reduce((a,x) => a + burnOf(x, w), 0), H = hOf(k);
   if (H && H.active > 0) { let delta = H.active - (bmr*.45 + burn); if (k === iso(new Date())) delta = Math.max(0, delta);
     const add = Math.max(-150, Math.min(500, Math.round(delta/2/10)*10)); if (add) { kcal += add; why.push(`⌚ Målt bevægelse${H.steps ? ' (' + fmt(H.steps) + ' skridt)' : ''} ${add > 0 ? '+' : '−'}${Math.abs(add)}`); }
@@ -1237,9 +1251,36 @@ function extrasOf(k){ return (state.days[k] || {}).extra || []; }
 function burnOf(x, w){ const a = ACT[x.t] || ACT.other; return Math.round((a.met*x.i - 1) * w * x.min/60); }
 function planMin(k){ const sch = schForKey(k), wd = wdOfKey(k), src = keyForWeekday(wd) === k ? srcFor(wd) : wd;
   return ['walk','row','run'].includes(sch.type) ? Math.round(segsFor(src, weekInfo()).reduce((a,x) => a+x[1], 0)/60) : 0; }
+const FEEL = { cold:['🤧','Lidt syg','Snue, ondt i halsen'], sick:['🤒','Meget syg','Feber, ondt i kroppen'], cramps:['🩸','Menstruations­smerter','Kramper, uro'] };
+function feelOf(k){ const f = (state.days[k] || {}).feel || null; return f === 'cramps' && !cycOn() ? null : f; }
+function setFeel(k, v){ const d = day(k); if (d.feel === v) delete d.feel; else d.feel = v; save();
+  toast(d.feel ? `${FEEL[v][0]} ${FEEL[v][1]} – træning og kalorier er tilpasset` : '😊 Frisk – planen er som normalt'); render(); }
+function backFromSick(k){ return !feelOf(k) && feelOf(iso(addDays(new Date(k+'T12:00:00'), -1))) === 'sick'; }
+function feelRow(k){ const f = feelOf(k), ks = Object.keys(FEEL).filter(x => x !== 'cramps' || cycOn());
+  return `<div class="card feelc"><div class="row between"><h2 style="margin:0">🩺 Hvordan har du det?</h2><span class="muted">${f ? 'tryk igen = frisk' : '😊 Frisk'}</span></div>
+    <div class="feel">${ks.map(x => `<button class="${f === x ? 'on' : ''}" onclick="setFeel('${k}','${x}')"><span>${FEEL[x][0]}</span><b>${FEEL[x][1]}</b><small>${FEEL[x][2]}</small></button>`).join('')}</div></div>`; }
+const WALKSEG = m => [['Rolig gang', m*60, '#a3a3a3']];
+function feelAdjust(k, f, sch){ const t = sch.type, rule = '<div class="muted" style="margin-top:4px">Tommelfinger: kun snue/hals = let bevægelse ok. Feber eller ondt i kroppen = hvil.</div>';
+  if (f === 'sick') return { rest:true, msg:'🤒 <b>Hviledag – du er syg.</b> Ingen træning i dag. Kroppen bruger energien på at blive rask. Sov, drik godt og spis nok. Planen venter på dig, og din streak er beskyttet.' };
+  if (f === 'cold') {
+    if (t === 'str') return { lighter:true, msg:'🤧 <b>Lidt syg:</b> tag kun <b>2 sæt</b>, lettere vægt og roligt tempo. Stop, hvis du får det værre.' + rule };
+    if (t === 'walk') return { factor:.6, msg:'🤧 <b>Lidt syg:</b> rolig gang i kortere tid – timeren er forkortet.' + rule };
+    if (t === 'row' || t === 'run') return { segs: WALKSEG(20), msg:'🤧 <b>Lidt syg:</b> spring intervallerne over. Tag 20 min rolig gang i stedet – timeren er ændret.' + rule };
+    return { msg:'🤧 <b>Lidt syg:</b> hvil og tag kun stræk, hvis det føles godt.' }; }
+  if (f === 'cramps') {
+    if (t === 'str') return { lighter:true, msg:'🩸 <b>Menstruationssmerter:</b> tag 2 sæt i roligt tempo og spring planken over, hvis maven gør ondt. Let bevægelse lindrer ofte smerterne.' };
+    if (t === 'walk') return { msg:'🩸 <b>Menstruationssmerter:</b> rolig gang lindrer ofte – gå i dit eget tempo, og brug varmepude bagefter.' };
+    if (t === 'row' || t === 'run') return { segs: WALKSEG(25), msg:'🩸 <b>Menstruationssmerter:</b> skift dagens hårde pas ud med 25 min rolig gang eller yoga. Timeren er ændret.' };
+    return { msg:'🩸 <b>Menstruationssmerter:</b> stræk og yoga (barnets stilling, kat-ko) kan lindre.' }; }
+  return null; }
 function adjustFor(k){
+  const d0 = state.days[k] || {}, sch0 = schForKey(k), f = feelOf(k);
+  if (f && !d0.done) { const fa = feelAdjust(k, f, sch0); if (fa) return fa; }
+  if (!d0.done && sch0.type !== 'rest' && backFromSick(k) && !extrasOf(k).length) return sch0.type === 'str'
+    ? { lighter:true, msg:'💪 <b>Første dag efter sygdom:</b> start blødt med 2 sæt. Har du det godt i morgen, kører du fuld plan igen.' }
+    : { factor:.6, msg:'💪 <b>Første dag efter sygdom:</b> kortere og roligere i dag – timeren er forkortet. Fuld plan i morgen, hvis du har det godt.' };
   const xs = extrasOf(k); if (!xs.length) return null;
-  const sch = schForKey(k), d = state.days[k] || {}, names = xs.map(x => (ACT[x.t]||ACT.other).n.toLowerCase() + ' ' + x.min + ' min').join(' + ');
+  const sch = sch0, d = d0, names = xs.map(x => (ACT[x.t]||ACT.other).n.toLowerCase() + ' ' + x.min + ' min').join(' + ');
   const cardio = xs.reduce((a,x) => a + x.min * (ACT[x.t]||ACT.other).int * x.i, 0);
   const hardMin = xs.reduce((a,x) => a + (x.i >= 1 && (ACT[x.t]||ACT.other).met >= 5 ? x.min : 0), 0);
   if (d.done) return { msg:`➕ Ekstra i dag: ${names}. Flot – alt er klaret! 🎉` };
@@ -1500,8 +1541,9 @@ function durOf(k){ const sch = schForKey(k); return sch.type === 'str' ? (sch.pr
 function activeMin(k){ const d = state.days[k]; if (!d) return 0; return (d.done ? durOf(k) : 0) + extrasOf(k).reduce((a,x) => a + x.min, 0); }
 function isActive(k){ const d = state.days[k]; return !!d && (d.done || (d.health && d.health.steps >= 8000) || extrasOf(k).reduce((a,x) => a + x.min, 0) >= 20); }
 function addDays(d, n){ const x = new Date(d); x.setDate(x.getDate() + n); return x; }
-function weekActive(mon){ let n = 0, m = 0; for (let i = 0; i < 7; i++) { const k = iso(addDays(mon, i)); if (isActive(k)) n++; m += activeMin(k); } return { n, m }; }
-function streak(){ let mon = mondayOf(new Date()), c = weekActive(mon).n >= 3 ? 1 : 0; for (let i = 0; i < 104; i++) { mon = addDays(mon, -7); if (weekActive(mon).n >= 3) c++; else break; } return c; }
+function weekActive(mon){ let n = 0, m = 0, s = 0; for (let i = 0; i < 7; i++) { const k = iso(addDays(mon, i)); if (isActive(k)) n++; else if (feelOf(k) === 'sick') s++; m += activeMin(k); } return { n, m, s }; }
+function weekOk(w){ return w.n >= Math.max(1, 3 - w.s); }
+function streak(){ let mon = mondayOf(new Date()), c = weekOk(weekActive(mon)) ? 1 : 0; for (let i = 0; i < 104; i++) { mon = addDays(mon, -7); if (weekOk(weekActive(mon))) c++; else break; } return c; }
 function hm(m){ return m >= 60 ? `${Math.floor(m/60)} t ${m%60} min` : `${m} min`; }
 /* ================= APPLE SUNDHED (via iPhone-genvej + udklipsholder) ================= */
 function hOf(k){ const d = state.days[k]; return d && d.health; }
@@ -1612,11 +1654,11 @@ function energyWeekCard(){ const wds = [1,2,3,4,5,6,0], todayK = iso(new Date())
     <div class="row between" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)"><span>I alt (${done.length} afsluttede dage)</span><b>${sum > 0 ? '+' : sum < 0 ? '−' : ''}${fmt(sum)} kcal</b></div>
     <div class="muted">${done.length ? `Snit ${balText(sum/done.length)} pr. dag · ca. ${(Math.abs(sum)/7700).toFixed(2).replace('.',',')} kg ${sum < 0 ? 'fedt forbrændt' : 'oplagret'}` : 'Log mad for at se din balance'} · sort = underskud, grå = overskud · i dag er lys, fordi dagen ikke er slut</div></div>`; }
 function statsCard(){
-  const w = weekActive(mondayOf(new Date())), st = streak(), goal = 5, pct = Math.min(1, w.n/goal);
+  const w = weekActive(mondayOf(new Date())), st = streak(), goal = Math.max(1, 5 - w.s), pct = Math.min(1, w.n/goal);
   return `<div class="card statc">
     <div class="ringsm">${ring(w.n, goal, '#ff5a1f', 92)}<div class="c"><b>${w.n}</b><span>af ${goal}</span></div></div>
     <div class="nums"><div><b>${hm(w.m)}</b><span>aktiv tid</span></div><div><b>${st ? '🔥 ' + st : '–'}</b><span>${st === 1 ? 'uge i træk' : 'uger i træk'}</span></div>
-      <div class="muted" style="grid-column:1/-1">${w.n >= goal ? 'Ugens mål er nået – flot! 🎉' : `${goal - w.n} aktive dage mere for at nå ugens mål. En aktiv dag = træning klaret eller 20+ min ekstra.`}</div></div></div>`;
+      <div class="muted" style="grid-column:1/-1">${w.n >= goal ? 'Ugens mål er nået – flot! 🎉' : `${goal - w.n} aktive dage mere for at nå ugens mål. En aktiv dag = træning klaret eller 20+ min ekstra.`}${w.s ? ` 🤒 ${w.s} ${w.s === 1 ? 'sygedag' : 'sygedage'} er trukket fra målet – din streak er beskyttet.` : ''}</div></div></div>`;
 }
 let calOff = 0;
 function calendarCard(){
@@ -1626,14 +1668,15 @@ function calendarCard(){
   for (let n = 1; n <= dim; n++) {
     const k = iso(new Date(first.getFullYear(), first.getMonth(), n, 12)), d = state.days[k], a = isActive(k), x = extrasOf(k).length, ph = cyclePhase(k);
     if (a) act++; min += activeMin(k); if (d && d.done && schForKey(k).type === 'str') str++;
-    cells += `<span class="${a ? 'a' : x ? 'x' : ''} ${k===today?'t':''} ${k>today?'f':''}">${n}${ph && ph.d <= 5 ? '<i></i>' : ''}</span>`;
+    cells += `<span class="${a ? 'a' : x ? 'x' : ''} ${k===today?'t':''} ${k>today?'f':''}">${n}${ph && ph.d <= 5 ? '<i></i>' : ''}${!a && feelOf(k) === 'sick' ? '<em>🤒</em>' : ''}</span>`;
   }
   return `<div class="card"><div class="row between"><h2 style="margin:0">🗓️ ${first.toLocaleDateString('da-DK',{month:'long',year:'numeric'})}</h2>
       <span><button class="btn small gray" onclick="calOff--;render()">‹</button> <button class="btn small gray" ${calOff>=0?'disabled style="opacity:.3"':''} onclick="calOff++;render()">›</button></span></div>
     <div class="cal">${SHORT.map(x => `<b>${x[0]}</b>`).join('')}${cells}</div>
-    <div class="legend"><span><i class="la"></i>Aktiv dag</span><span><i class="lx"></i>Lidt ekstra</span><span><i class="lp"></i>Menstruation${calOff >= 0 ? ' (beregnet)' : ''}</span></div>
+    <div class="legend"><span><i class="la"></i>Aktiv dag</span><span><i class="lx"></i>Lidt ekstra</span>${cycOn() ? `<span><i class="lp"></i>Menstruation${calOff >= 0 ? ' (beregnet)' : ''}</span>` : ''}${extraLegend()}</div>
     <div class="nums3"><div><b>${act}</b><span>aktive dage</span></div><div><b>${hm(min)}</b><span>aktiv tid</span></div><div><b>${str}</b><span>styrkepas</span></div></div></div>`;
 }
+function extraLegend(){ return '<span>🤒 Syg</span>'; }
 function relDay(k){ const t = iso(new Date()), y = iso(addDays(new Date(), -1)); return k === t ? 'I dag' : k === y ? 'I går' : dk(new Date(k+'T12:00:00')); }
 function feedCard(){
   const items = [];
@@ -1660,7 +1703,7 @@ function openQuick(){
         <button onclick="openWeight()"><span>⚖️</span>Vægt</button>
         <button onclick="closeSheet();tab='today';render();setTimeout(()=>$('#mood')&&$('#mood').scrollIntoView({behavior:'smooth'}),50)"><span>📓</span>Humør</button>
       </div>
-      <button class="opt ${near ? 'sel' : ''}" onclick="logPeriodToday()"><span class="e">🩸</span><span class="t"><b>Menstruation startede i dag</b><span>${n ? `Forventet ${dk(n.date)} · bruges til at beregne næste` : 'Så kan appen beregne din næste'}</span></span><span class="plus">＋</span></button>
+      ${cycOn() ? `<button class="opt ${near ? 'sel' : ''}" onclick="logPeriodToday()"><span class="e">🩸</span><span class="t"><b>Menstruation startede i dag</b><span>${n ? `Forventet ${dk(n.date)} · bruges til at beregne næste` : 'Så kan appen beregne din næste'}</span></span><span class="plus">＋</span></button>` : ''}
     </div>`;
 }
 function openWeight(){
@@ -1688,10 +1731,12 @@ function renderSettings(){
     <div class="group"><div style="padding:10px 12px 0"><div class="wtog" style="margin-bottom:10px"><button class="${g.auto?'on':''}" onclick="setS('auto',true);render()">Automatisk</button><button class="${!g.auto?'on':''}" onclick="setManual()">Mine egne</button></div></div>
       ${srow('Kalorier', num('kcal', g.auto ? G0.kcal : g.kcal, 'kcal', g.auto))}
       ${srow('Protein', num('protein', g.auto ? G0.p : g.protein, 'g', g.auto))}</div>
-    <div class="gnote">${g.auto ? `Beregnes hver dag ud fra vægt (${String(G0.w).replace('.',',')} kg), højde, alder, træning, cyklus og vægtudvikling – aldrig under dit hvilestofskifte (${G0.bmr} kcal).` : `Dine egne mål bruges hver dag. Automatisk ville i dag være ${G0.autoK} kcal · ${G0.autoP} g.`}</div>
+    <div class="gnote">${g.auto ? `Beregnes hver dag ud fra køn, vægt (${String(G0.w).replace('.',',')} kg), højde, alder, træning, ${cycOn() ? 'cyklus, ' : ''}hvordan du har det og vægtudvikling – aldrig under dit hvilestofskifte (${G0.bmr} kcal).` : `Dine egne mål bruges hver dag. Automatisk ville i dag være ${G0.autoK} kcal · ${G0.autoP} g.`}</div>
 
     <div class="gtitle">Om dig</div>
-    <div class="group">${srow('Højde', num('height', g.height, 'cm', false, 'render()'))}${srow('Alder', num('age', g.age, 'år', false, 'render()'))}
+    <div class="group"><div style="padding:10px 12px 0"><div class="wtog" style="margin-bottom:10px"><button class="${g.sex !== 'm' ? 'on' : ''}" onclick="setSex('f')">♀ Kvinde</button><button class="${g.sex === 'm' ? 'on' : ''}" onclick="setSex('m')">♂ Mand</button></div></div>
+      ${g.sex !== 'm' ? srow('Følg menstruation', `<input type="checkbox" ${g.cycle !== false ? 'checked' : ''} style="width:22px;height:22px;accent-color:#0a0a0a" onchange="setS('cycle',this.checked);render()">`, 'Cyklus, faser og smerter i appen') : ''}
+      ${srow('Højde', num('height', g.height, 'cm', false, 'render()'))}${srow('Alder', num('age', g.age, 'år', false, 'render()'))}
       <div class="srow" onclick="openWeight()"><span>Vægt</span><span class="sv"><b>${String(curWeight()).replace('.',',')}</b><em>kg ›</em></span></div></div>
 
     <div class="gtitle">Vægtmål</div>
@@ -1703,14 +1748,14 @@ function renderSettings(){
     <div class="gnote">${(() => { const WG = wGoal(); if (WG && !WG.reached && WG.need > 0.5) return `⚠️ Over 0,5 kg/uge er hårdt for stofskiftet. Kaloriemålet holdes skånsomt, så realistisk dato er ca. <b>${dk(WG.safeDate, { day:'numeric', month:'short', year:'numeric' })}</b>.`;
       return 'Kaloriemålet tilpasses dit mål – højst 500 kcal under din forbrænding. 0,25–0,5 kg/uge er skånsomt for stofskiftet.'; })()}</div>
 
-    <div class="gtitle">Menstruation</div>
+    ${cycOn() ? `<div class="gtitle">Menstruation</div>
     <div class="group">
       ${srow('Seneste startede', `<input type="date" value="${lastPeriod() || ''}" max="${iso(new Date())}" onchange="editLastPeriod(this.value);toast('Gemt · '+dk(new Date(this.value+'T12:00:00')));render()">`)}
       ${srow('Cykluslængde', c.n ? `<b>${c.len}</b><em>dage</em>` : num('cycleLen', g.cycleLen, 'dage', false, 'render()'), c.n ? `Beregnet ud fra dine ${c.n + 1} seneste` : 'Bliver beregnet, når du har registreret 2+')}
       <div class="srow"><span>Næste menstruation</span><span class="sv"><b>${n ? periodLine(false) : '–'}</b></span></div>
       ${n ? `<div class="srow"><span>Ægløsning ca.</span><span class="sv">${dk(n.ov)}</span></div>` : ''}
       <button class="srow act" onclick="logPeriodToday()">🩸 Den startede i dag</button></div>
-    <div class="gnote">Tip: tryk <b>+</b> → 🩸 hver gang, den starter. Så bliver beregningen mere præcis over tid.</div>
+    <div class="gnote">Tip: tryk <b>+</b> → 🩸 hver gang, den starter. Så bliver beregningen mere præcis over tid.</div>` : ''}
 
     <div class="gtitle">Træningsplan</div>
     <div class="group">${srow('Start på 4-ugers plan', `<input type="date" value="${g.programStart}" onchange="setS('programStart',this.value);render()">`, `Du er i uge ${weekInfo().n}`)}</div>
@@ -1758,6 +1803,7 @@ function importData(inp){
     Promise.all(ps.map(p => pPut(p).catch(() => {}))).then(() => { localStorage.setItem(KEY, JSON.stringify(o)); location.reload(); });
   });
 }
+function setSex(v){ state.settings.sex = v; save(); toast(v === 'm' ? '♂ Mand – kalorier er beregnet for mænd' : '♀ Kvinde'); render(); }
 function setS(k, v){ state.settings[k] = v; save(); toast('Gemt'); header(); }
 function setManual(){ const G = goalFor(); state.settings.auto = false; state.settings.kcal = G.kcal; state.settings.protein = G.p; save(); toast('Skriv dine egne mål'); render(); }
 function addWeight(){ const v = parseFloat(($('#wIn').value||'').replace(',','.')); if (!(v > 30 && v < 200)) { toast('Skriv en gyldig vægt'); return; } state.weights = state.weights.filter(w => w.date !== iso(new Date())); state.weights.push({ date: iso(new Date()), kg: v }); save(); toast('Vægt gemt'); render(); }
@@ -1810,7 +1856,7 @@ function weightCard(){ const ws = wSorted(), WG = wGoal(), tr = trendOf(ws), las
     ${ws.length ? `<div style="margin-top:10px">${ws.slice(-5).reverse().map((w,i) => { const prev = ws[ws.length - 2 - i]; const d = prev ? Math.round((w.kg - prev.kg)*10)/10 : null;
       return `<div class="row between" style="padding:7px 0;border-top:1px solid var(--line);font-size:14px"><span>${dk(new Date(w.date+'T12:00:00'))}</span><span><b>${f1(w.kg)} kg</b> <span class="muted">${d == null ? '' : (d > 0 ? '+' : d < 0 ? '−' : '±') + f1(Math.abs(d))}</span> <button style="border:0;background:none;color:#a3a3a3;font-size:16px" onclick="delWeight('${w.date}')">✕</button></span></div>`; }).join('')}</div>` : ''}
   </div>`; }
-function cycleBands(t0, t1, X, top, h){ if (!state.periods.length) return ''; let out = '', cur = null, s = null;
+function cycleBands(t0, t1, X, top, h){ if (!cycOn() || !state.periods.length) return ''; let out = '', cur = null, s = null;
   const flush = e => { if (cur) out += `<rect x="${X(s)}" y="${top}" width="${Math.max(1, X(e) - X(s))}" height="${h}" fill="${cur === 'Menstruation' ? '#fde4e4' : '#efefef'}"/>`; };
   for (let t = t0; t <= t1 + 864e5; t += 864e5) { const ph = cyclePhase(iso(new Date(t))), n = ph && ['Menstruation','Lutealfase'].includes(ph.name) ? ph.name : null;
     if (n !== cur) { flush(t); cur = n; s = t; } }
