@@ -1554,16 +1554,17 @@ function hDate(line){ let m = line.match(/(\d{4})-(\d{1,2})-(\d{1,2})/); if (m) 
   const mo = ['jan','feb','mar','apr','maj','jun','jul','aug','sep','okt','nov','dec']; m = line.match(/(\d{1,2})\.?\s+([a-zæøå]{3})[a-zæøå.]*\s+(\d{4})/i);
   if (m) { const n = mo.indexOf(m[2].toLowerCase()); if (n >= 0) return `${m[3]}-${String(n+1).padStart(2,'0')}-${m[1].padStart(2,'0')}`; } return null; }
 function parseHealth(txt){ const by = {}, today = iso(new Date()), oldest = iso(addDays(new Date(), -31)), und = { steps: [], active: [] };
-  const put = (d, st, ac) => { if (!d || d > today || d < oldest) return; const o = by[d] || (by[d] = { date: d, steps: 0, active: 0 }); if (st) o.steps = st; if (ac) o.active = ac; };
+  // null = felt ikke med i de indsatte data (bevarer eksisterende værdi); 0 = målt 0
+  const put = (d, st, ac) => { if (!d || d > today || d < oldest) return; const o = by[d] || (by[d] = { date: d, steps: null, active: null }); if (st != null) o.steps = st; if (ac != null) o.active = ac; };
   String(txt).split(/\n|;;/).forEach(line => { if (!/minuge/i.test(line)) return;
-    const g = k => { const m = line.match(new RegExp(k + '\\s*[=:]\\s*(\\d[\\d.,\\s]*\\d|\\d)', 'i')); return m ? Math.round(hNum(m[1])) : 0; };
+    const g = k => { const m = line.match(new RegExp(k + '\\s*[=:]\\s*(\\d[\\d.,\\s]*\\d|\\d)', 'i')); return m ? Math.round(hNum(m[1])) : null; };
     const st = g('steps'), ac = g('active'), dm = line.match(/date\s*[=:]\s*(.*?)(?=\s*(?:steps|active)\s*[=:]|$)/i);
     if (!dm) return put(today, st, ac); const d = hDate(dm[1]); if (d) return put(d, st, ac);
-    if (st) und.steps.push(st); if (ac) und.active.push(ac); });
+    if (st != null) und.steps.push(st); if (ac != null) und.active.push(ac); });
   // Lines without a usable date come oldest → newest, the last one being today
-  ['steps', 'active'].forEach(k => { const a = und[k]; a.forEach((v, i) => put(iso(addDays(new Date(), i - a.length + 1)), k === 'steps' ? v : 0, k === 'active' ? v : 0)); });
-  return Object.values(by).filter(x => x.steps > 0 || x.active > 0).sort((a, b) => a.date < b.date ? -1 : 1); }
-function saveHealth(list, src){ list.forEach(x => { const d = day(x.date), o = d.health || {}; d.health = { steps: x.steps || o.steps || 0, active: x.active || o.active || 0, at: new Date().toTimeString().slice(0,5), src }; });
+  ['steps', 'active'].forEach(k => { const a = und[k]; a.forEach((v, i) => put(iso(addDays(new Date(), i - a.length + 1)), k === 'steps' ? v : null, k === 'active' ? v : null)); });
+  return Object.values(by).filter(x => x.steps != null || x.active != null).sort((a, b) => a.date < b.date ? -1 : 1); }
+function saveHealth(list, src){ list.forEach(x => { const d = day(x.date), o = d.health || {}; d.health = { steps: x.steps ?? o.steps ?? 0, active: x.active ?? o.active ?? 0, at: new Date().toTimeString().slice(0,5), src }; });
   state.lastHealth = new Date().toISOString(); delete state.hPending; save(); closeSheet(); render();
   const t = list[list.length-1]; if (list.length > 1) { toast(`⌚ ${list.length} dage opdateret fra Apple Sundhed`); return; }
   toast(`⌚ ${t.steps ? fmt(t.steps) + ' skridt' : ''}${t.steps && t.active ? ' · ' : ''}${t.active ? fmt(t.active) + ' kcal aktiv' : ''} gemt`); }
