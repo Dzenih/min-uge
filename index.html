@@ -1523,7 +1523,14 @@ function saveHealth(list, src){ list.forEach(x => { const d = day(x.date), o = d
   toast(`⌚ ${t.steps ? fmt(t.steps) + ' skridt' : ''}${t.steps && t.active ? ' · ' : ''}${t.active ? fmt(t.active) + ' kcal aktiv' : ''} gemt`); }
 function runShortcut(){ state.hPending = Date.now(); save(); location.href = 'shortcuts://run-shortcut?name=' + encodeURIComponent(state.settings.hsName || 'Min uge sundhed'); }
 async function pasteHealth(){ let txt = ''; try { txt = await navigator.clipboard.readText(); } catch(e) { toast('Tillad "Indsæt" for at hente data'); return; }
-  const l = parseHealth(txt); if (!l.length) { toast('Fandt ingen sundhedsdata – kør genvejen først'); return; } saveHealth(l, 'apple'); }
+  const l = parseHealth(txt); if (!l.length) { healthDebug(txt); return; } saveHealth(l, 'apple'); }
+function healthDebug(txt){ const t = String(txt || '');
+  $('#overlay').innerHTML = `<div class="backdrop" onclick="closeSheet()"></div><div class="sheet"><div class="grab"></div>
+    <div class="shead"><h3>🔍 Det fik appen</h3><button class="btn small gray" onclick="closeSheet()">Luk</button></div>
+    <div class="muted" style="margin-bottom:8px">Appen fandt ingen linjer med <code>minuge … steps=…</code>. Her er præcis det, der lå i udklipsholderen (${t.length} tegn):</div>
+    <textarea id="hDbg" class="field" style="height:180px;font:12px ui-monospace,Menlo,monospace;white-space:pre">${esc(t.slice(0, 3000)) || '(tom)'}</textarea>
+    <button class="btn full" style="margin-top:8px" onclick="const l=parseHealth($('#hDbg').value);if(l.length)saveHealth(l,'apple');else toast('Stadig ingen data')">Prøv igen med teksten ovenfor</button>
+    <div class="muted" style="margin-top:8px">Tag et skærmbillede af det her og send det, så retter vi genvejen.</div></div>`; }
 function manualHealth(){ const st = hNum($('#hS').value), ac = hNum($('#hA').value); if (!(st > 0 || ac > 0)) { toast('Skriv skridt eller aktiv energi'); return; } saveHealth([{ date: iso(new Date()), steps: Math.round(st), active: Math.round(ac) }], 'manual'); }
 function openHealth(){ const H = hOf(iso(new Date()));
   $('#overlay').innerHTML = `<div class="backdrop" onclick="closeSheet()"></div><div class="sheet"><div class="grab"></div>
