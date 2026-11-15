@@ -975,10 +975,7 @@ function renderToday(){
     </div>
     ${energyCard(k)}
     ${suggestCard(wd)}
-    ${extraCard(k)}
-    ${workAt(wd)==='office' ? `<div class="card"><h2>🚗 Kontordag</h2><div style="font-size:14px">Kefir-skålen før afgang · shaken på formiddagen · frokost senest kl. 11–12 · skyr eller æg inden for 1 time efter hjemkomst.</div></div>`
-      : `<div class="card"><h2>🏡 Hjemmedag</h2><div style="font-size:14px">Morgenmad i ro inden kl. 9 · træn gerne formiddag eller i frokostpausen · frokost lige efter træning${LIGHT.includes(sch.type) ? ' · ekstra: 20 min rask gang på gangbåndet i en pause' : ''}.</div></div>`}
-    ${d.done ? afterCard(k, sch) : ''}${goalCard(k)}
+    ${d.done ? afterCard(k, sch) : ''}
     ${feelRow(k)}
     ${ph ? `<div class="card phase"><b>${ph.e} ${ph.name} · cyklusdag ${ph.d}</b>${cycleBar(ph)}<div style="margin-top:4px">${ph.tip}</div>${ph.more ? `<details class="more"><summary>Læs mere om ${ph.name.toLowerCase()}en</summary><div>${ph.more.split('\n').map(l => esc(l)).join('<br>')}</div></details>` : ''}${periodLine(true)}</div>` : ''}
     <div class="card">
