@@ -286,6 +286,8 @@
   .cal span { position:relative; aspect-ratio:1; display:flex; align-items:center; justify-content:center; font-size:13px; border-radius:99px; font-variant-numeric:tabular-nums; }
   .cal span.a { background:var(--teal); color:#fff; font-weight:700; } .cal span.x { background:#D4CFC2; }
   .cal span.t { box-shadow: inset 0 0 0 2px var(--orange); } .cal span.f { color:#B9B4A8; }
+  .cal span.sel { outline: 2px solid var(--ink); outline-offset: 1px; }
+  .wk .d.sel { outline: 2px solid var(--ink); outline-offset: 1px; }
   .cal span i { position:absolute; bottom:2px; width:5px; height:5px; border-radius:9px; background:var(--red); }
   .legend { display:flex; gap:12px; flex-wrap:wrap; font-size:11px; color:var(--muted); margin-top:8px; } .legend i { display:inline-block; width:9px; height:9px; border-radius:9px; margin-right:4px; vertical-align:-1px; }
   .la { background:var(--teal); } .lx { background:#D4CFC2; } .lp { background:var(--red); }
@@ -812,7 +814,13 @@ function mondayOf(d){ const x = new Date(d); const w = (x.getDay()+6)%7; x.setDa
 let viewK = null;
 function vIso(){ return viewK || iso(new Date()); }
 function vDate(){ return viewK ? new Date(viewK+'T12:00:00') : new Date(); }
-function setView(k){ viewK = k && k !== iso(new Date()) ? k : null; render(); scrollTo(0,0); }
+function setView(k, keepScroll){
+  viewK = k && k !== iso(new Date()) ? k : null;
+  const s = vDate(), n = new Date();
+  calOff = Math.min(0, (s.getFullYear() - n.getFullYear()) * 12 + s.getMonth() - n.getMonth());
+  render();
+  if (!keepScroll) scrollTo(0,0);
+}
 function day(k = vIso()){ return state.days[k] || (state.days[k] = { food:[], sets:{}, done:false, checks:{}, water:0 }); }
 function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function r0(n){ return Math.round(n); }
@@ -1811,7 +1819,7 @@ function renderWeek(){
   const cells = order.map((wd,i) => {
     const k = keyForWeekday(wd), dd = state.days[k], t = dd ? totals(k) : { kcal:0, p:0 };
     if (dd && dd.done) doneCount++; if (t.kcal > 0) { kcalSum += t.kcal; kcalDays++; }
-    return `<div class="d ${k===today?'today':''}"><b>${SHORT[i]}</b><span class="e">${dd && dd.done ? '✅' : schFor(wd).e}</span><div class="mini"><div style="height:${Math.min(100, t.kcal/goalFor(k).kcal*100)}%;background:${t.kcal>goalFor(k).kcal*1.05?'#e11d48':'#ff5a1f'}"></div></div>${t.kcal ? r0(t.kcal) : '–'}<small class="muted" style="display:block;font-size:10px">/${goalFor(k).kcal}</small><button class="loc" onclick="setWork(${wd},'${workAt(wd)==='home'?'office':'home'}')">${workAt(wd)==='home'?'🏡':'🏢'}</button></div>`;
+    return `<div class="d ${k===today?'today':''} ${k===vIso()?'sel':''}"><b>${SHORT[i]}</b><span class="e">${dd && dd.done ? '✅' : schFor(wd).e}</span><div class="mini"><div style="height:${Math.min(100, t.kcal/goalFor(k).kcal*100)}%;background:${t.kcal>goalFor(k).kcal*1.05?'#e11d48':'#ff5a1f'}"></div></div>${t.kcal ? r0(t.kcal) : '–'}<small class="muted" style="display:block;font-size:10px">/${goalFor(k).kcal}</small><button class="loc" onclick="setWork(${wd},'${workAt(wd)==='home'?'office':'home'}')">${workAt(wd)==='home'?'🏡':'🏢'}</button></div>`;
   }).join('');
     $('#view').innerHTML = `
     ${statsCard()}
@@ -1975,7 +1983,7 @@ function calendarCard(){
   for (let n = 1; n <= dim; n++) {
     const k = iso(new Date(first.getFullYear(), first.getMonth(), n, 12)), d = state.days[k], a = isActive(k), x = extrasOf(k).length, ph = cyclePhase(k);
     if (a) act++; min += activeMin(k); if (d && d.done && schForKey(k).type === 'str') str++;
-    cells += `<span class="${a ? 'a' : x ? 'x' : ''} ${k===today?'t':''} ${k>today?'f':''}" ${k<=today ? `onclick="tab='today';setView('${k}')"` : ''}>${n}${ph && ph.name === 'Menstruation' ? '<i></i>' : ''}${!a && feelOf(k) === 'sick' ? '<em>🤒</em>' : ''}</span>`;
+    cells += `<span class="${a ? 'a' : x ? 'x' : ''} ${k===today?'t':''} ${k===vIso()?'sel':''} ${k>today?'f':''}" ${k<=today ? `onclick="setView('${k}', true)"` : ''}>${n}${ph && ph.name === 'Menstruation' ? '<i></i>' : ''}${!a && feelOf(k) === 'sick' ? '<em>🤒</em>' : ''}</span>`;
   }
   return `<div class="card"><div class="row between"><h2 style="margin:0">🗓️ ${first.toLocaleDateString('da-DK',{month:'long',year:'numeric'})}</h2>
       <span><button class="btn small gray" onclick="calOff--;render()">‹</button> <button class="btn small gray" ${calOff>=0?'disabled style="opacity:.3"':''} onclick="calOff++;render()">›</button></span></div>
