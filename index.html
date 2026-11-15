@@ -1062,7 +1062,8 @@ async function aiGuess(){
         body: JSON.stringify({ contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: 'image/jpeg', data: aiPhoto.split(',')[1] } }] }], generationConfig: { responseMimeType: 'application/json', temperature: 0.2 } }) });
       const j = await r.json().catch(() => ({}));
       if (!r.ok) { if (r.status === 404) continue;
-        aiErr = r.status === 400 || r.status === 403 ? 'Nøglen virker ikke. Tjek den under Indstillinger.' : r.status === 429 ? 'Gratis-grænsen er nået lige nu – prøv igen om lidt.' : ((j.error && j.error.message) || 'Fejl ' + r.status); break; }
+        const gm = (j.error && j.error.message) || '';
+        aiErr = r.status === 400 || r.status === 403 ? (/api key|API_KEY/i.test(gm) ? 'Google siger, at nøglen ikke er gyldig (' + gKey().slice(0, 4) + '…, ' + gKey().length + ' tegn – en nøgle starter med AIza og har 39 tegn). Kopiér den igen fra aistudio.google.com/apikey.' : 'Google svarede: ' + (gm || 'fejl ' + r.status)) : r.status === 429 ? 'Gratis-grænsen er nået lige nu – prøv igen om lidt.' : ((j.error && j.error.message) || 'Fejl ' + r.status); break; }
       const t = ((j.candidates || [])[0]?.content?.parts || []).filter(x => !x.thought).map(x => x.text || '').join('');
       const js = (t.match(/\{[\s\S]*\}/) || [])[0];
       if (!js) { aiErr = 'Gemini svarede uden resultat – prøv et nyt billede.'; break; }
