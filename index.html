@@ -936,7 +936,7 @@ function header(){
 }
 
 /* Hver fane har sin kategorifarve (fuld farve til overskrift/aktiv fane, lys tint til siden). Samme farver som logoets prikker. */
-const TAB_COLORS = { today:['#2F5D50','#E1ECE7'], food:['#B0853F','#F4EBDA'], train:['#3F7A8C','#E2EEF1'], week:['#7D6B93','#ECE8F1'] };
+const TAB_COLORS = { today:['#2F5D50','#E1ECE7'], food:['#B0853F','#F4EBDA'], train:['#3F7A8C','#E2EEF1'], week:['#4A8A74','#E6F1EC'] };
 function applyTabColors(){
   const [c, t] = TAB_COLORS[tab] || TAB_COLORS.today, s = document.documentElement.style;
   s.setProperty('--teal', c); s.setProperty('--teal2', c); s.setProperty('--spruce-t', t); s.setProperty('--bg', t);
