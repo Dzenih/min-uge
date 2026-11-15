@@ -7,14 +7,14 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Min uge">
-<meta name="theme-color" content="#f2f2f2">
+<meta name="theme-color" content="#F5F3EE">
 <link rel="apple-touch-icon" href="icon.png">
 <link rel="icon" href="icon.png">
 <title>Min uge</title>
 <style>
   :root {
-    --teal: #0a0a0a; --teal2: #404040; --ink: #0a0a0a; --muted: #737373; --line: #e8e8e8;
-    --bg: #f2f2f2; --card: #fff; --orange: #ff5a1f; --red: #e11d48; --blue: #525252; --violet: #262626;
+    --teal: #2F5D50; --teal2: #2F5D50; --ink: #1E2B2A; --muted: #6E7A77; --line: #E4E0D6;
+    --bg: #F5F3EE; --card: #fff; --orange: #B0853F; --red: #B5654A; --blue: #3F7A8C; --violet: #7D6B93;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; font-size: 16px; }
@@ -83,20 +83,20 @@
   .entry .t b { display: block; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .entry .k { text-align: right; font-size: 14px; font-weight: 600; }
   .entry .k span { display: block; font-size: 12px; color: var(--muted); font-weight: 400; }
-  .scanbox { position: relative; border-radius: 16px; overflow: hidden; background: #0a0a0a; aspect-ratio: 4/3; margin-bottom: 10px; }
+  .scanbox { position: relative; border-radius: 16px; overflow: hidden; background: var(--ink); aspect-ratio: 4/3; margin-bottom: 10px; }
   .scanbox video { width: 100%; height: 100%; object-fit: cover; display: block; }
   .scanbox i { position: absolute; left: 12%; right: 12%; top: 50%; height: 2px; background: #f43f5e; box-shadow: 0 0 10px #f43f5e; }
   .chipm { background:#f0f0f0; border-radius:99px; padding:4px 10px; }
   .actg { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px; }
   .actg button { background:#f0f0f0; border-radius:14px; padding:10px 4px; font-size:13px; } .actg button span { display:block; font-size:26px; }
-  .actg button.on { background:#f0f0f0; outline:2px solid #0a0a0a; }
+  .actg button.on { background:#f0f0f0; outline:2px solid var(--ink); }
   .adj { margin-top:10px; font-size:13px; background: rgba(255,255,255,.75); border-radius: 12px; padding: 8px 10px; }
   .lg { display:flex; align-items:center; gap:8px; flex-wrap:wrap; background:#f7f7f7; border-radius:12px; padding:8px 10px; margin-top:8px; font-size:14px; }
   .lg .st { display:flex; align-items:center; gap:4px; } .lg .st button { width:32px; height:32px; border-radius:99px; background:#e8e8e8; font-size:18px; } .lg .st b { min-width:34px; text-align:center; font-size:17px; }
-  .lg .kg button { padding:4px 9px; border-radius:99px; background:#e8e8e8; font-size:12px; margin-right:3px; } .lg .kg button.on { background:#0a0a0a; color:#fff; }
+  .lg .kg button { padding:4px 9px; border-radius:99px; background:#e8e8e8; font-size:12px; margin-right:3px; } .lg .kg button.on { background:var(--ink); color:#fff; }
   .mw .d span { display:block; font-size:16px; line-height:1.3; }
   .scale { display:flex; gap:4px; margin:4px 0 10px; } .scale button { flex:1; font-size:22px; padding:6px 0; border-radius:12px; background:#f0f0f0; filter:grayscale(.7); opacity:.7; }
-  .scale button.on { background:#f0f0f0; filter:none; opacity:1; outline:2px solid #0a0a0a; }
+  .scale button.on { background:#f0f0f0; filter:none; opacity:1; outline:2px solid var(--ink); }
   .del { color: #a3a3a3; font-size: 18px; padding: 4px; }
   .star { font-size: 18px; padding: 4px; color: #d4d4d4; } .star.on { color: #f59e0b; }
 
@@ -107,10 +107,11 @@
   .sheet.search { height: 82vh; height: 82dvh; }
   .sheet h3 { margin: 0 0 10px; font-size: 19px; }
   .hero { position: relative; }
-  .swapbtn { position: absolute; top: 14px; right: 14px; background: rgba(255,255,255,.85); color: #0a0a0a; }
+  .sheet .grab { background: #CFC9BB; }
+  .swapbtn { position: absolute; top: 14px; right: 14px; background: rgba(255,255,255,.85); color: var(--ink); }
   .wtog { display:flex; gap:6px; background:#f0f0f0; border-radius:99px; padding:4px; margin-bottom:12px; }
   .wtog button { flex:1; border:0; border-radius:99px; padding:9px 6px; font-weight:700; font-size:14px; background:transparent; color:#525252; }
-  .wtog button.on { background:#fff; color:#0a0a0a; box-shadow:0 1px 4px rgba(0,0,0,.12); }
+  .wtog button.on { background:#fff; color:var(--ink); box-shadow:0 1px 4px rgba(0,0,0,.12); }
   .why { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
   .why span { background:#fff; border-radius:99px; padding:4px 10px; font-size:12px; border:1px solid #e8e8e8; }
   .wk .loc { display:block; border:0; background:#f0f0f0; border-radius:8px; margin-top:4px; padding:2px 0; font-size:14px; width:100%; }
@@ -122,7 +123,7 @@
   .added { background: #f2f2f2; border-radius: 14px; padding: 10px; margin-bottom: 10px; }
   .added .sum { font-size: 14px; margin-bottom: 6px; } .added .sum b { color: var(--orange); }
   .added .chip { display: inline-flex; align-items: center; gap: 4px; background: #fff; border: 1px solid #d4d4d4; border-radius: 99px; padding: 4px 4px 4px 10px; margin: 0 4px 4px 0; font-size: 13px; }
-  .added .chip button { border: 0; background: #f0f0f0; border-radius: 99px; width: 22px; height: 22px; font-size: 11px; color: #737373; }
+  .added .chip button { border: 0; background: #f0f0f0; border-radius: 99px; width: 22px; height: 22px; font-size: 11px; color: var(--muted); }
   .tabs { display: flex; background: #f0f0f0; border-radius: 12px; padding: 3px; margin-bottom: 12px; }
   .tabs button { flex: 1; padding: 8px 4px; border-radius: 10px; font-size: 14px; color: var(--muted); }
   .tabs button.on { background: #fff; color: var(--ink); font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,.08); }
@@ -140,10 +141,10 @@
   .parse { margin: -2px 0 10px; }
   .pl { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 12px; background: #f2f2f2; margin-bottom: 6px; font-size: 14px; }
   .pl .e { font-size: 22px; } .pl .t { flex: 1; } .pl .v { text-align: right; white-space: nowrap; color: var(--orange); font-weight: 600; }
-  .pl .v small { color: #737373; font-weight: 500; }
+  .pl .v small { color: var(--muted); font-weight: 500; }
   .pl.unk { background: #f2f2f2; } .pl.tot { background: #ececec; }
   textarea.field { resize: none; font: inherit; }
-  .lbl { font-size: 12px; color: #737373; } .lbl .field { margin-top: 4px; font-size: 16px; color: inherit; }
+  .lbl { font-size: 12px; color: var(--muted); } .lbl .field { margin-top: 4px; font-size: 16px; color: inherit; }
   .calc { text-align: center; font-size: 15px; margin-bottom: 12px; }
   .calc b { font-size: 22px; color: var(--orange); }
 
@@ -153,10 +154,10 @@
   .days button.on { background: var(--teal); color: #fff; }
   .days button.today::after { content: ""; position: absolute; left: 50%; bottom: 3px; width: 5px; height: 5px; margin-left: -2.5px; border-radius: 50%; background: var(--orange); }
   .days button .ok { display: block; font-size: 11px; }
-  .hero { border-radius: 18px; padding: 16px; margin-bottom: 12px; color: #0a0a0a; }
+  .hero { border-radius: 18px; padding: 16px; margin-bottom: 12px; color: #fff; }
   .hero .big { font-size: 40px; }
   .hero h2 { margin: 4px 0 2px; font-size: 22px; }
-  .hero { background:#0a0a0a; color:#fff; } .t-rest { background:#262626; }
+  .hero { background:var(--teal); color:#fff; } .t-rest { background:var(--muted); }
   .ex { background: #fff; border-radius: 16px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(15,23,42,.06); overflow: hidden; }
   .ex .top { display: flex; align-items: center; gap: 10px; padding: 12px; width: 100%; text-align: left; }
   .ex .num { width: 30px; height: 30px; border-radius: 50%; background: var(--red); color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center; flex: none; }
@@ -184,10 +185,10 @@
   .timer .next { font-size: 13px; color: var(--muted); margin-bottom: 10px; }
   .segs { display: flex; gap: 2px; height: 10px; margin: 10px 0 14px; border-radius: 99px; overflow: hidden; }
   .segs div { height: 100%; }
-  .rest { position: fixed; left: 12px; right: 12px; bottom: calc(84px + env(safe-area-inset-bottom)); background: #0a0a0a; color: #fff; border-radius: 18px; padding: 12px 16px; z-index: 30; display: flex; align-items: center; gap: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.25); max-width: 536px; margin: 0 auto; }
+  .rest { position: fixed; left: 12px; right: 12px; bottom: calc(84px + env(safe-area-inset-bottom)); background: var(--ink); color: #fff; border-radius: 18px; padding: 12px 16px; z-index: 30; display: flex; align-items: center; gap: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.25); max-width: 536px; margin: 0 auto; }
   .rest b { font-size: 28px; font-variant-numeric: tabular-nums; }
   .rest .t { flex: 1; font-size: 14px; }
-  .toast { position: fixed; top: calc(14px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); background: #0a0a0a; color: #fff; padding: 10px 16px; border-radius: 99px; font-size: 14px; z-index: 60; box-shadow: 0 6px 18px rgba(0,0,0,.2); white-space: nowrap; }
+  .toast { position: fixed; top: calc(14px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 10px 16px; border-radius: 99px; font-size: 14px; z-index: 60; box-shadow: 0 6px 18px rgba(0,0,0,.2); white-space: nowrap; }
 
   /* Week */
   .wk { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
@@ -208,13 +209,13 @@
   .more div { margin-top: 6px; line-height: 1.5; }
   .settings label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
 
-  /* ===== Monokromt design ===== */
-  :root { --teal:#0a0a0a; --ink:#0a0a0a; --muted:#737373; --line:#ececec; --bg:#f2f2f2; --orange:#ff5a1f; --red:#e11d48; }
+  /* ===== Nordic design (se designguiden i appen) ===== */
+  :root { --teal:#2F5D50; --teal2:#2F5D50; --ink:#1E2B2A; --muted:#6E7A77; --line:#E4E0D6; --bg:#F5F3EE; --orange:#B0853F; --red:#B5654A; --track:#EEEBE3; --spruce-t:#E1ECE7; --birch-t:#F4EBDA; --fjord-t:#E2EEF1; --heather-t:#ECE8F1; --clay-t:#F6E7E1; }
   html, body { font-family: -apple-system, "SF Pro Text", "Inter", "Helvetica Neue", Arial, sans-serif; letter-spacing: -.01em; -webkit-font-smoothing: antialiased; }
   header { background: var(--bg); color: var(--ink); border-radius: 0; padding: calc(10px + env(safe-area-inset-top)) 18px 6px; }
   header .htop { display:flex; align-items:flex-start; justify-content:space-between; }
   header .date { color: var(--muted); opacity: 1; font-size: 13px; font-weight: 500; }
-  header h1 { font-size: 32px; font-weight: 800; letter-spacing: -.03em; margin-top: 0; }
+  header h1 { font-size: 26px; font-weight: 600; letter-spacing: -.02em; margin-top: 0; }
   header .sub { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; opacity:1; }
   header .sub span { background:#fff; border:1px solid var(--line); border-radius:99px; padding:4px 10px; font-size:12px; font-weight:500; }
   .gear { width:40px; height:40px; border-radius:99px; background:#fff; border:1px solid var(--line); display:flex; align-items:center; justify-content:center; margin-top:4px; }
@@ -222,38 +223,38 @@
   main { padding: 8px 14px 14px; }
   .card { border-radius: 20px; box-shadow: none; border: 1px solid var(--line); padding: 16px; }
   .card h2 { font-size: 16px; font-weight: 700; letter-spacing: -.02em; }
-  .btn { background: #0a0a0a; border-radius: 99px; font-weight: 600; }
-  .btn.ghost, .btn.gray { background: #f0f0f0; color: #0a0a0a; }
-  .btn.small { border-radius: 99px; padding: 8px 13px; }
+  .btn { background: var(--teal); border-radius: 12px; font-weight: 600; }
+  .btn.ghost, .btn.gray { background: var(--spruce-t); color: var(--teal); }
+  .btn.small { border-radius: 10px; padding: 8px 13px; }
   .action { box-shadow:none; border:1px solid var(--line); border-radius:20px; }
-  .bar { height: 8px; background: #ededed; }
+  .bar { height: 8px; background: var(--track); }
   nav { grid-template-columns: repeat(5, 1fr); background: rgba(255,255,255,.92); border-top: 1px solid var(--line); align-items: end; }
-  nav button { color: #a3a3a3; font-weight: 500; font-size: 10.5px; gap: 3px; }
+  nav button { color: var(--muted); font-weight: 500; font-size: 10.5px; gap: 3px; }
   nav button svg.i { width: 24px; height: 24px; }
-  nav button.on { color: #0a0a0a; font-weight: 700; }
+  nav button.on { color: var(--teal); font-weight: 600; }
   nav .plusbtn { padding: 0; }
-  nav .plusbtn span { width: 52px; height: 52px; border-radius: 99px; background: #0a0a0a; color: #fff; font-size: 30px; font-weight: 300; line-height: 50px; display: block; margin: -14px auto 2px; box-shadow: 0 6px 16px rgba(0,0,0,.25); }
+  nav .plusbtn span { width: 52px; height: 52px; border-radius: 16px; background: var(--teal); color: #fff; font-size: 30px; font-weight: 300; line-height: 50px; display: block; margin: -14px auto 2px; box-shadow: 0 6px 16px rgba(47,93,80,.28); }
   .hero { border-radius: 22px; padding: 18px; }
   .hero .muted, .hero span:not(.btn):not(.big) { color: inherit; }
-  .hero .btn, .hero .btn.gray { background: #fff; color: #0a0a0a; }
+  .hero .btn, .hero .btn.gray { background: #fff; color: var(--teal); }
   .hero .adj, .hero .moved { background: rgba(255,255,255,.12); color: #fff; }
   .swapbtn { background: #fff; }
   .ex { box-shadow:none; border:1px solid var(--line); border-radius: 20px; }
-  .ex .num, .ex.B .num { background:#fff; color:#0a0a0a; border:2px solid #0a0a0a; }
-  .ex.done .num { background:#0a0a0a; color:#fff; }
-  .set { border-color:#d4d4d4; }
+  .ex .num, .ex.B .num { background:#fff; color:var(--teal); border:2px solid var(--teal); }
+  .ex.done .num { background:var(--teal); color:#fff; }
+  .set { border-color:#CFC9BB; }
   .chk { background:#fff; border-color: var(--line); }
-  .chk.on { background:#f5f5f5; border-color:#0a0a0a; }
-  .scale button { filter: grayscale(1); opacity:.6; background:#f5f5f5; }
-  .scale button.on { outline-color:#0a0a0a; background:#fff; }
+  .chk.on { background:var(--spruce-t); border-color:var(--teal); }
+  .scale button { filter: grayscale(1); opacity:.6; background:var(--bg); }
+  .scale button.on { outline-color:var(--teal); background:#fff; }
   .opt { border-color: var(--line); border-radius: 16px; }
-  .opt.sel { border-color:#0a0a0a; }
+  .opt.sel { border-color:var(--teal); }
   .days button { background:#fff; border:1px solid var(--line); border-radius: 14px; }
-  .days button.on { background:#0a0a0a; border-color:#0a0a0a; }
+  .days button.on { background:var(--teal); border-color:var(--teal); }
   .wk .d { background:#fff; }
-  .wk .d.today { border-color:#0a0a0a; }
+  .wk .d.today { border-color:var(--teal); }
   .toast { display:flex; align-items:center; gap:12px; }
-  .toast button { color:#ff8a5c; font-weight:700; }
+  .toast button { color:#E7C58E; font-weight:700; }
   .why span { border-color: var(--line); }
   .sheet { border-radius: 26px 26px 0 0; }
   .actg.quick { grid-template-columns: repeat(3,1fr); }
@@ -268,38 +269,38 @@
   .cal { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-top:12px; text-align:center; }
   .cal b { font-size:11px; color:var(--muted); font-weight:600; }
   .cal span { position:relative; aspect-ratio:1; display:flex; align-items:center; justify-content:center; font-size:13px; border-radius:99px; font-variant-numeric:tabular-nums; }
-  .cal span.a { background:#0a0a0a; color:#fff; font-weight:700; } .cal span.x { background:#d4d4d4; }
-  .cal span.t { box-shadow: inset 0 0 0 2px #ff5a1f; } .cal span.f { color:#c4c4c4; }
-  .cal span i { position:absolute; bottom:2px; width:5px; height:5px; border-radius:9px; background:#e11d48; }
+  .cal span.a { background:var(--teal); color:#fff; font-weight:700; } .cal span.x { background:#D4CFC2; }
+  .cal span.t { box-shadow: inset 0 0 0 2px var(--orange); } .cal span.f { color:#B9B4A8; }
+  .cal span i { position:absolute; bottom:2px; width:5px; height:5px; border-radius:9px; background:var(--red); }
   .legend { display:flex; gap:12px; flex-wrap:wrap; font-size:11px; color:var(--muted); margin-top:8px; } .legend i { display:inline-block; width:9px; height:9px; border-radius:9px; margin-right:4px; vertical-align:-1px; }
-  .la { background:#0a0a0a; } .lx { background:#d4d4d4; } .lp { background:#e11d48; }
+  .la { background:var(--teal); } .lx { background:#D4CFC2; } .lp { background:var(--red); }
   /* Indstillinger */
   .gtitle { font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin:18px 6px 6px; font-weight:600; }
   .group { background:#fff; border:1px solid var(--line); border-radius:18px; overflow:hidden; }
   .srow { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:0 16px; min-height:52px; border-bottom:1px solid #f0f0f0; font-size:15px; width:100%; text-align:left; background:#fff; }
   .srow:last-child { border-bottom:0; }
   .srow > span:first-child { flex:1; min-width:0; } .srow small { display:block; font-size:12px; color:var(--muted); font-weight:400; }
-  .srow .sv { display:flex; align-items:center; justify-content:flex-end; gap:4px; color:#0a0a0a; flex:none; }
-  .srow .sv em { font-style:normal; color:#a3a3a3; font-size:14px; }
-  .srow input { border:0; background:transparent; font:inherit; font-size:16px; color:#0a0a0a; text-align:right; width:72px; padding:0; margin:0; -webkit-appearance:none; appearance:none; height:44px; line-height:44px; }
+  .srow .sv { display:flex; align-items:center; justify-content:flex-end; gap:4px; color:var(--ink); flex:none; }
+  .srow .sv em { font-style:normal; color:var(--muted); font-size:14px; }
+  .srow input { border:0; background:transparent; font:inherit; font-size:16px; color:var(--ink); text-align:right; width:72px; padding:0; margin:0; -webkit-appearance:none; appearance:none; height:44px; line-height:44px; }
   .srow input[type=date] { width:auto; min-width:120px; display:flex; justify-content:flex-end; }
   .srow input::-webkit-date-and-time-value { text-align:right; margin:0; }
   .srow input:disabled { color:#a3a3a3; -webkit-text-fill-color:#a3a3a3; opacity:1; }
   .srow.act { font-weight:600; justify-content:flex-start; gap:8px; } .srow.act small { display:inline; margin-left:auto; }
-  .srow.red { color:#e11d48; }
+  .srow.red { color:var(--red); }
   .gnote { font-size:12px; color:var(--muted); margin:8px 8px 0; line-height:1.45; }
   .tile { flex:1; background:#f5f5f5; border-radius:14px; padding:9px 10px; display:flex; flex-direction:column; gap:2px; min-width:0; }
   .tile .muted { font-size:11px; } .tile b { font-size:15px; white-space:nowrap; }
-.hbar{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#0a0a0a;color:#fff;border-radius:20px;padding:14px 16px;margin:0 0 12px}
+.hbar{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--teal);color:#fff;border-radius:20px;padding:14px 16px;margin:0 0 12px}
 .hbar b{font-weight:700}.hbar small{display:block;opacity:.65;font-size:12px;margin-top:2px}
 .hbar .hbtns{display:flex;flex-direction:column;gap:6px;flex-shrink:0}
 .hbar button{border:0;border-radius:999px;padding:8px 14px;font:600 13px inherit;font-family:inherit;background:rgba(255,255,255,.14);color:#fff;white-space:nowrap}
-.hbar button.pri{background:#fff;color:#0a0a0a}
-.hbar.ok{background:#fff;color:#0a0a0a;border:1px solid #e5e5e5;padding:10px 12px 10px 16px;font-size:14px}
-.hbar.ok small{display:inline-block;white-space:nowrap;margin-left:4px;color:#737373;opacity:1}
-.hbar.ok button{background:#f2f2f2;color:#0a0a0a}
-.gstep{display:flex;gap:12px;background:#f5f5f5;border-radius:16px;padding:12px 14px;margin-bottom:8px;font-size:14px;line-height:1.45}
-.gstep b{font-size:15px}.gnum{flex-shrink:0;width:28px;height:28px;border-radius:50%;background:#0a0a0a;color:#fff;display:grid;place-items:center;font-weight:700;font-size:14px}
+.hbar button.pri{background:#fff;color:var(--ink)}
+.hbar.ok{background:#fff;color:var(--ink);border:1px solid var(--line);padding:10px 12px 10px 16px;font-size:14px}
+.hbar.ok small{display:inline-block;white-space:nowrap;margin-left:4px;color:var(--muted);opacity:1}
+.hbar.ok button{background:var(--spruce-t);color:var(--teal)}
+.gstep{display:flex;gap:12px;background:var(--bg);border-radius:16px;padding:12px 14px;margin-bottom:8px;font-size:14px;line-height:1.45}
+.gstep b{font-size:15px}.gnum{flex-shrink:0;width:28px;height:28px;border-radius:50%;background:var(--teal);color:#fff;display:grid;place-items:center;font-weight:700;font-size:14px}
 .gkey{display:inline-block;background:#fff;border:1px solid #e5e5e5;border-radius:8px;padding:0 6px;font-weight:600}
 .gex{margin-top:6px;background:#fff;border-radius:10px;padding:8px 10px;font-family:ui-monospace,Menlo,monospace;font-size:13px}
 .gex span{background:#e8e8e8;border-radius:6px;padding:1px 6px;font-family:-apple-system,system-ui,sans-serif;font-weight:600}
@@ -307,11 +308,90 @@
   .feel { display:flex; gap:6px; margin-top:10px; }
   .feel button { flex:1; border:1px solid var(--line); background:#fff; border-radius:14px; padding:8px 4px; display:flex; flex-direction:column; align-items:center; gap:2px; font:inherit; color:inherit; }
   .feel button span { font-size:20px; } .feel button b { font-size:12px; text-align:center; line-height:1.2; } .feel button small { font-size:10px; color:#8a8a8a; text-align:center; line-height:1.2; }
-  .feel button.on { background:#0a0a0a; color:#fff; border-color:#0a0a0a; } .feel button.on small { color:#bdbdbd; }
+  .feel button.on { background:var(--teal); color:#fff; border-color:var(--teal); } .feel button.on small { color:#CFE3DB; }
   .cal span em { position:absolute; font-style:normal; font-size:9px; right:1px; top:-2px; }
+  /* Designikoner (se designguiden i appen) */
+  .ico { width:1.15em; height:1.15em; display:inline-block; vertical-align:-0.2em; flex:none; fill:none; stroke:currentColor; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; color:inherit; }
+  .scale .ico { width:24px; height:24px; color:var(--ink); }
+  .scale button.on .ico { color:var(--teal); }
+  .chk .ico, .why .ico, .toast .ico { color:var(--teal); }
+  /* Designguide (dg-) */
+  .dg p { margin:0 0 10px; font-size:14px; line-height:1.5; color:var(--ink); }
+  .dg .sw { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; padding:12px; }
+  .dg .sw div { font-size:12px; color:var(--muted); }
+  .dg .sw i { display:block; height:44px; border-radius:10px; border:1px solid var(--line); margin-bottom:6px; }
+  .dg .ig { display:grid; grid-template-columns:repeat(auto-fill,minmax(70px,1fr)); gap:8px; padding:12px; }
+  .dg .ig div { display:flex; flex-direction:column; align-items:center; gap:6px; padding:10px 4px; background:#fff; border:1px solid var(--line); border-radius:12px; font-size:11px; color:var(--muted); }
+  .dg .ig .ico { width:26px; height:26px; color:var(--teal); }
+  .dg .emo { font-size:13px; color:var(--muted); text-align:right; max-width:55%; }
+  .dg .type-h { font-size:22px; font-weight:700; color:var(--ink); margin:0 0 4px; }
+  .dg .type-b { font-size:14px; color:var(--muted); margin:0; }
 </style>
 </head>
 <body>
+
+<!-- Ikonbibliotek (se designguiden i appen): 24×24, linje 1.6 med blød farvefyld (currentColor 14 %) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-bowl" viewBox="0 0 24 24"><path d="M3.5 11h17c0 4.8-3.8 8.5-8.5 8.5S3.5 15.8 3.5 11z" fill="currentColor" fill-opacity=".14"/><path d="M8 7.5c0-1.2 1-1.6 1-3M12 7.5c0-1.2 1-1.6 1-3M16 7.5c0-1.2 1-1.6 1-3"/></symbol>
+    <symbol id="i-apple" viewBox="0 0 24 24"><path d="M12 8.2c-1.6-1.1-5.5-1.3-6.3 2.3-.8 3.6 1.2 9.2 3.6 9.2.9 0 1.4-.5 2.7-.5s1.8.5 2.7.5c2.4 0 4.4-5.6 3.6-9.2C17.5 6.9 13.6 7.1 12 8.2z" fill="currentColor" fill-opacity=".14"/><path d="M12 8.2c0-2 .6-3.6 2.4-4.7M13.8 4.6c1.3-1 2.8-1.1 3.6-.9-.2 1.3-1.2 2.4-2.6 2.6"/></symbol>
+    <symbol id="i-egg" viewBox="0 0 24 24"><path d="M12 3.5c-3.2 0-6 5.4-6 10.3a6 6 0 0 0 12 0c0-4.9-2.8-10.3-6-10.3z" fill="currentColor" fill-opacity=".14"/></symbol>
+    <symbol id="i-bread" viewBox="0 0 24 24"><path d="M5.5 20V10.2C5.5 6.8 8.4 4.5 12 4.5s6.5 2.3 6.5 5.7V20z" fill="currentColor" fill-opacity=".14"/><path d="M9 11.5h.01M12.5 10.5h.01M15.5 13h.01M10 15.5h.01M13.8 16.5h.01"/></symbol>
+    <symbol id="i-fish" viewBox="0 0 24 24"><path d="M3 12c2.6-3.8 7.2-5.4 11.2-3.4 1.4.7 2.5 1.6 3.3 2.4l3.5-2.5v8.2l-3.5-2.5c-.8.8-1.9 1.7-3.3 2.4C10.2 17.4 5.6 15.8 3 12z" fill="currentColor" fill-opacity=".14"/><path d="M7.2 11.2h.01"/></symbol>
+    <symbol id="i-plate" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="5" fill="currentColor" fill-opacity=".14"/></symbol>
+    <symbol id="i-coffee" viewBox="0 0 24 24"><path d="M4 9.5h12.5v4.2a5.3 5.3 0 0 1-5.3 5.3H9.3A5.3 5.3 0 0 1 4 13.7z" fill="currentColor" fill-opacity=".14"/><path d="M16.5 11.2h.8a2.3 2.3 0 0 1 0 4.6h-.8M8 3.5c0 1.3 1 1.7 1 3M11.5 3.5c0 1.3 1 1.7 1 3"/></symbol>
+    <symbol id="i-shake" viewBox="0 0 24 24"><path d="M6.5 5h11l-1.4 15a1 1 0 0 1-1 .9H8.9a1 1 0 0 1-1-.9z" fill="currentColor" fill-opacity=".14"/><path d="M6 9.5h12M13.5 5l2.5-2.5"/></symbol>
+    <symbol id="i-milk" viewBox="0 0 24 24"><path d="M6 8.5 9.5 3h5L18 8.5V20a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1z" fill="currentColor" fill-opacity=".14"/><path d="M6 8.5h12M11 13h2"/></symbol>
+    <symbol id="i-leaf" viewBox="0 0 24 24"><path d="M5 19c0-8.5 5-13.5 14-14 .4 9-4.5 14-13 14.1z" fill="currentColor" fill-opacity=".14"/><path d="M5 19l8-8"/></symbol>
+    <symbol id="i-camera" viewBox="0 0 24 24"><path d="M3.5 8.5a1.5 1.5 0 0 1 1.5-1.5h3l1.8-2.5h5.4l1.8 2.5h3a1.5 1.5 0 0 1 1.5 1.5V18a1.5 1.5 0 0 1-1.5 1.5H5A1.5 1.5 0 0 1 3.5 18z" fill="currentColor" fill-opacity=".14"/><circle cx="12" cy="12.8" r="3.6"/></symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13.5 2.8 5.2 13.6h6.1l-1 7.6 8.6-11h-6.2z" fill="currentColor" fill-opacity=".14"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8"/><path d="M16 16l4.5 4.5"/></symbol>
+    <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M4.5 19.5l.9-4.2L15.6 5.1a2 2 0 0 1 2.8 0l.5.5a2 2 0 0 1 0 2.8L8.7 18.6z" fill="currentColor" fill-opacity=".14"/><path d="M13.8 6.9l3.3 3.3"/></symbol>
+    <symbol id="i-barcode" viewBox="0 0 24 24"><path d="M4 6.5v11M7 6.5v11M9.5 6.5v11M14 6.5v11M16.5 6.5v11M20 6.5v11"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3.6l2.5 5.2 5.7.8-4.1 4 1 5.7L12 16.6l-5.1 2.7 1-5.7-4.1-4 5.7-.8z" fill="currentColor" fill-opacity=".14"/></symbol>
+    <symbol id="i-walk" viewBox="0 0 24 24"><circle cx="13.2" cy="4.6" r="1.9"/><path d="M11.3 9.2 9 13.6l2.8 1.8-1.3 5.1M11.3 9.2l3.2 2.1 2.2 3.1M9 13.6 6.2 17.2"/></symbol>
+    <symbol id="i-run" viewBox="0 0 24 24"><circle cx="14" cy="4.6" r="1.9"/><path d="M12.6 9.2 10 12.8 13 15l-1.6 5M10 12.8l-3.5 1.7M12.6 9.2l3.8 1.4 2.2-1.2"/></symbol>
+    <symbol id="i-bike" viewBox="0 0 24 24"><circle cx="5.8" cy="16.2" r="3.3"/><circle cx="18.2" cy="16.2" r="3.3"/><path d="M5.8 16.2l3.8-6.7h5.3l3.3 6.7M9.6 9.5l2.6 6.7H9.1M15 6.5h2.4"/></symbol>
+    <symbol id="i-row" viewBox="0 0 24 24"><path d="M4 19.5h16M8 16l9-9.5M9.5 17.8 6 16.2"/></symbol>
+    <symbol id="i-swim" viewBox="0 0 24 24"><circle cx="15" cy="6" r="1.8"/><path d="M6 12.5l5-3.5 4 1.5 3-1M4 16.5c1.7 1 3.3 1 5 0s3.3-1 5 0 3.3 1 5 0M4 20.5c1.7 1 3.3 1 5 0s3.3-1 5 0 3.3 1 5 0"/></symbol>
+    <symbol id="i-yoga" viewBox="0 0 24 24"><circle cx="12" cy="4.8" r="2"/><path d="M5 10.5c2 1.3 4.3 1.9 7 1.9s5-.6 7-1.9M12 12.4v3.2M8 20.5c0-3 1.7-5 4-5s4 2 4 5"/></symbol>
+    <symbol id="i-dumbbell" viewBox="0 0 24 24"><path d="M6.5 7.5v9M17.5 7.5v9M3.5 9.5v5M20.5 9.5v5M6.5 12h11"/></symbol>
+    <symbol id="i-dance" viewBox="0 0 24 24"><circle cx="13" cy="4.6" r="1.9"/><path d="M12 9l-3 3.5 3 2.5-2 6.5M12 9l3.5 1 .5 4M9 12.5 5.5 9.5M15.5 10 19 7.5"/></symbol>
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 10.8 12 4l8 6.8V19.5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z" fill="currentColor" fill-opacity=".14"/><path d="M10 20.5v-2.6h4v2.6"/></symbol>
+    <symbol id="i-office" viewBox="0 0 24 24"><rect x="5.5" y="3.5" width="13" height="17" rx="1.5" fill="currentColor" fill-opacity=".14"/><path d="M9 7.5h1.5M13.5 7.5H15M9 11h1.5M13.5 11H15M10 20.5v-2.6h4v2.6"/></symbol>
+    <symbol id="i-drop" viewBox="0 0 24 24"><path d="M12 3.5C9 7.6 6.5 10.8 6.5 14.2a5.5 5.5 0 0 0 11 0c0-3.4-2.5-6.6-5.5-10.7z" fill="currentColor" fill-opacity=".14"/><path d="M9.3 14.4a2.7 2.7 0 0 0 2.4 2.6"/></symbol>
+    <symbol id="i-scale" viewBox="0 0 24 24"><path d="M12 4v15.5M7.5 19.5h9M4.5 6.5h15"/><path d="M4.5 6.5 2 13h5z" fill="currentColor" fill-opacity=".14"/><path d="M19.5 6.5 17 13h5z" fill="currentColor" fill-opacity=".14"/></symbol>
+    <symbol id="i-medal" viewBox="0 0 24 24"><circle cx="12" cy="14.5" r="5.5" fill="currentColor" fill-opacity=".14"/><path d="M8.6 9.4 6.2 3.5h3.6L12 7.4l2.2-3.9h3.6l-2.4 5.9"/></symbol>
+    <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 3.5c.5 3.9 1.6 5 5.5 5.5-3.9.5-5 1.6-5.5 5.5-.5-3.9-1.6-5-5.5-5.5 3.9-.5 5-1.6 5.5-5.5z" fill="currentColor" fill-opacity=".14"/><path d="M18.5 15.5c.2 1.6.7 2.1 2.3 2.3-1.6.2-2.1.7-2.3 2.3-.2-1.6-.7-2.1-2.3-2.3 1.6-.2 2.1-.7 2.3-2.3z"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2.5" fill="currentColor" fill-opacity=".14"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="currentColor" fill-opacity=".14"/><path d="M8 12.3l2.6 2.6 5.6-5.3"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol>
+    <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M12 3.5a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1 2.1h5.2c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3.5z" fill="currentColor" fill-opacity=".14"/><path d="M9.5 20.5h5M10.5 17.6h3"/></symbol>
+    <symbol id="i-warning" viewBox="0 0 24 24"><path d="M12 4 2.8 19.5h18.4z" fill="currentColor" fill-opacity=".14"/><path d="M12 10v4.2M12 16.9h.01"/></symbol>
+    <symbol id="i-trend-up" viewBox="0 0 24 24"><path d="M3.5 17 9.5 11l3.8 3.8 7.2-7.3"/><path d="M15.5 7.5h4.5v4.5"/></symbol>
+    <symbol id="i-flat" viewBox="0 0 24 24"><path d="M4 12h16M16 8.5l3.5 3.5-3.5 3.5"/></symbol>
+    <symbol id="i-sprout" viewBox="0 0 24 24"><path d="M12 21v-9"/><path d="M12 12.5c0-4 2.6-6.5 7-6.5 0 4-2.6 6.5-7 6.5z" fill="currentColor" fill-opacity=".14"/><path d="M12 15c0-3.3-2.3-5.2-6-5.2 0 3.3 2.3 5.2 6 5.2z" fill="currentColor" fill-opacity=".14"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.2" fill="currentColor" fill-opacity=".14"/><path d="M12 2.8v2M12 19.2v2M3.5 7.5l1.4 1.2M19.1 15.3l1.4 1.2M2.8 12h2M19.2 12h2M4.6 18.2l1.4-1.2M18 6.7l1.4-1.2"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.6A8.2 8.2 0 0 1 9.4 4a8.2 8.2 0 1 0 10.6 10.6z" fill="currentColor" fill-opacity=".14"/></symbol>
+    <!-- Ekstra ikoner til app-elementer -->
+    <symbol id="i-dot" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-snow" viewBox="0 0 24 24"><path d="M12 3v18M4.2 7.5l15.6 9M19.8 7.5l-15.6 9M9.5 4.8 12 6.5l2.5-1.7M9.5 19.2 12 17.5l2.5 1.7"/></symbol>
+    <symbol id="i-thermo" viewBox="0 0 24 24"><path d="M10 14.5V5a2 2 0 0 1 4 0v9.5a4 4 0 1 1-4 0z" fill="currentColor" fill-opacity=".14"/><path d="M12 17.5V10"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7.5-4.4-7.5-10A4 4 0 0 1 12 7.6 4 4 0 0 1 19.5 10c0 5.6-7.5 10-7.5 10z" fill="currentColor" fill-opacity=".14"/></symbol>
+    <symbol id="i-watch" viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="3" fill="currentColor" fill-opacity=".14"/><path d="M9.5 7 10 3.5h4L14.5 7M9.5 17l.5 3.5h4l.5-3.5M12 10v2.2l1.5 1"/></symbol>
+    <symbol id="i-pill" viewBox="0 0 24 24"><g transform="rotate(-45 12 12)"><rect x="3" y="9" width="18" height="6" rx="3" fill="currentColor" fill-opacity=".14"/><path d="M12 9v6"/></g></symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3.5 7.5a2 2 0 0 1 2-2h3.8l2 2.2h7.2a2 2 0 0 1 2 2V17.5a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z" fill="currentColor" fill-opacity=".14"/></symbol>
+    <symbol id="i-save" viewBox="0 0 24 24"><path d="M5 4.5h11l3 3V18.5a1.5 1.5 0 0 1-1.5 1.5h-12A1.5 1.5 0 0 1 4 18.5v-12.5A1.5 1.5 0 0 1 5.5 4.5z" fill="currentColor" fill-opacity=".14"/><path d="M8 4.5v5h7v-5M8 19.5v-5h8v5"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V4.5M4 20h16"/><rect x="7.5" y="11" width="2.8" height="6.5" fill="currentColor" fill-opacity=".14"/><rect x="12" y="7" width="2.8" height="10.5" fill="currentColor" fill-opacity=".14"/><rect x="16.5" y="13" width="2.8" height="4.5" fill="currentColor" fill-opacity=".14"/></symbol>
+    <symbol id="i-ruler" viewBox="0 0 24 24"><rect x="2.5" y="9" width="19" height="6" rx="1.5" fill="currentColor" fill-opacity=".14"/><path d="M6 9v2.5M9.5 9v3.5M13 9v2.5M16.5 9v3.5"/></symbol>
+    <symbol id="i-sync" viewBox="0 0 24 24"><path d="M19.5 9.5A7.8 7.8 0 0 0 5.6 7.3M4.5 14.5a7.8 7.8 0 0 0 13.9 2.2"/><path d="M19.5 4.5v5h-5M4.5 19.5v-5h5"/></symbol>
+    <symbol id="i-lvl1" viewBox="0 0 24 24"><rect x="1.5" y="15" width="2.6" height="5" rx="1" fill="currentColor" stroke="none"/><rect x="6.4" y="12" width="2.6" height="8" rx="1" fill="currentColor" fill-opacity=".22" stroke="none"/><rect x="11.3" y="9" width="2.6" height="11" rx="1" fill="currentColor" fill-opacity=".22" stroke="none"/><rect x="16.2" y="6" width="2.6" height="14" rx="1" fill="currentColor" fill-opacity=".22" stroke="none"/><rect x="21.1" y="3" width="2.6" height="17" rx="1" fill="currentColor" fill-opacity=".22" stroke="none"/></symbol>
+    <symbol id="i-lvl2" viewBox="0 0 24 24"><rect x="1.5" y="15" width="2.6" height="5" rx="1" fill="currentColor" stroke="none"/><rect x="6.4" y="12" width="2.6" height="8" rx="1" fill="currentColor" stroke="none"/><rect x="11.3" y="9" width="2.6" height="11" rx="1" fill="currentColor" fill-opacity=".22" stroke="none"/><rect x="16.2" y="6" width="2.6" height="14" rx="1" fill="currentColor" fill-opacity=".22" stroke="none"/><rect x="21.1" y="3" width="2.6" height="17" rx="1" fill="currentColor" fill-opacity=".22" stroke="none"/></symbol>
+    <symbol id="i-lvl3" viewBox="0 0 24 24"><rect x="1.5" y="15" width="2.6" height="5" rx="1" fill="currentColor" stroke="none"/><rect x="6.4" y="12" width="2.6" height="8" rx="1" fill="currentColor" stroke="none"/><rect x="11.3" y="9" width="2.6" height="11" rx="1" fill="currentColor" stroke="none"/><rect x="16.2" y="6" width="2.6" height="14" rx="1" fill="currentColor" fill-opacity=".22" stroke="none"/><rect x="21.1" y="3" width="2.6" height="17" rx="1" fill="currentColor" fill-opacity=".22" stroke="none"/></symbol>
+    <symbol id="i-lvl4" viewBox="0 0 24 24"><rect x="1.5" y="15" width="2.6" height="5" rx="1" fill="currentColor" stroke="none"/><rect x="6.4" y="12" width="2.6" height="8" rx="1" fill="currentColor" stroke="none"/><rect x="11.3" y="9" width="2.6" height="11" rx="1" fill="currentColor" stroke="none"/><rect x="16.2" y="6" width="2.6" height="14" rx="1" fill="currentColor" stroke="none"/><rect x="21.1" y="3" width="2.6" height="17" rx="1" fill="currentColor" fill-opacity=".22" stroke="none"/></symbol>
+    <symbol id="i-lvl5" viewBox="0 0 24 24"><rect x="1.5" y="15" width="2.6" height="5" rx="1" fill="currentColor" stroke="none"/><rect x="6.4" y="12" width="2.6" height="8" rx="1" fill="currentColor" stroke="none"/><rect x="11.3" y="9" width="2.6" height="11" rx="1" fill="currentColor" stroke="none"/><rect x="16.2" y="6" width="2.6" height="14" rx="1" fill="currentColor" stroke="none"/><rect x="21.1" y="3" width="2.6" height="17" rx="1" fill="currentColor" stroke="none"/></symbol>
+  </defs>
+</svg>
 
 <header>
   <div class="htop"><div><div class="date" id="hdrDate"></div><h1 id="hdrTitle">Min uge</h1></div>
@@ -798,26 +878,28 @@ function header(){
   const now = new Date();
   $('#hdrDate').textContent = now.toLocaleDateString('da-DK', { weekday:'long', day:'numeric', month:'long' });
   const w = weekInfo(), sch = schFor(now.getDay());
-  const titles = { today:'I dag', food:'Mad', train:'Træning', week:'Fremgang', settings:'Indstillinger' };
-  $('#gear').innerHTML = tab === 'settings' ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>'
+  const titles = { today:'I dag', food:'Mad', train:'Træning', week:'Fremgang', settings:'Indstillinger', guide:'Designguide' };
+  const overlay = tab === 'settings' || tab === 'guide';
+  $('#gear').innerHTML = overlay ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>'
     : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>';
   $('#hdrTitle').textContent = titles[tab];
   const work = workAt(now.getDay()) === 'office';
-  $('#hdrSub').innerHTML = tab === 'settings' ? '<span>Gemmes automatisk på telefonen</span>' : `<span>Uge ${w.n} af 4 · ${w.title}</span><span>${work ? '🏢 Kontor' : '🏡 Hjemme'}</span><span>${sch.e} ${sch.title}</span>`;
+  $('#hdrSub').innerHTML = overlay ? '<span>Gemmes automatisk på telefonen</span>' : `<span>Uge ${w.n} af 4 · ${w.title}</span><span>${work ? '🏢 Kontor' : '🏡 Hjemme'}</span><span>${sch.e} ${sch.title}</span>`;
 }
 
 function render(){
   header();
   document.querySelectorAll('nav button[data-tab]').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
-  ({ today:renderToday, food:renderFood, train:renderTrain, week:renderWeek, settings:renderSettings })[tab]();
+  ({ today:renderToday, food:renderFood, train:renderTrain, week:renderWeek, settings:renderSettings, guide:renderDesignGuide })[tab]();
 }
 let prevTab = 'today';
-function toggleSettings(){ if (tab === 'settings') tab = prevTab; else { prevTab = tab; tab = 'settings'; } render(); scrollTo(0,0); }
+function toggleSettings(){ if (tab === 'settings' || tab === 'guide') tab = prevTab; else { prevTab = tab; tab = 'settings'; } render(); scrollTo(0,0); }
+function openDesignGuide(){ if (tab !== 'guide') prevTab = tab; tab = 'guide'; render(); scrollTo(0,0); }
 document.querySelectorAll('nav button[data-tab]').forEach(b => b.onclick = () => { tab = b.dataset.tab; if (tab==='train') trainDay = new Date().getDay(); render(); scrollTo(0,0); });
 
 function ring(val, goal, color, size=130){
   const r = size/2 - 10, c = 2*Math.PI*r, pct = Math.min(1, val/goal);
-  return `<svg width="${size}" height="${size}"><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="#ededed" stroke-width="12"/>
+  return `<svg width="${size}" height="${size}"><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="#EEEBE3" stroke-width="12"/>
     <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${color}" stroke-width="12" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${c*(1-pct)}" style="transition:stroke-dashoffset .5s"/></svg>`;
 }
 
@@ -833,10 +915,10 @@ function renderToday(){
     ${feelRow(k)}
     <div class="card">
       <div class="rings">
-        <div class="ring">${ring(t.kcal, g.kcal, over ? '#e11d48' : '#ff5a1f')}<div class="c"><b>${r0(Math.abs(left))}</b><span>${over ? 'kcal over' : 'kcal tilbage'}</span></div></div>
+        <div class="ring">${ring(t.kcal, g.kcal, over ? '#B5654A' : '#B0853F')}<div class="c"><b>${r0(Math.abs(left))}</b><span>${over ? 'kcal over' : 'kcal tilbage'}</span></div></div>
         <div>
-          <div class="stat"><div class="row between"><span>🔥 Kalorier</span><b>${r0(t.kcal)} / ${g.kcal}</b></div><div class="bar"><div style="width:${Math.min(100,t.kcal/g.kcal*100)}%;background:#ff5a1f"></div></div></div>
-          <div class="stat"><div class="row between"><span>💪 Protein</span><b>${r0(t.p)} / ${g.protein} g</b></div><div class="bar"><div style="width:${Math.min(100,t.p/g.protein*100)}%;background:#0a0a0a"></div></div></div>
+          <div class="stat"><div class="row between"><span>🔥 Kalorier</span><b>${r0(t.kcal)} / ${g.kcal}</b></div><div class="bar"><div style="width:${Math.min(100,t.kcal/g.kcal*100)}%;background:#B0853F"></div></div></div>
+          <div class="stat"><div class="row between"><span>💪 Protein</span><b>${r0(t.p)} / ${g.protein} g</b></div><div class="bar"><div style="width:${Math.min(100,t.p/g.protein*100)}%;background:var(--ink)"></div></div></div>
           <button class="btn small ghost" onclick="openAdd()">＋ Tilføj mad</button>
           <button class="btn small ghost" onclick="snap()">📷</button>
         </div>
@@ -844,7 +926,7 @@ function renderToday(){
     </div>
 
     <button class="hero t-${sch.type}" style="width:100%;text-align:left" onclick="tab='train';trainDay=${new Date().getDay()};render()">
-      <div class="row between"><span class="big">${sch.e}</span>${d.done ? '<span class="btn small" style="background:#0a0a0a">✓ Gennemført</span>' : '<span class="btn small gray">Start ›</span>'}</div>
+      <div class="row between"><span class="big">${sch.e}</span>${d.done ? '<span class="btn small" style="background:var(--ink)">✓ Gennemført</span>' : '<span class="btn small gray">Start ›</span>'}</div>
       <h2>${sch.title}</h2><div style="font-size:14px">${sch.sub}</div>
       ${adjustFor(k) ? `<div class="adj">${adjustFor(k).msg}</div>` : ''}
     </button>
@@ -876,8 +958,8 @@ function renderFood(){
   const list = d.food.slice().reverse();
   $('#view').innerHTML = `
     <div class="card">
-      <div class="stat"><div class="row between"><span>🔥 ${r0(t.kcal)} af ${g.kcal} kcal</span><b>${r0(g.kcal - t.kcal)} tilbage</b></div><div class="bar"><div style="width:${Math.min(100,t.kcal/g.kcal*100)}%;background:${t.kcal>g.kcal?'#e11d48':'#ff5a1f'}"></div></div></div>
-      <div class="stat"><div class="row between"><span>💪 ${r0(t.p)} af ${g.protein} g protein</span><b>${r0(Math.max(0,g.protein - t.p))} g mangler</b></div><div class="bar"><div style="width:${Math.min(100,t.p/g.protein*100)}%;background:#0a0a0a"></div></div></div>
+      <div class="stat"><div class="row between"><span>🔥 ${r0(t.kcal)} af ${g.kcal} kcal</span><b>${r0(g.kcal - t.kcal)} tilbage</b></div><div class="bar"><div style="width:${Math.min(100,t.kcal/g.kcal*100)}%;background:${t.kcal>g.kcal?'#B5654A':'#B0853F'}"></div></div></div>
+      <div class="stat"><div class="row between"><span>💪 ${r0(t.p)} af ${g.protein} g protein</span><b>${r0(Math.max(0,g.protein - t.p))} g mangler</b></div><div class="bar"><div style="width:${Math.min(100,t.p/g.protein*100)}%;background:var(--ink)"></div></div></div>
       ${macroBlock(t)}
     </div>
     <div class="grid2" style="margin-bottom:12px">
@@ -1543,12 +1625,13 @@ function progressCard(){
 }
 
 /* ================= DAGBOG ================= */
-const MOOD = [['energy','⚡ Energi',['😴','🥱','🙂','😊','🤩']],['sleep','😴 Søvn i nat',['😫','😕','😐','🙂','😌']],['mood','💛 Humør',['😢','😕','😐','🙂','😄']]];
+const MOOD = [['energy','⚡ Energi'],['sleep','😴 Søvn i nat'],['mood','💛 Humør']];
+const levelIcon = n => `<svg class="ico" aria-hidden="true"><use href="#i-lvl${n}"/></svg>`;
 function setMood(f, v){ const d = day(); d.mood = d.mood || {}; d.mood[f] = d.mood[f] === v ? 0 : v; save(); render(); }
 function moodCard(){
   const m = day().mood || {};
   return `<div class="card" id="mood"><h2>📓 Hvordan har du det i dag?</h2>
-    ${MOOD.map(([f,l,em]) => `<div class="muted">${l}</div><div class="scale">${em.map((e,i) => `<button class="${m[f]===i+1?'on':''}" onclick="setMood('${f}',${i+1})">${e}</button>`).join('')}</div>`).join('')}
+    ${MOOD.map(([f,l]) => `<div class="muted">${l}</div><div class="scale">${[1,2,3,4,5].map(i => `<button class="${m[f]===i?'on':''}" aria-label="Niveau ${i}" onclick="setMood('${f}',${i})">${levelIcon(i)}</button>`).join('')}</div>`).join('')}
     <div class="checks">${[['cold','🥶','Fryser meget'],['hungry','😩','Meget sulten'],['bloat','🎈','Oppustet']].map(([id,e,l]) => `<button class="chk ${m[id]?'on':''}" onclick="setMood('${id}',${m[id]?0:1})"><span class="b">${m[id]?'✓':''}</span>${e} ${l}</button>`).join('')}</div>
     ${moodInsight(true)}</div>`;
 }
@@ -1572,7 +1655,7 @@ function moodInsight(short){
 }
 function moodWeekCard(){
   const cells = [1,2,3,4,5,6,0].map((wd,i) => { const m = (state.days[keyForWeekday(wd)] || {}).mood || {};
-    return `<div class="d"><b>${SHORT[i]}</b><span class="e">${m.energy ? MOOD[0][2][m.energy-1] : '·'}</span><span style="font-size:14px">${m.sleep ? MOOD[1][2][m.sleep-1] : '·'}</span><span style="font-size:14px">${m.mood ? MOOD[2][2][m.mood-1] : '·'}</span>${m.cold ? '🥶' : ''}</div>`; }).join('');
+    return `<div class="d"><b>${SHORT[i]}</b><span class="e">${m.energy ? levelIcon(m.energy) : '·'}</span><span>${m.sleep ? levelIcon(m.sleep) : '·'}</span><span>${m.mood ? levelIcon(m.mood) : '·'}</span>${m.cold ? '❄' : ''}</div>`; }).join('');
   return `<div class="card"><h2>📓 Trivsel</h2><div class="wk mw">${cells}</div><div class="muted" style="margin-top:4px">Energi · søvn · humør</div>${moodInsight(false)}</div>`;
 }
 
@@ -1764,8 +1847,8 @@ function energyCard(k){ const E = energy(k), max = Math.max(E.burn, E.intake, 1)
   const warn = E.bal < -700 && !today ? '<div class="muted" style="margin-top:8px">⚠️ Over 700 kcal underskud – det kan sænke stofskiftet. Spis lidt mere.</div>'
     : today && E.bal < -700 ? '<div class="muted" style="margin-top:8px">Dagen er ikke slut – husk at spise dine måltider 🍽️</div>' : '';
   return `<div class="card"><h2>⚖️ Energibalance ${today ? '<span class="muted" style="font-weight:400">i dag</span>' : ''}</h2>
-    <div class="stat"><div class="row between"><span>🍽️ Indtag</span><b>${fmt(E.intake)} kcal</b></div>${bar(E.intake, '#0a0a0a')}</div>
-    <div class="stat"><div class="row between"><span>🔥 Forbrænding</span><b>${fmt(E.burn)} kcal</b></div>${bar(E.burn, '#ff5a1f')}</div>
+    <div class="stat"><div class="row between"><span>🍽️ Indtag</span><b>${fmt(E.intake)} kcal</b></div>${bar(E.intake, 'var(--ink)')}</div>
+    <div class="stat"><div class="row between"><span>🔥 Forbrænding</span><b>${fmt(E.burn)} kcal</b></div>${bar(E.burn, '#B0853F')}</div>
     <div class="why"><span>Hvile ${fmt(E.bmr)}</span>${E.measured ? `<span>⌚ Aktiv ${fmt(E.measured)}</span>` : `<span>Hverdag ${fmt(E.neat)}</span>`}${E.steps ? `<span>👟 ${fmt(E.steps)} skridt</span>` : ''}${E.train ? `<span>Træning ${fmt(E.train)}</span>` : ''}${E.extra ? `<span>Ekstra ${fmt(E.extra)}</span>` : ''}</div>
     <div class="row between" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)"><span>${today ? 'Status lige nu' : 'Resultat'}</span><b>${E.bal > 0 ? '+' : E.bal < 0 ? '−' : ''}${fmt(E.bal)} kcal</b></div>
     <div class="muted">${balText(E.bal)}${E.measured ? ` · målt af Apple Sundhed${today && E.at ? ' kl. ' + E.at : ''}` : today ? ' · forbrænding er estimeret for hele dagen' : ''}</div>${warn}
@@ -1784,7 +1867,7 @@ function energyWeekCard(){ const wds = [1,2,3,4,5,6,0], todayK = iso(new Date())
 function statsCard(){
   const w = weekActive(mondayOf(new Date())), st = streak(), goal = Math.max(1, 5 - w.s), pct = Math.min(1, w.n/goal);
   return `<div class="card statc">
-    <div class="ringsm">${ring(w.n, goal, '#ff5a1f', 92)}<div class="c"><b>${w.n}</b><span>af ${goal}</span></div></div>
+    <div class="ringsm">${ring(w.n, goal, '#B0853F', 92)}<div class="c"><b>${w.n}</b><span>af ${goal}</span></div></div>
     <div class="nums"><div><b>${hm(w.m)}</b><span>aktiv tid</span></div><div><b>${st ? '🔥 ' + st : '–'}</b><span>${st === 1 ? 'uge i træk' : 'uger i træk'}</span></div>
       <div class="muted" style="grid-column:1/-1">${w.n >= goal ? 'Ugens mål er nået – flot! 🎉' : `${goal - w.n} aktive dage mere for at nå ugens mål. En aktiv dag = træning klaret eller 20+ min ekstra.`}${w.s ? ` 🤒 ${w.s} ${w.s === 1 ? 'sygedag' : 'sygedage'} er trukket fra målet – din streak er beskyttet.` : ''}</div></div></div>`;
 }
@@ -1853,6 +1936,53 @@ function periodLine(compact){
     <div class="muted" style="margin-top:2px">🌟 Næste ægløsning ca. <b>${dk(n.ov)}</b> (${n.ovDays === 0 ? 'i dag' : `om ${n.ovDays} ${n.ovDays === 1 ? 'dag' : 'dage'}`})</div>
     <div class="muted" style="margin-top:2px">🌱 Frugtbart vindue ${dk(fertileWindow().from)} – ${dk(fertileWindow().to)}${fertileWindow().now ? ' · <b>Du er frugtbar nu</b>' : ''}</div>`;
 }
+const DG_LOG = [
+  'Nordisk design med varme farver, afrundede kort og rolig typografi',
+  'Emojis erstattet af ikoner fra én fast sprite, også i humør-skalaerne',
+  'Niveau-ikoner med fem søjler i stedet for ansigter',
+  'Designguide tilføjet under Indstillinger',
+  'Brandfarver (sort, rød, orange, grå) erstattet af designtokens i knapper, ringe, toasts og statuslinjer',
+];
+const DG_RULES = [
+  'Ikoner kommer fra sprite-biblioteket: <svg class="ico"><use href="#i-navn"/></svg>. Ingen emojis i ny UI.',
+  'Farver hentes fra tokens (var(--teal), var(--ink) osv.), ikke fra hex-værdier.',
+  'Én primær knap pr. skærm (.btn.full). Sekundære knapper bruger .gray.',
+  'Nye emojis skal have et ikon i ICON_MAP, ellers vises en standardprik.',
+  'Hver ny funktion eller ændring tilføjes til DG_LOG i samme ændring.',
+];
+function renderDesignGuide(){
+  const tok = [['--teal','Teal'],['--ink','Blæk'],['--muted','Dæmpet'],['--line','Linje'],['--bg','Baggrund'],['--red','Rød'],['--orange','Orange']];
+  const ids = [...document.querySelectorAll('symbol[id^="i-"]')].map(s => s.id).filter(id => !id.startsWith('i-lvl'));
+  const byIcon = {};
+  for (const [e, name] of Object.entries(ICON_MAP)) (byIcon[name] ||= []).push(e);
+  $('#view').innerHTML = `
+    <button class="btn full gray" onclick="toggleSettings()">← Tilbage</button>
+    <div class="gtitle">Principper</div>
+    <div class="card dg"><p>Rolig og nordisk: god luft, få farver og afrundede hjørner.</p><p>Ikoner i stedet for emojis og smileys. Ikonerne er enkle linjetegn i teal.</p><p>Dette design gælder for hele appen, og nye skærme følger det.</p></div>
+
+    <div class="gtitle">Farver</div>
+    <div class="group dg"><div class="sw">${tok.map(([v,n]) => `<div><i style="background:var(${v})"></i>${n}<br>${v}</div>`).join('')}</div></div>
+
+    <div class="gtitle">Typografi</div>
+    <div class="card dg"><p class="type-h">Overskrift</p><p class="type-b">Brødtekst og hjælpetekst til det daglige.</p></div>
+
+    <div class="gtitle">Ikoner</div>
+    <div class="group dg"><div class="ig">${ids.map(id => `<div><svg class="ico"><use href="#${id}"/></svg>${id.slice(2)}</div>`).join('')}</div></div>
+
+    <div class="gtitle">Komponenter</div>
+    <div class="card"><h2>Kort</h2><div style="font-size:14px">Hvid flade med tynd kant og afrundede hjørner.</div></div>
+    <div class="group dg" style="padding:12px"><button class="btn full">Primær handling</button><button class="btn full gray" style="margin-top:8px">Sekundær handling</button></div>
+    <div class="group dg" style="padding:12px;display:flex;gap:12px;justify-content:center">${[1,2,3,4,5].map(n => `<svg class="ico" style="width:30px;height:30px;color:var(--teal)"><use href="#i-lvl${n}"/></svg>`).join('')}</div>
+
+    <div class="gtitle">Emoji → ikon</div>
+    <div class="group">${Object.keys(byIcon).sort().map(n => `<div class="srow"><span class="emo"><span data-noart>${byIcon[n].join(' ')}</span></span><span class="sv"><svg class="ico"><use href="#i-${n}"/></svg></span></div>`).join('')}</div>
+
+    <div class="gtitle">Regler for nye ændringer</div>
+    <div class="group">${DG_RULES.map(r => `<div class="srow"><span>${esc(r)}</span></div>`).join('')}</div>
+
+    <div class="gtitle">Ændringslog</div>
+    <div class="group">${DG_LOG.map(t => `<div class="srow"><span>${esc(t)}</span></div>`).join('')}</div>`;
+}
 function srow(label, inner, sub){ return `<label class="srow"><span>${label}${sub ? `<small>${sub}</small>` : ''}</span><span class="sv">${inner}</span></label>`; }
 function renderSettings(){
   const g = state.settings, G0 = goalFor(), c = cycLen(), pl = periodLen(), n = nextPeriod(), lb = state.lastBackup, ago = lb ? Math.round((new Date(iso(new Date())+'T12:00:00') - new Date(lb+'T12:00:00'))/864e5) : null;
@@ -1907,6 +2037,10 @@ function renderSettings(){
       <button class="srow act" onclick="openHealth()">⌚ Hent skridt og bevægelse nu</button></div>
     <div class="group" style="margin-top:8px"><button class="srow act" onclick="openGuide()">📖 Sådan laver du genvejen (trin for trin)</button></div>
     <div class="gnote">Genvejen henter de sidste 7 dage, så glemte dage bliver udfyldt næste gang.</div>
+
+    <div class="gtitle">Design</div>
+    <div class="group"><button class="srow act" onclick="openDesignGuide()">🎨 Designguide</button></div>
+    <div class="gnote">Farver, ikoner og komponenter. Nye funktioner føjes til guiden.</div>
 
     <div class="gtitle">Dine data</div>
     <div class="group">
@@ -1972,7 +2106,7 @@ function weightCard(){ const ws = wSorted(), WG = wGoal(), tr = trendOf(ws), las
       <div><div class="muted">Start</div><b style="font-size:18px">${f1(WG.st.kg)}</b></div>
       <div><div class="muted">Nu</div><b style="font-size:26px">${f1(WG.cur)}</b></div>
       <div><div class="muted">Mål</div><b style="font-size:18px">${f1(WG.goal)}</b></div></div>
-    <div class="bar" style="height:10px"><div style="width:${WG.pct}%;background:#ff5a1f"></div></div>
+    <div class="bar" style="height:10px"><div style="width:${WG.pct}%;background:#B0853F"></div></div>
     <div class="row between" style="font-size:13px;margin-top:6px"><span>${WG.reached ? '🎉 Mål nået!' : `${f1(WG.left)} kg tilbage · ${Math.round(WG.pct)} %`}</span><span class="muted">Mål: ${dk(new Date(state.settings.goalDate+'T12:00:00'), { day:'numeric', month:'short', year:'numeric' })}</span></div>`
     : `<div class="muted" style="margin-bottom:10px">Sæt et mål, så kan du følge din fremgang. <a href="#" onclick="toggleSettings();return false">Sæt vægtmål ›</a></div>`;
   const stats = tr.length > 1 ? `<div class="row" style="gap:6px;margin-top:12px">
@@ -2048,6 +2182,71 @@ async function viewPhoto(id){ const p = (await pAll()).find(x => x.id === id); i
     <div class="shead"><h3>${dk(new Date(p.date+'T12:00:00'), { day:'numeric', month:'long', year:'numeric' })}${p.kg ? ' · ' + f1(p.kg) + ' kg' : ''}</h3><button class="btn small gray" onclick="closeSheet()">Luk</button></div>
     <img src="${p.data}" style="width:100%;border-radius:14px;max-height:60vh;object-fit:contain;background:#f2f2f2">
     <button class="btn full ghost" style="margin-top:10px;color:#e11d48" onclick="if(confirm('Slet billedet?')){pDel('${p.id}').then(()=>{closeSheet();render();toast('Billede slettet')})}">Slet billede</button></div>`; }
+// Emoji → Nordic icon. Unmapped emoji fall back to a dot.
+const ICON_MAP = {
+  '🥣':'bowl','🥗':'bowl','🍚':'bowl','🍲':'bowl',
+  '🍎':'apple','🥚':'egg','🍳':'egg',
+  '🍞':'bread','🥪':'bread','🥐':'bread','🥯':'bread',
+  '🍽':'plate','🍗':'plate','🥩':'plate','🍔':'plate','🍕':'plate',
+  '☕':'coffee','🍵':'coffee','🫖':'coffee',
+  '🥤':'shake','🥛':'milk','🧀':'milk','🧈':'milk',
+  '🐟':'fish','🍣':'fish','🦐':'fish',
+  '🫒':'leaf','🥑':'leaf','🥜':'leaf','🌿':'leaf','🥦':'leaf','🥬':'leaf','🥕':'leaf',
+  '🍫':'dot','🍬':'dot','🍪':'dot','🎉':'sparkle','😄':'sparkle','🤩':'sparkle',
+  '🚶':'walk','🏃':'run','🚴':'bike','🧘':'yoga','🏋':'dumbbell','💧':'drop','🩸':'drop',
+  '⚖':'scale','🏅':'medal','✅':'check','😊':'check',
+  '📷':'camera','⚡':'bolt','🔎':'search','✏':'pencil','📦':'barcode','⭐':'star',
+  '🔒':'lock','🔑':'lock','🌙':'moon','😌':'moon','😴':'moon','🥱':'moon','🛌':'moon',
+  '🌱':'sprout','☀':'sun','🌞':'sun','📈':'chart','📊':'chart','💡':'bulb','⚠':'warning',
+  '🏡':'home','🏠':'home','🏢':'office','🤒':'thermo','🩺':'thermo','🌡':'thermo',
+  '🤧':'snow','🥶':'snow','❄':'snow','💊':'pill','⌚':'watch','💛':'heart','❤':'heart',
+  '📅':'calendar','🗓':'calendar','🎨':'bulb','📏':'ruler','📋':'folder','💾':'save','🔄':'sync',
+  '🌊':'swim','🏊':'swim','🚣':'row','💃':'dance','🕺':'dance',
+  '📸':'camera','🗒':'folder','📝':'pencil','✨':'sparkle','💪':'dumbbell','🔥':'bolt',
+};
+const EMOJI_RE = /\p{Extended_Pictographic}(?:\uFE0F|\p{Emoji_Modifier}|\u20E3)*(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\p{Emoji_Modifier})*)*/gu;
+const EMOJI_SKIP = new Set([...'♀♂✓✕★●▶⏸⏭↻↺⇄➕➖⬇⬆→←©®']);
+const ART_SKIP_TAGS = new Set(['SCRIPT','STYLE','TEXTAREA','OPTION','INPUT','SVG','NOSCRIPT']);
+const SVG_NS = 'http://www.w3.org/2000/svg';
+function icoEl(name){
+  const s = document.createElementNS(SVG_NS, 'svg'), u = document.createElementNS(SVG_NS, 'use');
+  s.setAttribute('class', 'ico'); s.setAttribute('aria-hidden', 'true');
+  u.setAttribute('href', '#i-' + name); s.append(u); return s;
+}
+// Variation selectors and ZWJ are stripped; ZWJ sequences fall back to their first code point.
+function iconFor(raw){
+  const key = raw.replace(/\uFE0F/g, '');
+  return ICON_MAP[key] || ICON_MAP[[...key][0]] || 'dot';
+}
+function artify(root){
+  const nodes = [];
+  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode(n){
+    for (let p = n.parentElement; p; p = p.parentElement)
+      if (ART_SKIP_TAGS.has(p.tagName) || p.hasAttribute('data-noart')) return NodeFilter.FILTER_REJECT;
+    return /\p{Extended_Pictographic}/u.test(n.nodeValue) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
+  } });
+  while (w.nextNode()) nodes.push(w.currentNode);
+  for (const n of nodes){
+    const text = n.nodeValue, frag = document.createDocumentFragment();
+    let last = 0, changed = false;
+    for (const m of text.matchAll(EMOJI_RE)){
+      if (EMOJI_SKIP.has(m[0].replace(/\uFE0F/g, ''))) continue;
+      if (m.index > last) frag.append(text.slice(last, m.index));
+      frag.append(icoEl(iconFor(m[0])));
+      last = m.index + m[0].length; changed = true;
+    }
+    if (!changed) continue;
+    if (last < text.length) frag.append(text.slice(last));
+    n.replaceWith(frag);
+  }
+}
+// Disconnect while converting so our own DOM edits do not re-trigger the observer.
+const ART_OBS_OPTS = { childList: true, characterData: true, subtree: true };
+const artObserver = new MutationObserver(() => {
+  artObserver.disconnect(); artify(document.body); artObserver.observe(document.body, ART_OBS_OPTS);
+});
+artify(document.body);
+artObserver.observe(document.body, ART_OBS_OPTS);
 render();
 </script>
 </body>
