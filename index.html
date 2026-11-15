@@ -37,9 +37,9 @@
 
   nav { position: fixed; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,.96); backdrop-filter: blur(10px); border-top: 1px solid var(--line); display: grid; grid-template-columns: repeat(4, 1fr); padding: 6px 4px calc(6px + env(safe-area-inset-bottom)); z-index: 20; }
   nav button { display: flex; flex-direction: column; align-items: center; font-size: 11px; color: var(--muted); padding: 4px 0; gap: 2px; }
-  nav button .i { font-size: 22px; filter: grayscale(1); opacity: .6; }
+  nav button .i { font-size: 22px; color: var(--c, var(--muted)); opacity: .6; }
   nav button.on { color: var(--teal); font-weight: 600; }
-  nav button.on .i { filter: none; opacity: 1; }
+  nav button.on .i { opacity: 1; }
 
   /* Rings */
   .rings { display: grid; grid-template-columns: 130px 1fr; gap: 14px; align-items: center; }
@@ -941,6 +941,7 @@ function applyTabColors(){
   const [c, t] = TAB_COLORS[tab] || TAB_COLORS.today, s = document.documentElement.style;
   s.setProperty('--teal', c); s.setProperty('--teal2', c); s.setProperty('--spruce-t', t); s.setProperty('--bg', t);
   document.querySelector('meta[name="theme-color"]').content = c;
+  document.querySelectorAll('nav button[data-tab]').forEach(b => b.style.setProperty('--c', TAB_COLORS[b.dataset.tab][0]));
 }
 function render(){
   applyTabColors();
