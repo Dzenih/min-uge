@@ -112,6 +112,12 @@
   .wtog { display:flex; gap:6px; background:#f0f0f0; border-radius:99px; padding:4px; margin-bottom:12px; }
   .wtog button { flex:1; border:0; border-radius:99px; padding:9px 6px; font-weight:700; font-size:14px; background:transparent; color:#525252; }
   .wtog button.on { background:#fff; color:var(--ink); box-shadow:0 1px 4px rgba(0,0,0,.12); }
+  .vnav { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:12px; }
+  .vnav button { border:0; background:#f0f0f0; color:var(--ink); border-radius:99px; width:36px; height:36px; display:flex; align-items:center; justify-content:center; padding:0; }
+  .vnav button svg { width:18px; height:18px; }
+  .vnav button:disabled { opacity:.3; }
+  .vnav span { flex:1; text-align:center; font-weight:700; font-size:14px; text-transform:capitalize; }
+  .vnav .reset { width:auto; padding:0 12px; font-size:13px; font-weight:700; }
   .why { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
   .why span { background:#fff; border-radius:99px; padding:4px 10px; font-size:12px; border:1px solid #e8e8e8; }
   .wk .loc { display:block; border:0; background:#f0f0f0; border-radius:8px; margin-top:4px; padding:2px 0; font-size:14px; width:100%; }
@@ -399,6 +405,7 @@
   <div class="sub" id="hdrSub"></div>
 </header>
 
+<div id="vnav"></div>
 <main id="view"></main>
 
 <nav>
@@ -778,13 +785,18 @@ loadScanned();
 function save(){ try { localStorage.setItem(KEY, JSON.stringify(state)); } catch(e){ toast('Hukommelsen er fuld – slet nogle billeder'); } }
 function iso(d){ return d.toLocaleDateString('sv-SE'); }
 function mondayOf(d){ const x = new Date(d); const w = (x.getDay()+6)%7; x.setDate(x.getDate()-w); x.setHours(12,0,0,0); return x; }
-function day(k = iso(new Date())){ return state.days[k] || (state.days[k] = { food:[], sets:{}, done:false, checks:{}, water:0 }); }
+/* Valgt dag i I dag / Mad / Træning / Fremgang-uge. null = i dag (ikke gemt) */
+let viewK = null;
+function vIso(){ return viewK || iso(new Date()); }
+function vDate(){ return viewK ? new Date(viewK+'T12:00:00') : new Date(); }
+function setView(k){ viewK = k && k !== iso(new Date()) ? k : null; trainDay = vDate().getDay(); render(); scrollTo(0,0); }
+function day(k = vIso()){ return state.days[k] || (state.days[k] = { food:[], sets:{}, done:false, checks:{}, water:0 }); }
 function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function r0(n){ return Math.round(n); }
 function totals(k){ const d = day(k); return d.food.reduce((a,f) => ({ kcal:a.kcal+f.kcal, p:a.p+f.p, c:a.c+(f.c||0), fat:a.fat+(f.fat||0), fib:a.fib+(f.fib||0), miss:a.miss+(f.c==null?1:0) }), { kcal:0, p:0, c:0, fat:0, fib:0, miss:0 }); }
 function weekInfo(){
   const start = new Date(state.settings.programStart + 'T12:00:00');
-  const diff = Math.floor((mondayOf(new Date()) - mondayOf(start)) / (7*864e5));
+  const diff = Math.floor((mondayOf(vDate()) - mondayOf(start)) / (7*864e5));
   return WEEKS[((diff % 4) + 4) % 4];
 }
 function median(a){ const s = a.slice().sort((x,y) => x-y), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m-1] + s[m]) / 2; }
@@ -862,7 +874,7 @@ function cycleBar(ph){
 
 /* ================= UI HELPERS ================= */
 const $ = (s, el=document) => el.querySelector(s);
-let tab = 'today', trainDay = new Date().getDay(), openEx = null;
+let tab = 'today', trainDay = vDate().getDay(), openEx = null;
 function toast(msg, undo){
   document.querySelectorAll('.toast').forEach(t => t.remove());
   const t = document.createElement('div'); t.className = 'toast'; t.innerHTML = esc(msg) + (undo ? '<button>Fortryd</button>' : '');
@@ -875,8 +887,8 @@ function beep(f=880, dur=.18){ try { actx = actx || new (window.AudioContext||wi
 function fmt(s){ s = Math.max(0, Math.ceil(s)); return Math.floor(s/60) + ':' + String(s%60).padStart(2,'0'); }
 
 function header(){
-  const now = new Date();
-  $('#hdrDate').textContent = now.toLocaleDateString('da-DK', { weekday:'long', day:'numeric', month:'long' });
+  const now = vDate();
+  $('#hdrDate').textContent = now.toLocaleDateString('da-DK', { weekday:'long', day:'numeric', month:'long' }) + (viewK ? ' · tilbage i tid' : '');
   const w = weekInfo(), sch = schFor(now.getDay());
   const titles = { today:'I dag', food:'Mad', train:'Træning', week:'Fremgang', settings:'Indstillinger', guide:'Designguide' };
   const overlay = tab === 'settings' || tab === 'guide';
@@ -890,12 +902,30 @@ function header(){
 function render(){
   header();
   document.querySelectorAll('nav button[data-tab]').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
+  $('#vnav').innerHTML = tab === 'week' ? weekNav() : ['today','food','train'].includes(tab) ? dayNav() : '';
   ({ today:renderToday, food:renderFood, train:renderTrain, week:renderWeek, settings:renderSettings, guide:renderDesignGuide })[tab]();
 }
 let prevTab = 'today';
 function toggleSettings(){ if (tab === 'settings' || tab === 'guide') tab = prevTab; else { prevTab = tab; tab = 'settings'; } render(); scrollTo(0,0); }
 function openDesignGuide(){ if (tab !== 'guide') prevTab = tab; tab = 'guide'; render(); scrollTo(0,0); }
-document.querySelectorAll('nav button[data-tab]').forEach(b => b.onclick = () => { tab = b.dataset.tab; if (tab==='train') trainDay = new Date().getDay(); render(); scrollTo(0,0); });
+document.querySelectorAll('nav button[data-tab]').forEach(b => b.onclick = () => { tab = b.dataset.tab; if (tab==='train') trainDay = vDate().getDay(); render(); scrollTo(0,0); });
+
+/* Dagsnavigation (I dag / Mad / Træning) og ugenavigation (Fremgang) */
+function dayNav(){
+  const k = vIso(), lbl = viewK ? dk(vDate(), { weekday:'long', day:'numeric', month:'short' }) : 'I dag';
+  return `<div class="vnav"><button onclick="shiftView(-1)" aria-label="Dag tilbage"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button>
+    <span>${esc(lbl)}</span>
+    ${viewK ? '<button class="reset" onclick="setView(null)">I dag</button>' : ''}
+    <button onclick="shiftView(1)" aria-label="Dag frem" ${k >= iso(new Date()) ? 'disabled' : ''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button></div>`;
+}
+function weekNav(){
+  const mon = mondayOf(vDate()), sun = addDays(mon, 6), lbl = `${dk(mon, { day:'numeric', month:'short' })} – ${dk(sun, { day:'numeric', month:'short' })}`;
+  return `<div class="vnav"><button onclick="shiftView(-7)" aria-label="Uge tilbage"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button>
+    <span>${esc(lbl)}</span>
+    ${viewK ? '<button class="reset" onclick="setView(null)">I dag</button>' : ''}
+    <button onclick="shiftView(7)" aria-label="Uge frem" ${iso(mon) >= iso(mondayOf(new Date())) ? 'disabled' : ''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button></div>`;
+}
+function shiftView(n){ const base = vDate(); base.setDate(base.getDate() + n); const k = iso(base); if (k > iso(new Date())) return; setView(k); }
 
 function ring(val, goal, color, size=130){
   const r = size/2 - 10, c = 2*Math.PI*r, pct = Math.min(1, val/goal);
@@ -905,9 +935,9 @@ function ring(val, goal, color, size=130){
 
 /* ================= I DAG ================= */
 function renderToday(){
-  const k = iso(new Date()), d = day(k), t = totals(k), G = goalFor(k), g = { kcal:G.kcal, protein:G.p }, wd = new Date().getDay(), sch = schFor(wd);
+  const k = vIso(), d = day(k), t = totals(k), G = goalFor(k), g = { kcal:G.kcal, protein:G.p }, wd = vDate().getDay(), sch = schFor(wd);
   const left = g.kcal - t.kcal, over = left < 0;
-  const ph = cyclePhase();
+  const ph = cyclePhase(k);
   const checks = [['d3b','💊','D3 + B-vitamin'],['c','🍋','C-brus'],['coll','✨','Collagen'],['sleep','😴','7–8 timers søvn'],['stretch','🧘‍♀️','Stræk 5 min'],['iron','🩸','Jern (hvis aftalt)']];
   $('#view').innerHTML = `
     ${goalCard(k)}
@@ -936,7 +966,7 @@ function renderToday(){
       <div class="water">${Array.from({length:8}, (_,i) => `<button class="${i<d.water?'on':''}" onclick="setWater(${i+1})">💧</button>`).join('')}</div>
     </div>
     ${moodCard()}
-    <button class="hero t-${sch.type}" style="width:100%;text-align:left" onclick="tab='train';trainDay=${new Date().getDay()};render()">
+    <button class="hero t-${sch.type}" style="width:100%;text-align:left" onclick="tab='train';trainDay=${wd};render()">
       <div class="row between"><span class="big">${sch.e}</span>${d.done ? '<span class="btn small" style="background:var(--ink)">✓ Gennemført</span>' : '<span class="btn small gray">Start ›</span>'}</div>
       <h2>${sch.title}</h2><div style="font-size:14px">${sch.sub}</div>
       ${adjustFor(k) ? `<div class="adj">${adjustFor(k).msg}</div>` : ''}
@@ -950,7 +980,7 @@ function setWater(n){ const d = day(); d.water = d.water === n ? n-1 : n; save()
 
 /* ================= MAD ================= */
 function renderFood(){
-  const k = iso(new Date()), d = day(k), t = totals(k), G = goalFor(k), g = { kcal:G.kcal, protein:G.p };
+  const k = vIso(), d = day(k), t = totals(k), G = goalFor(k), g = { kcal:G.kcal, protein:G.p };
   const list = d.food.slice().reverse();
   $('#view').innerHTML = `
     <div class="card">
@@ -967,7 +997,7 @@ function renderFood(){
       <button class="action" onclick="openAdd('fav')"><span class="e">⭐</span><b>Mine</b><span>favoritter og måltider</span></button>
     </div>
     <div class="card">
-      <h2>📝 I dag</h2>
+      <h2>📝 ${viewK ? 'Logget den dag' : 'I dag'}</h2>
       ${list.length ? list.map(f => `
         <div class="entry">
           <div class="thumb">${f.photo ? `<img src="${f.photo}">` : esc(f.e || '🍽️')}</div>
@@ -977,7 +1007,7 @@ function renderFood(){
           <button class="del" onclick="delFood('${f.id}')">✕</button>
         </div>`).join('') : '<div class="muted">Intet logget endnu. Start med din kefir-skål ☀️</div>'}
       <div class="row" style="flex-wrap:wrap;gap:8px;margin-top:10px">
-        ${yesterdayFood().length ? `<button class="btn small gray" onclick="copyYesterday()">📋 Kopiér i går (${yesterdayFood().length})</button>` : ''}
+        ${yesterdayFood().length ? `<button class="btn small gray" onclick="copyYesterday()">📋 ${viewK ? 'Kopiér dagen før' : 'Kopiér i går'} (${yesterdayFood().length})</button>` : ''}
         ${list.length > 1 ? `<button class="btn small gray" onclick="saveMeal(day().food)">💾 Gem dagen som måltid</button>` : ''}
       </div>
       <div class="muted" style="margin-top:6px">Tryk ★ for at gemme en ret som favorit.</div>
@@ -1070,7 +1100,7 @@ function toggleFav(id){ const f = day().food.find(x => x.id === id); if (!f) ret
   else { state.favs.unshift(clean(f)); toast('⭐ Gemt som favorit'); }
   save(); render(); if ($('#overlay .sheet')) drawSheet(true); }
 function unFav(i){ state.favs.splice(i, 1); save(); drawSheet(true); }
-function yesterdayFood(){ const y = new Date(); y.setDate(y.getDate()-1); return (state.days[iso(y)] || {}).food || []; }
+function yesterdayFood(){ const y = vDate(); y.setDate(y.getDate()-1); return (state.days[iso(y)] || {}).food || []; }
 function addMany(items, label){
   const d = day(), now = new Date().toLocaleTimeString('da-DK', { hour:'2-digit', minute:'2-digit' });
   const news = items.map(f => Object.assign({ id: Date.now().toString(36) + Math.random().toString(36).slice(2,6), time: now }, clean(f)));
@@ -1272,10 +1302,10 @@ function figure(id){
 function full(o){ const r = Object.assign({}, o); r.kr = r.kr || r.kl; r.fr = r.fr || r.fl; r.er = r.er || r.el; r.hr = r.hr || r.hl; return r; }
 
 function renderTrain(){
-  const now = new Date().getDay(), key = keyForWeekday(trainDay), d = day(key), sch = schFor(trainDay), w0 = weekInfo(), moved = srcFor(trainDay) !== trainDay, adj = adjustFor(key);
+  const todayK = iso(new Date()), key = keyForWeekday(trainDay), d = day(key), sch = schFor(trainDay), w0 = weekInfo(), moved = srcFor(trainDay) !== trainDay, adj = adjustFor(key);
   const w = adj && adj.lighter ? Object.assign({}, w0, { sets: Math.min(2, w0.sets) }) : w0;
   const order = [1,2,3,4,5,6,0];
-  let html = `<div class="days">${order.map((wd,i) => { const dd = state.days[keyForWeekday(wd)]; return `<button class="${wd===trainDay?'on':''} ${wd===now?'today':''}" onclick="trainDay=${wd};openEx=null;render()">${SHORT[i]}<span class="ok">${dd && dd.done ? '✅' : schFor(wd).e}</span>${srcFor(wd)!==wd?'<i class="sw">⇄</i>':''}</button>`; }).join('')}</div>
+  let html = `<div class="days">${order.map((wd,i) => { const dd = state.days[keyForWeekday(wd)]; return `<button class="${wd===trainDay?'on':''} ${keyForWeekday(wd)===todayK?'today':''}" onclick="trainDay=${wd};openEx=null;render()">${SHORT[i]}<span class="ok">${dd && dd.done ? '✅' : schFor(wd).e}</span>${srcFor(wd)!==wd?'<i class="sw">⇄</i>':''}</button>`; }).join('')}</div>
     ${workToggle(trainDay)}${suggestCard(trainDay)}
     <div class="hero t-${sch.type}"><div class="big">${sch.e}</div><h2>${sch.title}</h2><div style="font-size:14px">${DAYNAMES[trainDay]} · ${sch.sub}</div>
       ${moved ? `<div class="moved">⇄ Ændret denne uge · planen var ${SCHEDULE[trainDay].e} ${SCHEDULE[trainDay].title}</div>` : ''}
@@ -1335,7 +1365,7 @@ function swapDays(a, b){
 }
 function pickWorkout(wd, src){ setSrc(wd, src); save(); closeSheet(); openEx = null; toast(`${SCHEDULE[src].e} ${DAYNAMES[wd]}: ${SCHEDULE[src].title}`); render(); }
 function resetSwap(wd){ setSrc(wd, wd); save(); closeSheet(); openEx = null; toast('↺ Tilbage til planen'); render(); }
-function keyForWeekday(wd){ const m = mondayOf(new Date()); m.setDate(m.getDate() + ((wd+6)%7)); return iso(m); }
+function keyForWeekday(wd){ const m = mondayOf(vDate()); m.setDate(m.getDate() + ((wd+6)%7)); return iso(m); }
 
 /* ================= HJEMME / KONTOR ================= */
 const ORDER = [1,2,3,4,5,6,0];
@@ -1346,10 +1376,10 @@ function workToggle(wd){ const v = workAt(wd);
   return `<div class="wtog"><button class="${v==='office'?'on':''}" onclick="setWork(${wd},'office')">🏢 Kontor</button><button class="${v==='home'?'on':''}" onclick="setWork(${wd},'home')">🏡 Hjemme</button></div>`; }
 // Foreslår at flytte hård træning til hjemmedage og let træning til kontordage (kun dage fra i dag og frem)
 function workSuggest(wd){
-  const today = new Date().getDay(), idx = w => ORDER.indexOf(w);
-  if (idx(wd) < idx(today) || (state.days[keyForWeekday(wd)] || {}).done) return null;
+  const todayK = iso(new Date()), k = keyForWeekday(wd), idx = w => ORDER.indexOf(w);
+  if (k < todayK || (state.days[k] || {}).done) return null;
   const me = schFor(wd), loc = workAt(wd);
-  const later = ORDER.filter(w => w !== wd && idx(w) >= idx(today) && !(state.days[keyForWeekday(w)] || {}).done);
+  const later = ORDER.filter(w => w !== wd && keyForWeekday(w) >= todayK && !(state.days[keyForWeekday(w)] || {}).done);
   if (loc === 'home' && LIGHT.includes(me.type)) {
     const t = later.find(w => schFor(w).type === 'str' && workAt(w) === 'office') ?? later.find(w => HEAVY.includes(schFor(w).type) && workAt(w) === 'office') ?? later.find(w => schFor(w).type === 'str' && idx(w) > idx(wd));
     if (t == null) return null;
@@ -1631,7 +1661,7 @@ function moodCard(){
     <div class="checks">${[['cold','🥶','Fryser meget'],['hungry','😩','Meget sulten'],['bloat','🎈','Oppustet']].map(([id,e,l]) => `<button class="chk ${m[id]?'on':''}" onclick="setMood('${id}',${m[id]?0:1})"><span class="b">${m[id]?'✓':''}</span>${e} ${l}</button>`).join('')}</div>
     ${moodInsight(true)}</div>`;
 }
-function moodDays(n){ const out = []; for (let i = 0; i < n; i++) { const x = new Date(); x.setDate(x.getDate()-i); const k = iso(x), d = state.days[k]; if (d && d.mood && Object.values(d.mood).some(Boolean)) out.push({ k, m: d.mood, t: totals(k), g: goalFor(k) }); } return out; }
+function moodDays(n){ const out = []; for (let i = 0; i < n; i++) { const x = vDate(); x.setDate(x.getDate()-i); const k = iso(x), d = state.days[k]; if (d && d.mood && Object.values(d.mood).some(Boolean)) out.push({ k, m: d.mood, t: totals(k), g: goalFor(k) }); } return out; }
 function avg(a){ return a.length ? a.reduce((x,y) => x+y, 0)/a.length : null; }
 function moodInsight(short){
   const ds = moodDays(14), e = ds.filter(x => x.m.energy), notes = [];
@@ -1861,7 +1891,7 @@ function energyWeekCard(){ const wds = [1,2,3,4,5,6,0], todayK = iso(new Date())
     <div class="row between" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)"><span>I alt (${done.length} afsluttede dage)</span><b>${sum > 0 ? '+' : sum < 0 ? '−' : ''}${fmt(sum)} kcal</b></div>
     <div class="muted">${done.length ? `Snit ${balText(sum/done.length)} pr. dag · ca. ${(Math.abs(sum)/7700).toFixed(2).replace('.',',')} kg ${sum < 0 ? 'fedt forbrændt' : 'oplagret'}` : 'Log mad for at se din balance'} · sort = underskud, grå = overskud · i dag er lys, fordi dagen ikke er slut</div></div>`; }
 function statsCard(){
-  const w = weekActive(mondayOf(new Date())), st = streak(), goal = Math.max(1, 5 - w.s), pct = Math.min(1, w.n/goal);
+  const w = weekActive(mondayOf(vDate())), st = streak(), goal = Math.max(1, 5 - w.s), pct = Math.min(1, w.n/goal);
   return `<div class="card statc">
     <div class="ringsm">${ring(w.n, goal, '#B0853F', 92)}<div class="c"><b>${w.n}</b><span>af ${goal}</span></div></div>
     <div class="nums"><div><b>${hm(w.m)}</b><span>aktiv tid</span></div><div><b>${st ? '🔥 ' + st : '–'}</b><span>${st === 1 ? 'uge i træk' : 'uger i træk'}</span></div>
@@ -1875,7 +1905,7 @@ function calendarCard(){
   for (let n = 1; n <= dim; n++) {
     const k = iso(new Date(first.getFullYear(), first.getMonth(), n, 12)), d = state.days[k], a = isActive(k), x = extrasOf(k).length, ph = cyclePhase(k);
     if (a) act++; min += activeMin(k); if (d && d.done && schForKey(k).type === 'str') str++;
-    cells += `<span class="${a ? 'a' : x ? 'x' : ''} ${k===today?'t':''} ${k>today?'f':''}">${n}${ph && ph.name === 'Menstruation' ? '<i></i>' : ''}${!a && feelOf(k) === 'sick' ? '<em>🤒</em>' : ''}</span>`;
+    cells += `<span class="${a ? 'a' : x ? 'x' : ''} ${k===today?'t':''} ${k>today?'f':''}" ${k<=today ? `onclick="tab='today';setView('${k}')"` : ''}>${n}${ph && ph.name === 'Menstruation' ? '<i></i>' : ''}${!a && feelOf(k) === 'sick' ? '<em>🤒</em>' : ''}</span>`;
   }
   return `<div class="card"><div class="row between"><h2 style="margin:0">🗓️ ${first.toLocaleDateString('da-DK',{month:'long',year:'numeric'})}</h2>
       <span><button class="btn small gray" onclick="calOff--;render()">‹</button> <button class="btn small gray" ${calOff>=0?'disabled style="opacity:.3"':''} onclick="calOff++;render()">›</button></span></div>
@@ -1906,7 +1936,7 @@ function openQuick(){
         <button onclick="closeSheet();openAdd()"><span>🍽️</span>Mad</button>
         <button onclick="closeSheet();snap()"><span>📷</span>Foto af mad</button>
         <button onclick="closeSheet();openScan()"><span>📦</span>Stregkode</button>
-        <button onclick="openExtra(iso(new Date()))"><span>🚶‍♀️</span>Aktivitet</button>
+        <button onclick="openExtra(vIso())"><span>🚶‍♀️</span>Aktivitet</button>
         <button onclick="openWeight()"><span>⚖️</span>Vægt</button>
         <button onclick="closeSheet();tab='today';render();setTimeout(()=>$('#mood')&&$('#mood').scrollIntoView({behavior:'smooth'}),50)"><span>📓</span>Humør</button>
       </div>
