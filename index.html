@@ -1047,8 +1047,8 @@ $('#cam').onchange = (e) => {
 
 /* ================= GÆT MAD FRA BILLEDE (Google Gemini) ================= */
 // Nøglen ligger kun i localStorage – ikke i state, så den kommer ikke med i backup-filer
-const gKey = () => (localStorage.getItem('minuge-gkey') || '').replace(/[^A-Za-z0-9_\-]/g, '');
-function setGKey(v){ v = String(v || '').replace(/[^A-Za-z0-9_\-]/g, ''); v ? localStorage.setItem('minuge-gkey', v) : localStorage.removeItem('minuge-gkey'); toast(v ? '🔑 Nøgle gemt – tag et billede af din mad' : 'Nøgle fjernet'); render(); }
+const gKey = () => (localStorage.getItem('minuge-gkey') || '').replace(/[^A-Za-z0-9_.\-]/g, '');
+function setGKey(v){ v = String(v || '').replace(/[^A-Za-z0-9_.\-]/g, ''); v ? localStorage.setItem('minuge-gkey', v) : localStorage.removeItem('minuge-gkey'); toast(v ? '🔑 Nøgle gemt – tag et billede af din mad' : 'Nøgle fjernet'); render(); }
 let aiPhoto = null, aiRes = null, aiBusy = false, aiErr = '';
 async function aiGuess(){
   if (!aiPhoto || !gKey()) return; aiBusy = true; aiErr = ''; aiRes = null; if (addTab === 'ai' && $('#overlay .sheet')) drawSheet(true);
@@ -1063,7 +1063,7 @@ async function aiGuess(){
       const j = await r.json().catch(() => ({}));
       if (!r.ok) { if (r.status === 404) continue;
         const gm = (j.error && j.error.message) || '';
-        aiErr = r.status === 400 || r.status === 403 ? (/api key|API_KEY/i.test(gm) ? 'Google siger, at nøglen ikke er gyldig (' + gKey().slice(0, 4) + '…, ' + gKey().length + ' tegn – en nøgle starter med AIza og har 39 tegn). Kopiér den igen fra aistudio.google.com/apikey.' : 'Google svarede: ' + (gm || 'fejl ' + r.status)) : r.status === 429 ? 'Gratis-grænsen er nået lige nu – prøv igen om lidt.' : ((j.error && j.error.message) || 'Fejl ' + r.status); break; }
+        aiErr = r.status === 400 || r.status === 403 ? (/api key|API_KEY/i.test(gm) ? 'Google siger, at nøglen ikke er gyldig (' + gKey().slice(0, 4) + '…, ' + gKey().length + ' tegn). Kopiér den igen fra aistudio.google.com/apikey.' : 'Google svarede: ' + (gm || 'fejl ' + r.status)) : r.status === 429 ? 'Gratis-grænsen er nået lige nu – prøv igen om lidt.' : ((j.error && j.error.message) || 'Fejl ' + r.status); break; }
       const t = ((j.candidates || [])[0]?.content?.parts || []).filter(x => !x.thought).map(x => x.text || '').join('');
       const js = (t.match(/\{[\s\S]*\}/) || [])[0];
       if (!js) { aiErr = 'Gemini svarede uden resultat – prøv et nyt billede.'; break; }
