@@ -13,7 +13,7 @@
 <title>Min uge</title>
 <style>
   :root {
-    --teal: #2F5D50; --teal2: #2F5D50; --ink: #1E2B2A; --muted: #6E7A77; --line: #E4E0D6;
+    --teal: #C8453B; --teal2: #C8453B; --ink: #1E2B2A; --muted: #6E7A77; --line: #E4E0D6;
     --bg: #F5F3EE; --card: #fff; --orange: #B0853F; --red: #B5654A; --blue: #3F7A8C; --violet: #7D6B93;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -225,7 +225,7 @@
   .settings label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
 
   /* ===== Nordic design (se designguiden i appen) ===== */
-  :root { --teal:#2F5D50; --teal2:#2F5D50; --ink:#1E2B2A; --muted:#6E7A77; --line:#E4E0D6; --bg:#F5F3EE; --orange:#B0853F; --red:#B5654A; --track:#EEEBE3; --spruce-t:#E1ECE7; --birch-t:#F4EBDA; --fjord-t:#E2EEF1; --heather-t:#ECE8F1; --clay-t:#F6E7E1; }
+  :root { --teal:#C8453B; --teal2:#C8453B; --warn:#8E2A22; --ink:#1E2B2A; --muted:#6E7A77; --line:#E4E0D6; --bg:#F5F3EE; --orange:#B0853F; --red:#B5654A; --track:#EEEBE3; --spruce-t:#FBE7E5; --birch-t:#F4EBDA; --fjord-t:#E2EEF1; --heather-t:#ECE8F1; --clay-t:#F6E7E1; }
   html, body { font-family: -apple-system, "SF Pro Text", "Inter", "Helvetica Neue", Arial, sans-serif; letter-spacing: -.01em; -webkit-font-smoothing: antialiased; }
   header { background: var(--teal); color: #fff; border-radius: 0; padding: calc(10px + env(safe-area-inset-top)) 18px 6px; }
   header .htop { display:flex; align-items:flex-start; justify-content:space-between; }
@@ -936,7 +936,7 @@ function header(){
 }
 
 /* Hver fane har sin kategorifarve (fuld farve til overskrift/aktiv fane, lys tint til siden). Samme farver som logoets prikker. */
-const TAB_COLORS = { today:['#2F5D50','#E1ECE7'], food:['#B0853F','#F4EBDA'], train:['#3F7A8C','#E2EEF1'], week:['#4A8A74','#E6F1EC'] };
+const TAB_COLORS = { today:['#C8453B','#FBE7E5'], food:['#B0853F','#F4EBDA'], train:['#3F7A8C','#E2EEF1'], week:['#4A8A74','#E6F1EC'] };
 function applyTabColors(){
   const [c, t] = TAB_COLORS[tab] || TAB_COLORS.today, s = document.documentElement.style;
   s.setProperty('--teal', c); s.setProperty('--teal2', c); s.setProperty('--spruce-t', t); s.setProperty('--bg', t);
@@ -1260,7 +1260,7 @@ async function aiGuess(){
 const aiK = x => x.g / x.g0;
 function aiBody(){
   if (aiBusy) return '<div class="muted" style="text-align:center;padding:24px 0">🤖 Kigger på billedet …</div>';
-  if (aiErr) return `<div class="muted" style="padding:10px 0">⚠️ ${esc(aiErr)}</div><button class="btn full" onclick="aiGuess()">Prøv igen</button>`;
+  if (aiErr) return `<div class="muted" style="padding:10px 0;color:var(--warn)">⚠️ ${esc(aiErr)}</div><button class="btn full" onclick="aiGuess()">Prøv igen</button>`;
   if (!aiRes) return '';
   if (!aiRes.length) return '<div class="muted" style="padding:10px 0">Jeg kunne ikke se noget mad. Brug "Søg" eller "Skriv" i stedet.</div>';
   const on = aiRes.filter(x => x.on), tk = on.reduce((a, x) => a + x.kcal*aiK(x), 0), tp = on.reduce((a, x) => a + x.p*aiK(x), 0);
@@ -1957,7 +1957,7 @@ function healthBar(k){ const H = hOf(k);
   return `<div class="hbar"><div><b>⌚ Hent dagens bevægelse</b><small>Skridt og aktiv energi fra Apple Watch</small></div><div class="hbtns"><button class="pri" onclick="pasteHealth()">📋 Indsæt data</button><button onclick="runShortcut()">Kør genvej</button></div></div>`; }
 function energyCard(k){ const E = energy(k), max = Math.max(E.burn, E.intake, 1), today = k === iso(new Date());
   const bar = (v, c) => `<div class="bar" style="height:10px"><div style="width:${Math.min(100, v/max*100)}%;background:${c}"></div></div>`;
-  const warn = E.bal < -700 && !today ? '<div class="muted" style="margin-top:8px">⚠️ Over 700 kcal underskud – det kan sænke stofskiftet. Spis lidt mere.</div>'
+  const warn = E.bal < -700 && !today ? '<div class="muted" style="margin-top:8px;color:var(--warn)">⚠️ Over 700 kcal underskud – det kan sænke stofskiftet. Spis lidt mere.</div>'
     : today && E.bal < -700 ? '<div class="muted" style="margin-top:8px">Dagen er ikke slut – husk at spise dine måltider 🍽️</div>' : '';
   return `<div class="card"><h2>⚖️ Energibalance ${today ? '<span class="muted" style="font-weight:400">i dag</span>' : ''}</h2>
     <div class="stat"><div class="row between"><span>🍽️ Indtag</span><b>${fmt(E.intake)} kcal</b></div>${bar(E.intake, 'var(--ink)')}</div>
@@ -2120,7 +2120,7 @@ function renderSettings(){
       ${srow('Nå målet inden', `<input type="date" value="${g.goalDate || ''}" min="${iso(addDays(new Date(), 7))}" onchange="setGoal('goalDate',this.value)">`)}
       ${(() => { const WG = wGoal(); if (!WG) return ''; return `<div class="srow"><span>Tempo<small>${WG.reached ? 'Du har nået dit mål 🎉' : `${String(WG.left).replace('.',',')} kg på ${Math.round(WG.wLeft)} uger`}</small></span><span class="sv"><b>${WG.reached ? '–' : WG.need.toFixed(2).replace('.',',')}</b><em>kg/uge</em></span></div>`; })()}
       ${g.goalW ? `<button class="srow act" style="color:#e11d48" onclick="delete state.settings.goalW;delete state.settings.goalDate;delete state.settings.goalStart;save();render()">Fjern vægtmål</button>` : ''}</div>
-    <div class="gnote">${(() => { const WG = wGoal(); if (WG && !WG.reached && WG.need > 0.5) return `⚠️ Over 0,5 kg/uge er hårdt for stofskiftet. Kaloriemålet holdes skånsomt, så realistisk dato er ca. <b>${dk(WG.safeDate, { day:'numeric', month:'short', year:'numeric' })}</b>.`;
+    <div class="gnote">${(() => { const WG = wGoal(); if (WG && !WG.reached && WG.need > 0.5) return `<span style="color:var(--warn)">⚠️ Over 0,5 kg/uge er hårdt for stofskiftet. Kaloriemålet holdes skånsomt, så realistisk dato er ca. <b>${dk(WG.safeDate, { day:'numeric', month:'short', year:'numeric' })}</b>.</span>`;
       return 'Kaloriemålet tilpasses dit mål – højst 500 kcal under din forbrænding. 0,25–0,5 kg/uge er skånsomt for stofskiftet.'; })()}</div>
 
     ${cycOn() ? `<div class="gtitle">Menstruation</div>
@@ -2235,7 +2235,7 @@ function weightCard(){ const ws = wSorted(), WG = wGoal(), tr = trendOf(ws), las
       <div class="tile"><span class="muted">Prognose</span><b>${WG && WG.reached ? 'Nået 🎉' : FC && FC.date ? dk(FC.date, { day:'numeric', month:'short' }) + (FC.date.getFullYear() !== new Date().getFullYear() ? ' ' + String(FC.date.getFullYear()).slice(2) : '') : '–'}</b></div></div>
     <div style="font-size:14px;margin-top:8px">${!FC ? '📊 Prognosen kommer, når du har vejet dig over et par uger.'
       : WG && !WG.reached && FC.date ? (T(iso(FC.date)) <= T(state.settings.goalDate) + 7*864e5 ? '✅ Med dit nuværende tempo når du målet til tiden' : '📈 Lidt langsommere end planen – helt ok, det skåner stofskiftet')
-      : FC.rate > 0.75 ? '⚠️ Du taber dig hurtigt – spis lidt mere' : FC.rate < -0.1 ? '📈 Trenden går lidt op – det svinger, se på flere uger' : '➖ Trenden står stille'}</div>` : '';
+      : FC.rate > 0.75 ? '<span style="color:var(--warn)">⚠️ Du taber dig hurtigt – spis lidt mere</span>' : FC.rate < -0.1 ? '📈 Trenden går lidt op – det svinger, se på flere uger' : '➖ Trenden står stille'}</div>` : '';
   const cyc = ph && last && ['Lutealfase','Menstruation'].includes(ph.name) ? `<div class="muted" style="margin-top:6px">${ph.e} ${ph.name}: 0,5–2 kg ekstra væske er normalt nu – kig på trenden, ikke dagens tal.</div>` : '';
   const ms = milestones(ws, WG), got = ms.filter(m => m.done), nxt = ms.find(m => !m.done);
   const miles = ws.length ? `<div style="margin-top:12px"><div class="muted" style="margin-bottom:6px">🏅 Milepæle${got.length ? ` · ${got.length} nået` : ''}</div><div class="why">${got.slice(-4).map(m => `<span style="background:#0a0a0a;color:#fff;border-color:#0a0a0a">🏅 ${m.l}</span>`).join('')}${nxt ? `<span>Næste: ${nxt.l} · ${f1(nxt.rest)} kg</span>` : ''}</div></div>` : '';
