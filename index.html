@@ -703,6 +703,18 @@ const WEEKS = [
   { n:3, title:'Hårdeste uge', sets:3, note:'3 × 15 med 3 sek. ned i bevægelsen.', walk:40, int:[60,60,8] },
   { n:4, title:'Let uge', sets:2, note:'Kun 2 runder. Kroppen restituerer.', walk:30, int:null },
 ];
+const GOALS = [
+  { k:'speed', e:'🏃‍♀️', label:'Løbe hurtigere', sub:'+2 jog-intervaller i løbepasset' },
+  { k:'strength', e:'🏋️‍♀️', label:'Styrke', sub:'+1 sæt i styrkepassene' },
+  { k:'muscle', e:'💪', label:'Opbygning af muskler', sub:'Ekstra energi og mere protein' },
+  { k:'fat', e:'🔥', label:'Tabe fedt', sub:'+10 min gang og et skånsomt underskud' },
+];
+const AFTER = {
+  walk: { food:'🍎 Et stykke frugt og en håndfuld nødder giver let energi og god mætthed.', rec:'💧 Drik et glas vand og gå 5 min roligt for at falde ned.' },
+  str:  { food:'🥚 25–30 g protein inden for en time: skyr, æg eller kylling med et kulhydrat ved siden af.', rec:'🧘‍♀️ Stræk de trænede muskelgrupper i 5 min – det hjælper restitutionen.' },
+  row:  { food:'🍚 Kulhydrat og protein: havregrød med skyr eller rugbrød med æg.', rec:'💧 Drik rigeligt vand og tag det roligt resten af dagen.' },
+  run:  { food:'🍌 Kulhydrat først (banan, ris eller havregryn), derefter protein.', rec:'🛁 Lad benene køle af, og overvej en let gåtur eller roligt stræk i aften.' },
+};
 
 /* ---------- Stregtegninger: to positioner pr. øvelse, som animeres ---------- */
 const S = { h:[100,28], n:[100,42], p:[100,88], kl:[100,118], fl:[100,148], el:[100,64], hl:[100,86] };
@@ -797,7 +809,12 @@ function totals(k){ const d = day(k); return d.food.reduce((a,f) => ({ kcal:a.kc
 function weekInfo(){
   const start = new Date(state.settings.programStart + 'T12:00:00');
   const diff = Math.floor((mondayOf(vDate()) - mondayOf(start)) / (7*864e5));
-  return WEEKS[((diff % 4) + 4) % 4];
+  const base = WEEKS[((diff % 4) + 4) % 4], w = Object.assign({}, base);
+  if (base.n === 4) return w;
+  if (goalsOn('strength') || goalsOn('muscle')) w.sets = base.sets + 1;
+  if (goalsOn('speed') && base.int) w.int = [base.int[0], base.int[1], Math.min(10, base.int[2] + 2)];
+  if (goalsOn('fat')) w.walk = base.walk + 10;
+  return w;
 }
 function median(a){ const s = a.slice().sort((x,y) => x-y), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m-1] + s[m]) / 2; }
 function cycLen(){
@@ -957,6 +974,11 @@ function renderToday(){
       </div>
     </div>
     ${energyCard(k)}
+    ${suggestCard(wd)}
+    ${extraCard(k)}
+    ${workAt(wd)==='office' ? `<div class="card"><h2>🚗 Kontordag</h2><div style="font-size:14px">Kefir-skålen før afgang · shaken på formiddagen · frokost senest kl. 11–12 · skyr eller æg inden for 1 time efter hjemkomst.</div></div>`
+      : `<div class="card"><h2>🏡 Hjemmedag</h2><div style="font-size:14px">Morgenmad i ro inden kl. 9 · træn gerne formiddag eller i frokostpausen · frokost lige efter træning${LIGHT.includes(sch.type) ? ' · ekstra: 20 min rask gang på gangbåndet i en pause' : ''}.</div></div>`}
+    ${d.done ? afterCard(k, sch) : ''}${goalCard(k)}
     ${feelRow(k)}
     ${ph ? `<div class="card phase"><b>${ph.e} ${ph.name} · cyklusdag ${ph.d}</b>${cycleBar(ph)}<div style="margin-top:4px">${ph.tip}</div>${ph.more ? `<details class="more"><summary>Læs mere om ${ph.name.toLowerCase()}en</summary><div>${ph.more.split('\n').map(l => esc(l)).join('<br>')}</div></details>` : ''}${periodLine(true)}</div>` : ''}
     <div class="card">
@@ -1420,14 +1442,16 @@ function goalFor(k = iso(new Date())){
   const g = state.settings, w = curWeight(k), h = +g.height || 170, a = +g.age || 31;
   const bmr = Math.round(10*w + 6.25*h - 5*a + (g.sex === 'm' ? 5 : -161)), sch = schForKey(k), fl = feelOf(k), ph = cyclePhase(k), rate = weightRate(k);
   let burn = { rest:0, walk:75, str:125, row:150, run:150 }[sch.type] || 0; if (fl === 'sick') burn = 0; else if (fl === 'cold') burn = Math.round(burn/2/5)*5;
-  const WG = wGoal(k); let def = 400, defTxt = 'Skånsomt underskud −400';
+  const WG = wGoal(k), cut = goalsOn('fat'), bulk = goalsOn('muscle'); let def = 400, defTxt = 'Skånsomt underskud −400';
   if (WG) { if (WG.reached) { def = 0; defTxt = `🎯 Mål nået (${String(WG.goal).replace('.',',')} kg) – vedligehold`; }
     else { def = Math.max(150, Math.min(500, Math.round(WG.need*1100/10)*10)); defTxt = `🎯 Mod ${String(WG.goal).replace('.',',')} kg${WG.need > 0.5 ? ' (maks. tempo)' : ''} −${def}`; } }
+  if (cut && !WG) { if (bulk) { def = 0; defTxt = '🔀 Fedttab + muskler: vedligehold'; } else { def = 500; defTxt = '🔥 Fedttab −500'; } }
   if (fl === 'sick') { def = 0; defTxt = '🤒 Syg – spis til vedligehold, intet underskud'; }
   else if (fl === 'cold' && def > 0) { def = Math.round(def/2/10)*10; defTxt = `🤧 Lidt syg – mindre underskud −${def}`; }
   const why = [`Hvilestofskifte ${bmr}`, `Hverdag ×1,45`, defTxt];
   let kcal = bmr*1.45 - def;
   if (burn) { kcal += burn; why.push(`${sch.e} ${sch.title} +${burn}`); }
+  if (bulk && !cut && !['sick','cold'].includes(fl) && (!WG || WG.reached)) { kcal += 150; why.push('💪 Muskelopbygning +150'); }
   let tips = [];
   if (fl === 'sick' || fl === 'cold') tips.push('🍲 Syg: varm mad, suppe, protein og rigeligt at drikke – ikke dagen at spare på maden');
   if (fl === 'cramps') tips.push('🩸 Smerter: varmepude, rolig gang og magnesium (havregryn, mandler, mørk chokolade)');
@@ -1442,17 +1466,26 @@ function goalFor(k = iso(new Date())){
   if (ph && ph.name === 'Menstruation') tips.push('🩸 Menstruation: jernrigt (æg, linser, kød) med C-vitamin');
   if (rate > 0.75) { kcal += 150; why.push(`⚖️ Hurtigt vægttab (${rate.toFixed(1).replace('.',',')} kg/uge) +150`); tips.push('⚠️ Du taber dig hurtigere end anbefalet – spis lidt mere for at passe på stofskiftet'); }
   kcal = Math.max(bmr, 1200, Math.round(kcal/10)*10);
-  const p = Math.round(w*1.7/5)*5;
+  const pf = (bulk || goalsOn('strength')) ? 2 : cut ? 1.8 : 1.7, p = Math.round(w*pf/5)*5;
   if (!g.auto) return { kcal: +g.kcal || kcal, p: +g.protein || p, auto:false, why:['Egne mål (sat i Indstillinger)'], tips, bmr, w, autoK:kcal, autoP:p };
-  why.push(`Protein 1,7 g × ${String(w).replace('.',',')} kg`);
+  why.push(`Protein ${String(pf).replace('.',',')} g × ${String(w).replace('.',',')} kg`);
   return { kcal, p, auto:true, why, tips, bmr, w, autoK:kcal, autoP:p };
 }
+function afterCard(k, sch){
+  const fl = feelOf(k);
+  if (fl === 'sick' || fl === 'cold') return `<div class="card"><h2>🛌 Efter træning</h2><div style="font-size:14px">Du er syg, så hvil og spis varm mad, suppe og rigeligt at drikke. Træning kan vente.</div></div>`;
+  const A = AFTER[sch.type]; if (!A) return '';
+  let food = A.food;
+  if (['row','run'].includes(sch.type) && goalsOn('speed')) food = '🍝 Kulhydrat til næste hårde pas: fyld op med pasta, ris eller havregryn dagen før.';
+  else if (sch.type === 'str' && (goalsOn('strength') || goalsOn('muscle'))) food = '🥩 25–30 g protein i hvert måltid, så musklerne kan bygges op.';
+  else if (goalsOn('fat')) food = '🥗 Protein og grøntsager mætter og holder snacks væk efter træning.';
+  return `<div class="card"><h2>🍽️ Efter træning</h2><div style="font-size:14px">${food}<br>${A.rec}</div></div>`; }
 function goalCard(k){ const G = goalFor(k);
   return `<div class="card"><h2>🎯 Dagens mål: ${G.kcal} kcal · ${G.p} g protein</h2>
     <details class="more"><summary>Læs mere om målet</summary><div>
     <div class="why">${G.why.map(x => `<span>${x}</span>`).join('')}</div>
     ${G.tips.length ? `<div style="font-size:14px;margin-top:8px">${G.tips.join('<br>')}</div>` : ''}
-    ${!G.auto ? `<div class="muted" style="margin-top:6px">Automatisk ville være ${G.autoK} kcal · ${G.autoP} g. <a href="#" onclick="setS('auto',true);render();return false">Brug automatisk</a></div>` : ''}
+    ${!G.auto ? `<div class="muted" style="margin-top:6px">Automatisk ville være ${G.autoK} kcal · ${G.autoP} g. <a href="#" style="color:inherit;font-weight:700;text-decoration:underline" onclick="setS('auto',true);render();return false">Brug automatisk</a></div>` : ''}
     </div></details></div>`; }
 function segsFor(wd, w){
   if (wd === 1) return [['Rolig gang', 20*60, '#a3a3a3']];
@@ -2053,6 +2086,9 @@ function renderSettings(){
     <div class="gtitle">Træningsplan</div>
     <div class="group">${srow('Start på 4-ugers plan', `<input type="date" value="${g.programStart}" onchange="setS('programStart',this.value);render()">`, `Du er i uge ${weekInfo().n}`)}</div>
 
+    <div class="gtitle">🎯 Mine mål</div>
+    <div class="group">${GOALS.map(x => srow(`${x.e} ${x.label}`, `<input type="checkbox" ${goalsOn(x.k) ? 'checked' : ''} style="width:22px;height:22px;accent-color:#0a0a0a" onchange="toggleGoal('${x.k}',this.checked)">`, x.sub)).join('')}</div>
+
     <div class="gtitle">📷 Gæt mad fra billede</div>
     <div class="group">${srow('Gemini-nøgle', `<input type="password" autocomplete="off" placeholder="sæt nøgle ind" value="${esc(gKey())}" onchange="setGKey(this.value)" style="width:150px">`, gKey() ? '✓ Aktiv – tag et billede af din mad' : 'Gratis fra Google')}
       <button class="srow act" onclick="window.open('https://aistudio.google.com/apikey','_blank')">🔑 Hent gratis nøgle ›</button></div>
@@ -2107,6 +2143,8 @@ function importData(inp){
 }
 function setSex(v){ state.settings.sex = v; save(); toast(v === 'm' ? '♂ Mand – kalorier er beregnet for mænd' : '♀ Kvinde'); render(); }
 function setS(k, v){ state.settings[k] = v; save(); toast('Gemt'); header(); }
+function goalsOn(g){ return (state.settings.goals || []).includes(g); }
+function toggleGoal(g, on){ const s = state.settings, cur = (s.goals || []).filter(x => x !== g); if (on) cur.push(g); s.goals = cur; save(); toast(on ? 'Mål tilføjet' : 'Mål fjernet'); render(); }
 function setManual(){ const G = goalFor(); state.settings.auto = false; state.settings.kcal = G.kcal; state.settings.protein = G.p; save(); toast('Skriv dine egne mål'); render(); }
 function addWeight(){ const v = parseFloat(($('#wIn').value||'').replace(',','.')); if (!(v > 30 && v < 200)) { toast('Skriv en gyldig vægt'); return; } state.weights = state.weights.filter(w => w.date !== iso(new Date())); state.weights.push({ date: iso(new Date()), kg: v }); save(); toast('Vægt gemt'); render(); }
 const T = d => new Date(d+'T12:00:00').getTime(), f1 = v => String(Math.round(v*10)/10).replace('.',',');
