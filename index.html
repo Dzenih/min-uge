@@ -1449,9 +1449,11 @@ function goalFor(k = iso(new Date())){
 }
 function goalCard(k){ const G = goalFor(k);
   return `<div class="card"><h2>🎯 Dagens mål: ${G.kcal} kcal · ${G.p} g protein</h2>
+    <details class="more"><summary>Læs mere om målet</summary><div>
     <div class="why">${G.why.map(x => `<span>${x}</span>`).join('')}</div>
     ${G.tips.length ? `<div style="font-size:14px;margin-top:8px">${G.tips.join('<br>')}</div>` : ''}
-    ${!G.auto ? `<div class="muted" style="margin-top:6px">Automatisk ville være ${G.autoK} kcal · ${G.autoP} g. <a href="#" onclick="setS('auto',true);render();return false">Brug automatisk</a></div>` : ''}</div>`; }
+    ${!G.auto ? `<div class="muted" style="margin-top:6px">Automatisk ville være ${G.autoK} kcal · ${G.autoP} g. <a href="#" onclick="setS('auto',true);render();return false">Brug automatisk</a></div>` : ''}
+    </div></details></div>`; }
 function segsFor(wd, w){
   if (wd === 1) return [['Rolig gang', 20*60, '#a3a3a3']];
   if (wd === 2) return [['Opvarmning, roligt', 180, '#d4d4d4'], ['Rask gang 5–6 km/t', (w.walk-6)*60, '#404040'], ['Nedkøling', 180, '#d4d4d4']];
