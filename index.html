@@ -1026,10 +1026,10 @@ function renderToday(){
     ${suggestCard(wd)}
     <div class="card">
       <div class="rings">
-        <div class="ring">${ring(t.kcal, g.kcal, over ? '#B5654A' : '#B0853F')}<div class="c"><b>${r0(Math.abs(left))}</b><span>${over ? 'kcal over' : 'kcal tilbage'}</span></div></div>
+        <div class="ring">${ring(t.kcal, g.kcal, over ? '#B5654A' : '#2F5D50')}<div class="c"><b>${r0(Math.abs(left))}</b><span>${over ? 'kcal over' : 'kcal tilbage'}</span></div></div>
         <div>
-          <div class="stat"><div class="row between"><span>🔥 Kalorier</span><b>${r0(t.kcal)} / ${g.kcal}</b></div><div class="bar"><div style="width:${Math.min(100,t.kcal/g.kcal*100)}%;background:#B0853F"></div></div></div>
-          <div class="stat"><div class="row between"><span>💪 Protein</span><b>${r0(t.p)} / ${g.protein} g</b></div><div class="bar"><div style="width:${Math.min(100,t.p/g.protein*100)}%;background:var(--ink)"></div></div></div>
+          <div class="stat"><div class="row between"><span>🔥 Kalorier</span><b>${r0(t.kcal)} / ${g.kcal}</b></div><div class="bar"><div style="width:${Math.min(100,t.kcal/g.kcal*100)}%;background:#2F5D50"></div></div></div>
+          <div class="stat"><div class="row between"><span>💪 Protein</span><b>${r0(t.p)} / ${g.protein} g</b></div><div class="bar"><div style="width:${Math.min(100,t.p/g.protein*100)}%;background:#2F5D50"></div></div></div>
           <button class="btn small ghost" onclick="openAdd()">＋ Tilføj mad</button>
           <button class="btn small ghost" onclick="snap()">📷</button>
         </div>
@@ -1043,7 +1043,7 @@ function renderToday(){
     <div class="card">
       <h2>✅ Dagens tjekliste</h2>
       <div class="checks">${checks.map(([id,e,l]) => `<button class="chk ${d.checks[id]?'on':''}" onclick="toggleCheck('${id}')"><span class="b">${d.checks[id]?'✓':''}</span>${e} ${l}</button>`).join('')}</div>
-      <h2 style="margin-top:14px">💧 Vand <span class="muted" style="font-weight:400">${(d.water*0.25).toFixed(2).replace('.',',')} l af 2 l</span></h2>
+      <h2 style="margin-top:14px;color:#3F7A8C">💧 Vand <span class="muted" style="font-weight:400">${(d.water*0.25).toFixed(2).replace('.',',')} l af 2 l</span></h2>
       <div class="water">${Array.from({length:8}, (_,i) => `<button class="${i<d.water?'on':''}" onclick="setWater(${i+1})">💧</button>`).join('')}</div>
     </div>
     ${moodCard()}
@@ -1065,8 +1065,8 @@ function renderFood(){
   const list = d.food.slice().reverse();
   $('#view').innerHTML = `
     <div class="card">
-      <div class="stat"><div class="row between"><span>🔥 ${r0(t.kcal)} af ${g.kcal} kcal</span><b>${r0(g.kcal - t.kcal)} tilbage</b></div><div class="bar"><div style="width:${Math.min(100,t.kcal/g.kcal*100)}%;background:${t.kcal>g.kcal?'#B5654A':'#B0853F'}"></div></div></div>
-      <div class="stat"><div class="row between"><span>💪 ${r0(t.p)} af ${g.protein} g protein</span><b>${r0(Math.max(0,g.protein - t.p))} g mangler</b></div><div class="bar"><div style="width:${Math.min(100,t.p/g.protein*100)}%;background:var(--ink)"></div></div></div>
+      <div class="stat"><div class="row between"><span>🔥 ${r0(t.kcal)} af ${g.kcal} kcal</span><b>${r0(g.kcal - t.kcal)} tilbage</b></div><div class="bar"><div style="width:${Math.min(100,t.kcal/g.kcal*100)}%;background:${t.kcal>g.kcal?'#B5654A':'#2F5D50'}"></div></div></div>
+      <div class="stat"><div class="row between"><span>💪 ${r0(t.p)} af ${g.protein} g protein</span><b>${r0(Math.max(0,g.protein - t.p))} g mangler</b></div><div class="bar"><div style="width:${Math.min(100,t.p/g.protein*100)}%;background:#2F5D50"></div></div></div>
       ${macroBlock(t)}
     </div>
     <div class="grid2" style="margin-bottom:12px">
@@ -1967,8 +1967,8 @@ function energyCard(k){ const E = energy(k), max = Math.max(E.burn, E.intake, 1)
   const warn = E.bal < -700 && !today ? '<div class="muted" style="margin-top:8px;color:var(--warn)">⚠️ Over 700 kcal underskud – det kan sænke stofskiftet. Spis lidt mere.</div>'
     : today && E.bal < -700 ? '<div class="muted" style="margin-top:8px">Dagen er ikke slut – husk at spise dine måltider 🍽️</div>' : '';
   return `<div class="card"><h2>⚖️ Energibalance ${today ? '<span class="muted" style="font-weight:400">i dag</span>' : ''}</h2>
-    <div class="stat"><div class="row between"><span>🍽️ Indtag</span><b>${fmt(E.intake)} kcal</b></div>${bar(E.intake, 'var(--ink)')}</div>
-    <div class="stat"><div class="row between"><span>🔥 Forbrænding</span><b>${fmt(E.burn)} kcal</b></div>${bar(E.burn, '#B0853F')}</div>
+    <div class="stat"><div class="row between"><span>🍽️ Indtag</span><b>${fmt(E.intake)} kcal</b></div>${bar(E.intake, '#2F5D50')}</div>
+    <div class="stat"><div class="row between"><span>🔥 Forbrænding</span><b>${fmt(E.burn)} kcal</b></div>${bar(E.burn, '#3F7A8C')}</div>
     <div class="why"><span>Hvile ${fmt(E.bmr)}</span>${E.measured ? `<span>⌚ Aktiv ${fmt(E.measured)}</span>` : `<span>Hverdag ${fmt(E.neat)}</span>`}${E.steps ? `<span>👟 ${fmt(E.steps)} skridt</span>` : ''}${E.train ? `<span>Træning ${fmt(E.train)}</span>` : ''}${E.extra ? `<span>Ekstra ${fmt(E.extra)}</span>` : ''}</div>
     <div class="row between" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)"><span>${today ? 'Status lige nu' : 'Resultat'}</span><b>${E.bal > 0 ? '+' : E.bal < 0 ? '−' : ''}${fmt(E.bal)} kcal</b></div>
     <div class="muted">${balText(E.bal)}${E.measured ? ` · målt af Apple Sundhed${today && E.at ? ' kl. ' + E.at : ''}` : today ? ' · forbrænding er estimeret for hele dagen' : ''}</div>${warn}
@@ -1987,7 +1987,7 @@ function energyWeekCard(){ const wds = [1,2,3,4,5,6,0], todayK = iso(new Date())
 function statsCard(){
   const w = weekActive(mondayOf(vDate())), st = streak(), goal = Math.max(1, 5 - w.s), pct = Math.min(1, w.n/goal);
   return `<div class="card statc">
-    <div class="ringsm">${ring(w.n, goal, '#B0853F', 92)}<div class="c"><b>${w.n}</b><span>af ${goal}</span></div></div>
+    <div class="ringsm">${ring(w.n, goal, '#3F7A8C', 92)}<div class="c"><b>${w.n}</b><span>af ${goal}</span></div></div>
     <div class="nums"><div><b>${hm(w.m)}</b><span>aktiv tid</span></div><div><b>${st ? '🔥 ' + st : '–'}</b><span>${st === 1 ? 'uge i træk' : 'uger i træk'}</span></div>
       <div class="muted" style="grid-column:1/-1">${w.n >= goal ? 'Ugens mål er nået – flot! 🎉' : `${goal - w.n} aktive dage mere for at nå ugens mål. En aktiv dag = træning klaret eller 20+ min ekstra.`}${w.s ? ` 🤒 ${w.s} ${w.s === 1 ? 'sygedag' : 'sygedage'} er trukket fra målet – din streak er beskyttet.` : ''}</div></div></div>`;
 }
@@ -2052,7 +2052,7 @@ function periodLine(compact){
   const n = nextPeriod(); if (!n) return '';
   if (!compact) return `${dk(n.date, { weekday:'short', day:'numeric', month:'short' })} · ${n.late ? 'forventet nu' : `om ${n.days} d.`}`;
   const open = openPeriod();
-  return `<div class="muted" style="margin-top:6px">${n.late ? '🩸 Menstruationen er forventet nu' : `🩸 Næste menstruation ca. <b>${dk(n.date)}</b> (om ${n.days} ${n.days === 1 ? 'dag' : 'dage'})`} · <a href="#" onclick="${open ? 'endPeriodToday' : 'logPeriodToday'}();return false">${open ? 'Slut i dag?' : 'Startet i dag?'}</a></div>
+  return `<div class="muted" style="margin-top:6px">${n.late ? '🩸 Menstruationen er forventet nu' : `🩸 Næste menstruation ca. <b>${dk(n.date)}</b> (om ${n.days} ${n.days === 1 ? 'dag' : 'dage'})`} · <button class="btn small ghost" style="margin-left:4px;vertical-align:middle" onclick="${open ? 'endPeriodToday' : 'logPeriodToday'}()">${open ? 'Slut i dag?' : 'Startet i dag?'}</button></div>
     <div class="muted" style="margin-top:2px">🌟 Næste ægløsning ca. <b>${dk(n.ov)}</b> (${n.ovDays === 0 ? 'i dag' : `om ${n.ovDays} ${n.ovDays === 1 ? 'dag' : 'dage'}`})</div>
     <div class="muted" style="margin-top:2px">🌱 Frugtbart vindue ${dk(fertileWindow().from)} – ${dk(fertileWindow().to)}${fertileWindow().now ? ' · <b>Du er frugtbar nu</b>' : ''}</div>`;
 }
@@ -2335,9 +2335,11 @@ const EMOJI_RE = /\p{Extended_Pictographic}(?:\uFE0F|\p{Emoji_Modifier}|\u20E3)*
 const EMOJI_SKIP = new Set([...'♀♂✓✕★●▶⏸⏭↻↺⇄➕➖⬇⬆→←©®']);
 const ART_SKIP_TAGS = new Set(['SCRIPT','STYLE','TEXTAREA','OPTION','INPUT','SVG','NOSCRIPT']);
 const SVG_NS = 'http://www.w3.org/2000/svg';
-function icoEl(name){
+const ICON_COLOR = { '🩸':'#C8453B', '💧':'#3F7A8C', '🌱':'#2F5D50' };
+function icoEl(name, color){
   const s = document.createElementNS(SVG_NS, 'svg'), u = document.createElementNS(SVG_NS, 'use');
   s.setAttribute('class', 'ico'); s.setAttribute('aria-hidden', 'true');
+  if (color) s.style.color = color;
   u.setAttribute('href', '#i-' + name); s.append(u); return s;
 }
 // Variation selectors and ZWJ are stripped; ZWJ sequences fall back to their first code point.
@@ -2359,7 +2361,7 @@ function artify(root){
     for (const m of text.matchAll(EMOJI_RE)){
       if (EMOJI_SKIP.has(m[0].replace(/\uFE0F/g, ''))) continue;
       if (m.index > last) frag.append(text.slice(last, m.index));
-      frag.append(icoEl(iconFor(m[0])));
+      frag.append(icoEl(iconFor(m[0]), ICON_COLOR[m[0].replace(/\uFE0F/g, '')]));
       last = m.index + m[0].length; changed = true;
     }
     if (!changed) continue;
