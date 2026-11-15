@@ -930,7 +930,7 @@ function header(){
 function render(){
   header();
   document.querySelectorAll('nav button[data-tab]').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
-  $('#vnav').innerHTML = tab === 'week' ? weekNav() : ['today','food','train'].includes(tab) ? dayNav() : '';
+  $('#vnav').innerHTML = tab === 'week' || tab === 'train' ? weekNav() : ['today','food'].includes(tab) ? dayNav() : '';
   ({ today:renderToday, food:renderFood, train:renderTrain, week:renderWeek, guide:renderDesignGuide })[tab]();
   renderDrawer();
 }
@@ -971,6 +971,18 @@ function weekNav(){
     <button onclick="shiftView(7)" aria-label="Uge frem" ${iso(mon) >= iso(mondayOf(new Date())) ? 'disabled' : ''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button></div>`;
 }
 function shiftView(n){ const base = vDate(); base.setDate(base.getDate() + n); const k = iso(base); if (k > iso(new Date())) return; setView(k); }
+/* Vandret swipe på træningssiden skifter uge (venstre = frem, højre = tilbage) */
+let swipeX = null, swipeY = null;
+document.addEventListener('touchstart', e => {
+  const t = e.touches[0];
+  swipeX = tab === 'train' && !e.target.closest('input,textarea,select,#overlay') ? t.clientX : null; swipeY = t.clientY;
+}, { passive:true });
+document.addEventListener('touchend', e => {
+  if (swipeX == null) return;
+  const t = e.changedTouches[0], dx = t.clientX - swipeX, dy = t.clientY - swipeY; swipeX = null;
+  if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) shiftView(dx < 0 ? 7 : -7);
+}, { passive:true });
+document.addEventListener('touchcancel', () => { swipeX = null; }, { passive:true });
 
 function ring(val, goal, color, size=130){
   const r = size/2 - 10, c = 2*Math.PI*r, pct = Math.min(1, val/goal);
