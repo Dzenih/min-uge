@@ -1367,9 +1367,9 @@ function renderTrain(){
       ${moved ? `<div class="moved">⇄ Ændret denne uge · planen var ${SCHEDULE[trainDay].e} ${SCHEDULE[trainDay].title}</div>` : ''}
       ${adj ? `<div class="adj">${adj.msg}${adj.covered && !d.done ? `<div><button class="btn small" style="margin-top:6px" onclick="setDone('${key}',true)">✓ Marker som klaret</button></div>` : ''}</div>` : ''}
       <button class="btn small swapbtn" onclick="openSwap()">🔄 ${moved ? 'Ændr' : 'Byt dag'}</button></div>
-    ${key <= iso(new Date()) ? feelRow(key) : ''}${extraCard(key)}`;
+    ${key <= iso(new Date()) ? feelRow(key) : ''}`;
   if (adj && adj.rest && !d.done) { $('#view').innerHTML = html + `<div class="card"><h2>🛌 Hvil i dag</h2><div style="font-size:14px">Ingen sæt og ingen timer i dag. Vil du gerne tage træningen senere på ugen, kan du flytte den.</div>
-    <button class="btn small ghost" style="margin-top:10px" onclick="openSwap()">🔄 Flyt ${sch.title.toLowerCase()} til en anden dag</button></div>`; return; }
+    <button class="btn small ghost" style="margin-top:10px" onclick="openSwap()">🔄 Flyt ${sch.title.toLowerCase()} til en anden dag</button></div>${extraCard(key)}`; return; }
 
   if (sch.type === 'str') {
     const ids = PROGRAMS[sch.prog];
@@ -1394,6 +1394,7 @@ function renderTrain(){
   html += d.done
     ? `<button class="btn full gray" onclick="setDone('${key}',false)">✅ Gennemført – fortryd</button>`
     : `<button class="btn full" onclick="setDone('${key}',true)">Marker dagens træning som gennemført</button>`;
+  html += extraCard(key);
   $('#view').innerHTML = html;
   if (timer.run && timer.key === key) tickUI();
 }
