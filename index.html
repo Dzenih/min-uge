@@ -940,9 +940,11 @@ function renderToday(){
   const ph = cyclePhase(k);
   const checks = [['d3b','💊','D3 + B-vitamin'],['c','🍋','C-brus'],['coll','✨','Collagen'],['sleep','😴','7–8 timers søvn'],['stretch','🧘‍♀️','Stræk 5 min'],['iron','🩸','Jern (hvis aftalt)']];
   $('#view').innerHTML = `
+    ${goalCard(k)}
     ${workToggle(wd)}
-    ${healthBar(k)}
-    ${feelRow(k)}
+    ${workAt(wd)==='office' ? `<div class="card"><h2>🚗 Kontordag</h2><div style="font-size:14px">Kefir-skålen før afgang · shaken på formiddagen · frokost senest kl. 11–12 · skyr eller æg inden for 1 time efter hjemkomst.</div></div>`
+      : `<div class="card"><h2>🏡 Hjemmedag</h2><div style="font-size:14px">Morgenmad i ro inden kl. 9 · træn gerne formiddag eller i frokostpausen · frokost lige efter træning${LIGHT.includes(sch.type) ? ' · ekstra: 20 min rask gang på gangbåndet i en pause' : ''}.</div></div>`}
+    ${suggestCard(wd)}
     <div class="card">
       <div class="rings">
         <div class="ring">${ring(t.kcal, g.kcal, over ? '#B5654A' : '#B0853F')}<div class="c"><b>${r0(Math.abs(left))}</b><span>${over ? 'kcal over' : 'kcal tilbage'}</span></div></div>
@@ -954,22 +956,9 @@ function renderToday(){
         </div>
       </div>
     </div>
-
-    <button class="hero t-${sch.type}" style="width:100%;text-align:left" onclick="tab='train';trainDay=${wd};render()">
-      <div class="row between"><span class="big">${sch.e}</span>${d.done ? '<span class="btn small" style="background:var(--ink)">✓ Gennemført</span>' : '<span class="btn small gray">Start ›</span>'}</div>
-      <h2>${sch.title}</h2><div style="font-size:14px">${sch.sub}</div>
-      ${adjustFor(k) ? `<div class="adj">${adjustFor(k).msg}</div>` : ''}
-    </button>
     ${energyCard(k)}
-    ${suggestCard(wd)}
-    ${extraCard(k)}
-    ${workAt(wd)==='office' ? `<div class="card"><h2>🚗 Kontordag</h2><div style="font-size:14px">Kefir-skålen før afgang · shaken på formiddagen · frokost senest kl. 11–12 · skyr eller æg inden for 1 time efter hjemkomst.</div></div>`
-      : `<div class="card"><h2>🏡 Hjemmedag</h2><div style="font-size:14px">Morgenmad i ro inden kl. 9 · træn gerne formiddag eller i frokostpausen · frokost lige efter træning${LIGHT.includes(sch.type) ? ' · ekstra: 20 min rask gang på gangbåndet i en pause' : ''}.</div></div>`}
-    ${goalCard(k)}
-
+    ${feelRow(k)}
     ${ph ? `<div class="card phase"><b>${ph.e} ${ph.name} · cyklusdag ${ph.d}</b>${cycleBar(ph)}<div style="margin-top:4px">${ph.tip}</div>${ph.more ? `<details class="more"><summary>Læs mere om ${ph.name.toLowerCase()}en</summary><div>${ph.more.split('\n').map(l => esc(l)).join('<br>')}</div></details>` : ''}${periodLine(true)}</div>` : ''}
-    ${backupNag()}
-
     <div class="card">
       <h2>✅ Dagens tjekliste</h2>
       <div class="checks">${checks.map(([id,e,l]) => `<button class="chk ${d.checks[id]?'on':''}" onclick="toggleCheck('${id}')"><span class="b">${d.checks[id]?'✓':''}</span>${e} ${l}</button>`).join('')}</div>
@@ -977,6 +966,13 @@ function renderToday(){
       <div class="water">${Array.from({length:8}, (_,i) => `<button class="${i<d.water?'on':''}" onclick="setWater(${i+1})">💧</button>`).join('')}</div>
     </div>
     ${moodCard()}
+    <button class="hero t-${sch.type}" style="width:100%;text-align:left" onclick="tab='train';trainDay=${wd};render()">
+      <div class="row between"><span class="big">${sch.e}</span>${d.done ? '<span class="btn small" style="background:var(--ink)">✓ Gennemført</span>' : '<span class="btn small gray">Start ›</span>'}</div>
+      <h2>${sch.title}</h2><div style="font-size:14px">${sch.sub}</div>
+      ${adjustFor(k) ? `<div class="adj">${adjustFor(k).msg}</div>` : ''}
+    </button>
+    ${backupNag()}
+    ${healthBar(k)}
   `;
 }
 function toggleCheck(id){ const d = day(); d.checks[id] = !d.checks[id]; save(); render(); }
