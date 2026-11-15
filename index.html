@@ -108,7 +108,8 @@
   @keyframes drawerUp { from { transform: translateY(100%); } to { transform: none; } }
   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
   .drawer-bg { animation: fadeIn .2s ease; }
-  .settings-drawer { height: 92vh; height: 92dvh; max-height: 92vh; max-height: 92dvh; background: var(--bg); box-shadow: 0 -12px 40px rgba(0,0,0,.18); animation: drawerUp .32s cubic-bezier(.2,.8,.2,1); }
+  .settings-drawer { height: 92vh; height: 92dvh; max-height: 92vh; max-height: 92dvh; padding-top: 0; background: var(--bg); box-shadow: 0 -12px 40px rgba(0,0,0,.18); animation: drawerUp .32s cubic-bezier(.2,.8,.2,1); }
+  .settings-drawer .grab { margin: 10px auto 8px; }
   .settings-drawer .dhead { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 -16px; padding: 4px 16px 10px; background: var(--bg); border-bottom: 1px solid var(--line); }
   .settings-drawer .dhead h3 { margin: 0; font-size: 20px; }
   .dclose { width: 36px; height: 36px; padding: 0; border-radius: 50%; background: #fff; border: 1px solid var(--line); display: grid; place-items: center; color: var(--ink); }
