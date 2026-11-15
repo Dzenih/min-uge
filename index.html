@@ -105,6 +105,15 @@
   .sheet { position: fixed; left: 0; right: 0; bottom: 0; max-height: 88vh; overflow-y: auto; background: #fff; border-radius: 22px 22px 0 0; z-index: 41; padding: 10px 16px calc(18px + env(safe-area-inset-bottom)); max-width: 560px; margin: 0 auto; }
   .sheet .grab { width: 40px; height: 5px; border-radius: 9px; background: #d4d4d4; margin: 0 auto 10px; }
   .sheet.search { height: 82vh; height: 82dvh; }
+  @keyframes drawerUp { from { transform: translateY(100%); } to { transform: none; } }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .drawer-bg { animation: fadeIn .2s ease; }
+  .settings-drawer { height: 92vh; height: 92dvh; max-height: 92vh; max-height: 92dvh; background: var(--bg); box-shadow: 0 -12px 40px rgba(0,0,0,.18); animation: drawerUp .32s cubic-bezier(.2,.8,.2,1); }
+  .settings-drawer .dhead { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 -16px; padding: 4px 16px 10px; background: var(--bg); border-bottom: 1px solid var(--line); }
+  .settings-drawer .dhead h3 { margin: 0; font-size: 20px; }
+  .dclose { width: 36px; height: 36px; padding: 0; border-radius: 50%; background: #fff; border: 1px solid var(--line); display: grid; place-items: center; color: var(--ink); }
+  .dclose svg { width: 18px; height: 18px; }
+  @media (prefers-reduced-motion: reduce) { .drawer-bg, .settings-drawer { animation: none; } }
   .sheet h3 { margin: 0 0 10px; font-size: 19px; }
   .hero { position: relative; }
   .sheet .grab { background: #CFC9BB; }
@@ -419,6 +428,7 @@
 <input type="file" id="restoreIn" accept="application/json,.json" class="hidden" onchange="importData(this)">
 
 <input type="file" id="cam" accept="image/*" capture="environment" class="hidden">
+<div id="drawer"></div>
 <div id="overlay"></div>
 <div id="restBox"></div>
 
@@ -908,8 +918,8 @@ function header(){
   const now = vDate();
   $('#hdrDate').textContent = now.toLocaleDateString('da-DK', { weekday:'long', day:'numeric', month:'long' }) + (viewK ? ' · tilbage i tid' : '');
   const w = weekInfo(), sch = schFor(now.getDay());
-  const titles = { today:'I dag', food:'Mad', train:'Træning', week:'Fremgang', settings:'Indstillinger', guide:'Designguide' };
-  const overlay = tab === 'settings' || tab === 'guide';
+  const titles = { today:'I dag', food:'Mad', train:'Træning', week:'Fremgang', guide:'Designguide' };
+  const overlay = settingsOpen || tab === 'guide';
   $('#gear').innerHTML = overlay ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>'
     : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>';
   $('#hdrTitle').textContent = titles[tab];
@@ -921,12 +931,29 @@ function render(){
   header();
   document.querySelectorAll('nav button[data-tab]').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
   $('#vnav').innerHTML = tab === 'week' || tab === 'train' ? weekNav() : ['today','food'].includes(tab) ? dayNav() : '';
-  ({ today:renderToday, food:renderFood, train:renderTrain, week:renderWeek, settings:renderSettings, guide:renderDesignGuide })[tab]();
+  ({ today:renderToday, food:renderFood, train:renderTrain, week:renderWeek, guide:renderDesignGuide })[tab]();
+  renderDrawer();
 }
+/* Indstillinger åbnes som bundpanel (drawer) over den aktuelle fane */
+let settingsOpen = false;
 let prevTab = 'today';
-function toggleSettings(){ if (tab === 'settings' || tab === 'guide') tab = prevTab; else { prevTab = tab; tab = 'settings'; } render(); scrollTo(0,0); }
-function openDesignGuide(){ if (tab !== 'guide') prevTab = tab; tab = 'guide'; render(); scrollTo(0,0); }
-document.querySelectorAll('nav button[data-tab]').forEach(b => b.onclick = () => { tab = b.dataset.tab; if (tab==='train') trainDay = vDate().getDay(); render(); scrollTo(0,0); });
+function renderDrawer(){
+  const d = $('#drawer');
+  if (!settingsOpen) { d.innerHTML = ''; return; }
+  if (!d.firstElementChild) d.innerHTML = `
+    <div class="backdrop drawer-bg" onclick="closeSettings()"></div>
+    <div class="sheet settings-drawer" role="dialog" aria-label="Indstillinger">
+      <div class="grab"></div>
+      <div class="dhead"><h3>Indstillinger</h3><button class="dclose" onclick="closeSettings()" aria-label="Luk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+      <div id="settingsBody"></div>
+    </div>`;
+  renderSettings();
+}
+function toggleSettings(){ if (tab === 'guide') backFromGuide(); else { settingsOpen = !settingsOpen; render(); } }
+function closeSettings(){ settingsOpen = false; render(); }
+function backFromGuide(){ tab = prevTab; settingsOpen = true; render(); }
+function openDesignGuide(){ if (tab !== 'guide') prevTab = tab; tab = 'guide'; settingsOpen = false; render(); scrollTo(0,0); }
+document.querySelectorAll('nav button[data-tab]').forEach(b => b.onclick = () => { tab = b.dataset.tab; settingsOpen = false; if (tab==='train') trainDay = vDate().getDay(); render(); scrollTo(0,0); });
 
 /* Dagsnavigation (I dag / Mad / Træning) og ugenavigation (Fremgang) */
 function dayNav(){
@@ -2013,6 +2040,7 @@ const DG_LOG = [
   'Niveau-ikoner med fem søjler i stedet for ansigter',
   'Designguide tilføjet under Indstillinger',
   'Brandfarver (sort, rød, orange, grå) erstattet af designtokens i knapper, ringe, toasts og statuslinjer',
+  'Indstillinger åbnes som bundpanel (drawer) med titel og luk-knap i stedet for som fane',
 ];
 const DG_RULES = [
   'Ikoner kommer fra sprite-biblioteket: <svg class="ico"><use href="#i-navn"/></svg>. Ingen emojis i ny UI.',
@@ -2027,7 +2055,7 @@ function renderDesignGuide(){
   const byIcon = {};
   for (const [e, name] of Object.entries(ICON_MAP)) (byIcon[name] ||= []).push(e);
   $('#view').innerHTML = `
-    <button class="btn full gray" onclick="toggleSettings()">← Tilbage</button>
+    <button class="btn full gray" onclick="backFromGuide()">← Tilbage</button>
     <div class="gtitle">Principper</div>
     <div class="card dg"><p>Rolig og nordisk: god luft, få farver og afrundede hjørner.</p><p>Ikoner i stedet for emojis og smileys. Ikonerne er enkle linjetegn i teal.</p><p>Dette design gælder for hele appen, og nye skærme følger det.</p></div>
 
@@ -2058,7 +2086,7 @@ function srow(label, inner, sub){ return `<label class="srow"><span>${label}${su
 function renderSettings(){
   const g = state.settings, G0 = goalFor(), c = cycLen(), pl = periodLen(), n = nextPeriod(), lb = state.lastBackup, ago = lb ? Math.round((new Date(iso(new Date())+'T12:00:00') - new Date(lb+'T12:00:00'))/864e5) : null;
   const num = (k, v, u, dis, after='') => `<input type="number" inputmode="decimal" ${dis ? 'disabled' : ''} value="${v}" onchange="setS('${k}',+this.value);${after}"><em>${u}</em>`;
-  $('#view').innerHTML = `
+  $('#settingsBody').innerHTML = `
     <div class="gtitle">Daglige mål</div>
     <div class="group"><div style="padding:10px 12px 0"><div class="wtog" style="margin-bottom:10px"><button class="${g.auto?'on':''}" onclick="setS('auto',true);render()">Automatisk</button><button class="${!g.auto?'on':''}" onclick="setManual()">Mine egne</button></div></div>
       ${srow('Kalorier', num('kcal', g.auto ? G0.kcal : g.kcal, 'kcal', g.auto))}
