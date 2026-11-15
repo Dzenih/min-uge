@@ -1599,8 +1599,8 @@ function streak(){ let mon = mondayOf(new Date()), c = weekOk(weekActive(mon)) ?
 function hm(m){ return m >= 60 ? `${Math.floor(m/60)} t ${m%60} min` : `${m} min`; }
 /* ================= APPLE SUNDHED (via iPhone-genvej + udklipsholder) ================= */
 function hOf(k){ const d = state.days[k]; return d && d.health; }
-function hNum(v){ v = String(v || '').replace(/[^\d.,]/g, ''); const m = v.match(/[.,](\d+)$/); let dec = '';
-  if (m && m[1].length !== 3) { dec = m[1]; v = v.slice(0, -m[0].length); } v = v.replace(/[.,]/g, ''); return parseFloat(v + (dec ? '.' + dec : '')) || 0; }
+function hNum(v, isDec){ v = String(v || '').replace(/[^\d.,]/g, ''); const m = v.match(/[.,](\d+)$/); let dec = '';
+  if (m && (m[1].length !== 3 || (isDec && (v.match(/[.,]/g) || []).length === 1))) { dec = m[1]; v = v.slice(0, -m[0].length); } v = v.replace(/[.,]/g, ''); return parseFloat(v + (dec ? '.' + dec : '')) || 0; }
 function hDate(line){ let m = line.match(/(\d{4})-(\d{1,2})-(\d{1,2})/); if (m) return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
   m = line.match(/(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{2,4})/); if (m) { const y = m[3].length === 2 ? '20' + m[3] : m[3]; return `${y}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`; }
   const mo = ['jan','feb','mar','apr','maj','jun','jul','aug','sep','okt','nov','dec']; m = line.match(/(\d{1,2})\.?\s+([a-zæøå]{3})[a-zæøå.]*\s+(\d{4})/i);
@@ -1609,17 +1609,25 @@ function parseHealth(txt){ const by = {}, today = iso(new Date()), oldest = iso(
   // null = felt ikke med i de indsatte data (bevarer eksisterende værdi); 0 = målt 0
   const put = (d, st, ac) => { if (!d || d > today || d < oldest) return; const o = by[d] || (by[d] = { date: d, steps: null, active: null }); if (st != null) o.steps = st; if (ac != null) o.active = ac; };
   String(txt).split(/\n|;;/).forEach(line => { if (!/minuge/i.test(line)) return;
-    const g = k => { const m = line.match(new RegExp(k + '\\s*[=:]\\s*(\\d[\\d.,\\s]*\\d|\\d)', 'i')); return m ? Math.round(hNum(m[1])) : null; };
+    const g = k => { const m = line.match(new RegExp(k + '\\s*[=:]\\s*(\\d[\\d.,\\s]*\\d|\\d)', 'i')); return m ? Math.round(hNum(m[1], k === 'active')) : null; };
     const st = g('steps'), ac = g('active'), dm = line.match(/date\s*[=:]\s*(.*?)(?=\s*(?:steps|active)\s*[=:]|$)/i);
     if (!dm) return put(today, st, ac); const d = hDate(dm[1]); if (d) return put(d, st, ac);
     if (st != null) und.steps.push(st); if (ac != null) und.active.push(ac); });
   // Lines without a usable date come oldest → newest, the last one being today
   ['steps', 'active'].forEach(k => { const a = und[k]; a.forEach((v, i) => put(iso(addDays(new Date(), i - a.length + 1)), k === 'steps' ? v : null, k === 'active' ? v : null)); });
-  return Object.values(by).filter(x => x.steps != null || x.active != null).sort((a, b) => a.date < b.date ? -1 : 1); }
+  const l = Object.values(by).filter(x => x.steps != null || x.active != null).sort((a, b) => a.date < b.date ? -1 : 1);
+  // "I de sidste N dage" starter midt på den ældste dag – den dag er kun halv, så den springes over
+  if (l.length >= 3) l.shift(); return l; }
 function saveHealth(list, src){ list.forEach(x => { const d = day(x.date), o = d.health || {}; d.health = { steps: x.steps ?? o.steps ?? 0, active: x.active ?? o.active ?? 0, at: new Date().toTimeString().slice(0,5), src }; });
   state.lastHealth = new Date().toISOString(); delete state.hPending; save(); closeSheet(); render();
-  const t = list[list.length-1]; if (list.length > 1) { toast(`⌚ ${list.length} dage opdateret fra Apple Sundhed`); return; }
+  const t = list[list.length-1]; if (list.length > 1) { healthReview(list); return; }
   toast(`⌚ ${t.steps ? fmt(t.steps) + ' skridt' : ''}${t.steps && t.active ? ' · ' : ''}${t.active ? fmt(t.active) + ' kcal aktiv' : ''} gemt`); }
+function healthReview(list){
+  $('#overlay').innerHTML = `<div class="backdrop" onclick="closeSheet()"></div><div class="sheet"><div class="grab"></div>
+    <div class="shead"><h3>⌚ ${list.length} dage hentet</h3><button class="btn small gray" onclick="closeSheet()">OK</button></div>
+    <div class="muted" style="margin-bottom:8px">Sammenlign gerne med Sundhed-appen → Skridt → D (dag).</div>
+    ${list.slice().reverse().map(x => `<div class="row between" style="padding:8px 0;border-bottom:1px solid var(--line)"><span>${relDay(x.date)}</span><span><b>${x.steps != null ? fmt(x.steps) : '–'}</b> skridt · ${x.active != null ? fmt(x.active) : '–'} kcal</span></div>`).join('')}
+    <button class="btn full" style="margin-top:12px" onclick="closeSheet()">Fint</button></div>`; }
 function runShortcut(){ state.hPending = Date.now(); save(); location.href = 'shortcuts://run-shortcut?name=' + encodeURIComponent(state.settings.hsName || 'Min uge sundhed'); }
 async function pasteHealth(){ let txt = ''; try { txt = await navigator.clipboard.readText(); } catch(e) { toast('Tillad "Indsæt" for at hente data'); return; }
   const l = parseHealth(txt); if (!l.length) { healthDebug(txt); return; } saveHealth(l, 'apple'); }
