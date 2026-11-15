@@ -1047,8 +1047,8 @@ $('#cam').onchange = (e) => {
 
 /* ================= GÆT MAD FRA BILLEDE (Google Gemini) ================= */
 // Nøglen ligger kun i localStorage – ikke i state, så den kommer ikke med i backup-filer
-const gKey = () => localStorage.getItem('minuge-gkey') || '';
-function setGKey(v){ v = String(v || '').trim(); v ? localStorage.setItem('minuge-gkey', v) : localStorage.removeItem('minuge-gkey'); toast(v ? '🔑 Nøgle gemt – tag et billede af din mad' : 'Nøgle fjernet'); render(); }
+const gKey = () => (localStorage.getItem('minuge-gkey') || '').replace(/[^A-Za-z0-9_\-]/g, '');
+function setGKey(v){ v = String(v || '').replace(/[^A-Za-z0-9_\-]/g, ''); v ? localStorage.setItem('minuge-gkey', v) : localStorage.removeItem('minuge-gkey'); toast(v ? '🔑 Nøgle gemt – tag et billede af din mad' : 'Nøgle fjernet'); render(); }
 let aiPhoto = null, aiRes = null, aiBusy = false, aiErr = '';
 async function aiGuess(){
   if (!aiPhoto || !gKey()) return; aiBusy = true; aiErr = ''; aiRes = null; if (addTab === 'ai' && $('#overlay .sheet')) drawSheet(true);
@@ -1063,11 +1063,14 @@ async function aiGuess(){
       const j = await r.json().catch(() => ({}));
       if (!r.ok) { if (r.status === 404) continue;
         aiErr = r.status === 400 || r.status === 403 ? 'Nøglen virker ikke. Tjek den under Indstillinger.' : r.status === 429 ? 'Gratis-grænsen er nået lige nu – prøv igen om lidt.' : ((j.error && j.error.message) || 'Fejl ' + r.status); break; }
-      const t = ((j.candidates || [])[0]?.content?.parts || []).map(x => x.text || '').join('').replace(/^\s*```(json)?|```\s*$/g, '');
-      aiRes = (JSON.parse(t).items || []).filter(x => x && x.name).map(x => { const g = Math.max(1, +x.g || 100);
+      const t = ((j.candidates || [])[0]?.content?.parts || []).filter(x => !x.thought).map(x => x.text || '').join('');
+      const js = (t.match(/\{[\s\S]*\}/) || [])[0];
+      if (!js) { aiErr = 'Gemini svarede uden resultat – prøv et nyt billede.'; break; }
+      let o; try { o = JSON.parse(js); } catch (e) { aiErr = 'Kunne ikke læse svaret fra Gemini – prøv igen.'; break; }
+      aiRes = (o.items || []).filter(x => x && x.name).map(x => { const g = Math.max(1, +x.g || 100);
         return { name: String(x.name).slice(0, 40), e: x.emoji || '🍽️', g0: g, g, kcal: +x.kcal || 0, p: +x.p || 0, c: +x.c || 0, fat: +x.fat || 0, fib: +x.fib || 0, on: true }; });
       aiErr = ''; break;
-    } catch (e) { aiErr = 'Kunne ikke få svar fra Gemini. Tjek internettet, og prøv igen.'; }
+    } catch (e) { aiErr = 'Kunne ikke få svar fra Gemini (' + ((e && (e.name + ': ' + e.message)) || e) + ').'; }
   }
   aiBusy = false; if (addTab === 'ai' && $('#overlay .sheet')) drawSheet(true);
 }
