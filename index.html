@@ -227,9 +227,9 @@
   /* ===== Nordic design (se designguiden i appen) ===== */
   :root { --teal:#2F5D50; --teal2:#2F5D50; --ink:#1E2B2A; --muted:#6E7A77; --line:#E4E0D6; --bg:#F5F3EE; --orange:#B0853F; --red:#B5654A; --track:#EEEBE3; --spruce-t:#E1ECE7; --birch-t:#F4EBDA; --fjord-t:#E2EEF1; --heather-t:#ECE8F1; --clay-t:#F6E7E1; }
   html, body { font-family: -apple-system, "SF Pro Text", "Inter", "Helvetica Neue", Arial, sans-serif; letter-spacing: -.01em; -webkit-font-smoothing: antialiased; }
-  header { background: var(--bg); color: var(--ink); border-radius: 0; padding: calc(10px + env(safe-area-inset-top)) 18px 6px; }
+  header { background: var(--teal); color: #fff; border-radius: 0; padding: calc(10px + env(safe-area-inset-top)) 18px 6px; }
   header .htop { display:flex; align-items:flex-start; justify-content:space-between; }
-  header .date { color: var(--muted); opacity: 1; font-size: 13px; font-weight: 500; }
+  header .date { color: #fff; opacity: .9; font-size: 13px; font-weight: 500; }
   header h1 { font-size: 26px; font-weight: 600; letter-spacing: -.02em; margin-top: 0; }
   header .sub { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; opacity:1; }
   header .sub span { background:#fff; border:1px solid var(--line); border-radius:99px; padding:4px 10px; font-size:12px; font-weight:500; }
@@ -935,7 +935,15 @@ function header(){
   $('#hdrSub').innerHTML = overlay ? '<span>Gemmes automatisk på telefonen</span>' : `<span>Uge ${w.n} af 4 · ${w.title}</span><span>${work ? '🏢 Kontor' : '🏡 Hjemme'}</span><span>${sch.e} ${sch.title}</span>`;
 }
 
+/* Hver fane har sin kategorifarve (fuld farve til overskrift/aktiv fane, lys tint til siden). Samme farver som logoets prikker. */
+const TAB_COLORS = { today:['#2F5D50','#E1ECE7'], food:['#B0853F','#F4EBDA'], train:['#3F7A8C','#E2EEF1'], week:['#7D6B93','#ECE8F1'] };
+function applyTabColors(){
+  const [c, t] = TAB_COLORS[tab] || TAB_COLORS.today, s = document.documentElement.style;
+  s.setProperty('--teal', c); s.setProperty('--teal2', c); s.setProperty('--spruce-t', t); s.setProperty('--bg', t);
+  document.querySelector('meta[name="theme-color"]').content = c;
+}
 function render(){
+  applyTabColors();
   header();
   document.querySelectorAll('nav button[data-tab]').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
   trainDay = vDate().getDay();
