@@ -812,7 +812,7 @@ function mondayOf(d){ const x = new Date(d); const w = (x.getDay()+6)%7; x.setDa
 let viewK = null;
 function vIso(){ return viewK || iso(new Date()); }
 function vDate(){ return viewK ? new Date(viewK+'T12:00:00') : new Date(); }
-function setView(k){ viewK = k && k !== iso(new Date()) ? k : null; trainDay = vDate().getDay(); render(); scrollTo(0,0); }
+function setView(k){ viewK = k && k !== iso(new Date()) ? k : null; render(); scrollTo(0,0); }
 function day(k = vIso()){ return state.days[k] || (state.days[k] = { food:[], sets:{}, done:false, checks:{}, water:0 }); }
 function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function r0(n){ return Math.round(n); }
@@ -916,7 +916,7 @@ function fmt(s){ s = Math.max(0, Math.ceil(s)); return Math.floor(s/60) + ':' + 
 
 function header(){
   const now = vDate();
-  $('#hdrDate').textContent = now.toLocaleDateString('da-DK', { weekday:'long', day:'numeric', month:'long' }) + (viewK ? ' · tilbage i tid' : '');
+  $('#hdrDate').textContent = now.toLocaleDateString('da-DK', { weekday:'long', day:'numeric', month:'long' }) + (viewK ? (viewK < iso(new Date()) ? ' · tilbage i tid' : ' · frem i tid') : '');
   const w = weekInfo(), sch = schFor(now.getDay());
   const titles = { today:'I dag', food:'Mad', train:'Træning', week:'Fremgang', guide:'Designguide' };
   const overlay = settingsOpen || tab === 'guide';
@@ -930,7 +930,8 @@ function header(){
 function render(){
   header();
   document.querySelectorAll('nav button[data-tab]').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
-  $('#vnav').innerHTML = tab === 'week' || tab === 'train' ? weekNav() : ['today','food'].includes(tab) ? dayNav() : '';
+  trainDay = vDate().getDay();
+  $('#vnav').innerHTML = tab === 'guide' ? '' : weekNav() + weekStrip();
   ({ today:renderToday, food:renderFood, train:renderTrain, week:renderWeek, guide:renderDesignGuide })[tab]();
   renderDrawer();
 }
@@ -953,16 +954,9 @@ function toggleSettings(){ if (tab === 'guide') backFromGuide(); else { settings
 function closeSettings(){ settingsOpen = false; render(); }
 function backFromGuide(){ tab = prevTab; settingsOpen = true; render(); }
 function openDesignGuide(){ if (tab !== 'guide') prevTab = tab; tab = 'guide'; settingsOpen = false; render(); scrollTo(0,0); }
-document.querySelectorAll('nav button[data-tab]').forEach(b => b.onclick = () => { tab = b.dataset.tab; settingsOpen = false; if (tab==='train') trainDay = vDate().getDay(); render(); scrollTo(0,0); });
+document.querySelectorAll('nav button[data-tab]').forEach(b => b.onclick = () => { tab = b.dataset.tab; settingsOpen = false; render(); scrollTo(0,0); });
 
-/* Dagsnavigation (I dag / Mad / Træning) og ugenavigation (Fremgang) */
-function dayNav(){
-  const k = vIso(), lbl = viewK ? dk(vDate(), { weekday:'long', day:'numeric', month:'short' }) : 'I dag';
-  return `<div class="vnav"><button onclick="shiftView(-1)" aria-label="Dag tilbage"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button>
-    <span>${esc(lbl)}</span>
-    ${viewK ? '<button class="reset" onclick="setView(null)">I dag</button>' : ''}
-    <button onclick="shiftView(1)" aria-label="Dag frem" ${k >= iso(new Date()) ? 'disabled' : ''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button></div>`;
-}
+/* Ugenavigation og dagsstrip vises på alle faner. Valgt dag = vIso() */
 function weekNav(){
   const mon = mondayOf(vDate()), sun = addDays(mon, 6), lbl = `${dk(mon, { day:'numeric', month:'short' })} – ${dk(sun, { day:'numeric', month:'short' })}`;
   return `<div class="vnav"><button onclick="shiftView(-7)" aria-label="Uge tilbage"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button>
@@ -970,12 +964,16 @@ function weekNav(){
     ${viewK ? '<button class="reset" onclick="setView(null)">I dag</button>' : ''}
     <button onclick="shiftView(7)" aria-label="Uge frem" ${iso(mon) >= iso(mondayOf(new Date())) ? 'disabled' : ''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button></div>`;
 }
+function weekStrip(){
+  const todayK = iso(new Date()), cur = vIso(), order = [1,2,3,4,5,6,0];
+  return `<div class="days">${order.map((wd,i) => { const k = keyForWeekday(wd), dd = state.days[k]; return `<button class="${k===cur?'on':''} ${k===todayK?'today':''}" onclick="setView('${k}')">${SHORT[i]}<span class="ok">${dd && dd.done ? '✅' : schFor(wd).e}</span>${srcFor(wd)!==wd?'<i class="sw">⇄</i>':''}</button>`; }).join('')}</div>`;
+}
 function shiftView(n){ const base = vDate(); base.setDate(base.getDate() + n); const k = iso(base); if (k > iso(new Date())) return; setView(k); }
-/* Vandret swipe på træningssiden skifter uge (venstre = frem, højre = tilbage) */
+/* Vandret swipe på alle faner skifter uge (venstre = frem, højre = tilbage) */
 let swipeX = null, swipeY = null;
 document.addEventListener('touchstart', e => {
   const t = e.touches[0];
-  swipeX = tab === 'train' && !e.target.closest('input,textarea,select,#overlay') ? t.clientX : null; swipeY = t.clientY;
+  swipeX = !e.target.closest('input,textarea,select,#overlay') ? t.clientX : null; swipeY = t.clientY;
 }, { passive:true });
 document.addEventListener('touchend', e => {
   if (swipeX == null) return;
@@ -1364,8 +1362,7 @@ function renderTrain(){
   const todayK = iso(new Date()), key = keyForWeekday(trainDay), d = day(key), sch = schFor(trainDay), w0 = weekInfo(), moved = srcFor(trainDay) !== trainDay, adj = adjustFor(key);
   const w = adj && adj.lighter ? Object.assign({}, w0, { sets: Math.min(2, w0.sets) }) : w0;
   const order = [1,2,3,4,5,6,0];
-  let html = `<div class="days">${order.map((wd,i) => { const dd = state.days[keyForWeekday(wd)]; return `<button class="${wd===trainDay?'on':''} ${keyForWeekday(wd)===todayK?'today':''}" onclick="trainDay=${wd};openEx=null;render()">${SHORT[i]}<span class="ok">${dd && dd.done ? '✅' : schFor(wd).e}</span>${srcFor(wd)!==wd?'<i class="sw">⇄</i>':''}</button>`; }).join('')}</div>
-    ${workToggle(trainDay)}${suggestCard(trainDay)}
+  let html = `${workToggle(trainDay)}${suggestCard(trainDay)}
     <div class="hero t-${sch.type}"><div class="big">${sch.e}</div><h2>${sch.title}</h2><div style="font-size:14px">${DAYNAMES[trainDay]} · ${sch.sub}</div>
       ${moved ? `<div class="moved">⇄ Ændret denne uge · planen var ${SCHEDULE[trainDay].e} ${SCHEDULE[trainDay].title}</div>` : ''}
       ${adj ? `<div class="adj">${adj.msg}${adj.covered && !d.done ? `<div><button class="btn small" style="margin-top:6px" onclick="setDone('${key}',true)">✓ Marker som klaret</button></div>` : ''}</div>` : ''}
