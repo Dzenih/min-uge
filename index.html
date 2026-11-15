@@ -13,7 +13,7 @@
 <title>Min uge</title>
 <style>
   :root {
-    --teal: #C8453B; --teal2: #C8453B; --ink: #1E2B2A; --muted: #6E7A77; --line: #E4E0D6;
+    --teal: #2F5D50; --teal2: #2F5D50; --ink: #1E2B2A; --muted: #6E7A77; --line: #E4E0D6;
     --bg: #F5F3EE; --card: #fff; --orange: #B0853F; --red: #B5654A; --blue: #3F7A8C; --violet: #7D6B93;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -225,7 +225,7 @@
   .settings label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
 
   /* ===== Nordic design (se designguiden i appen) ===== */
-  :root { --teal:#C8453B; --teal2:#C8453B; --warn:#8E2A22; --ink:#1E2B2A; --muted:#6E7A77; --line:#E4E0D6; --bg:#F5F3EE; --orange:#B0853F; --red:#B5654A; --track:#EEEBE3; --spruce-t:#FBE7E5; --birch-t:#F4EBDA; --fjord-t:#E2EEF1; --heather-t:#ECE8F1; --clay-t:#F6E7E1; }
+  :root { --teal:#2F5D50; --teal2:#2F5D50; --warn:#8E2A22; --ink:#1E2B2A; --muted:#6E7A77; --line:#E4E0D6; --bg:#F5F3EE; --orange:#B0853F; --red:#B5654A; --track:#EEEBE3; --spruce-t:#E1ECE7; --birch-t:#F4EBDA; --fjord-t:#E2EEF1; --heather-t:#ECE8F1; --clay-t:#F6E7E1; }
   html, body { font-family: -apple-system, "SF Pro Text", "Inter", "Helvetica Neue", Arial, sans-serif; letter-spacing: -.01em; -webkit-font-smoothing: antialiased; }
   header { background: var(--teal); color: #fff; border-radius: 0; padding: calc(10px + env(safe-area-inset-top)) 18px 6px; }
   header .htop { display:flex; align-items:flex-start; justify-content:space-between; }
@@ -936,7 +936,7 @@ function header(){
 }
 
 /* Hver fane har sin kategorifarve (fuld farve til overskrift/aktiv fane, lys tint til siden). Samme farver som logoets prikker. */
-const TAB_COLORS = { today:['#C8453B','#FBE7E5'], food:['#B0853F','#F4EBDA'], train:['#3F7A8C','#E2EEF1'], week:['#4A8A74','#E6F1EC'] };
+const TAB_COLORS = { today:['#2F5D50','#E1ECE7'], food:['#B0853F','#F4EBDA'], train:['#3F7A8C','#E2EEF1'], week:['#4A8A74','#E6F1EC'] };
 function applyTabColors(){
   const [c, t] = TAB_COLORS[tab] || TAB_COLORS.today, s = document.documentElement.style;
   s.setProperty('--teal', c); s.setProperty('--teal2', c); s.setProperty('--spruce-t', t); s.setProperty('--bg', t);
