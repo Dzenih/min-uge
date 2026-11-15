@@ -292,6 +292,7 @@
   .srow input[type=date] { width:auto; min-width:120px; display:flex; justify-content:flex-end; }
   .srow input::-webkit-date-and-time-value { text-align:right; margin:0; }
   .srow input:disabled { color:#a3a3a3; -webkit-text-fill-color:#a3a3a3; opacity:1; }
+  .srow input[type=checkbox] { -webkit-appearance:checkbox; appearance:auto; flex:none; }
   .srow.act { font-weight:600; justify-content:flex-start; gap:8px; } .srow.act small { display:inline; margin-left:auto; }
   .srow.red { color:var(--red); }
   .gnote { font-size:12px; color:var(--muted); margin:8px 8px 0; line-height:1.45; }
@@ -705,9 +706,9 @@ const WEEKS = [
 ];
 const GOALS = [
   { k:'speed', e:'🏃‍♀️', label:'Løbe hurtigere', sub:'+2 jog-intervaller i løbepasset' },
-  { k:'strength', e:'🏋️‍♀️', label:'Styrke', sub:'+1 sæt i styrkepassene' },
-  { k:'muscle', e:'💪', label:'Opbygning af muskler', sub:'Ekstra energi og mere protein' },
-  { k:'fat', e:'🔥', label:'Tabe fedt', sub:'+10 min gang og et skånsomt underskud' },
+  { k:'strength', e:'🏋️‍♀️', label:'Styrke', sub:'+1 sæt i styrkepassene og 2 g protein pr. kg' },
+  { k:'muscle', e:'💪', label:'Opbygning af muskler', sub:'+1 sæt i styrkepassene, +150 kcal og 2 g protein pr. kg' },
+  { k:'fat', e:'🔥', label:'Tabe fedt', sub:'+10 min gang og et underskud på 500 kcal' },
 ];
 const AFTER = {
   walk: { food:'🍎 Et stykke frugt og en håndfuld nødder giver let energi og god mætthed.', rec:'💧 Drik et glas vand og gå 5 min roligt for at falde ned.' },
@@ -2085,6 +2086,7 @@ function renderSettings(){
 
     <div class="gtitle">🎯 Mine mål</div>
     <div class="group">${GOALS.map(x => srow(`${x.e} ${x.label}`, `<input type="checkbox" ${goalsOn(x.k) ? 'checked' : ''} style="width:22px;height:22px;accent-color:#0a0a0a" onchange="toggleGoal('${x.k}',this.checked)">`, x.sub)).join('')}</div>
+    <div class="gnote">Sæt flueben ved de mål, du vil have. Et valgt mål ændrer din træningsplan og dine daglige mål – og du kan altid fjerne det igen.</div>
 
     <div class="gtitle">📷 Gæt mad fra billede</div>
     <div class="group">${srow('Gemini-nøgle', `<input type="password" autocomplete="off" placeholder="sæt nøgle ind" value="${esc(gKey())}" onchange="setGKey(this.value)" style="width:150px">`, gKey() ? '✓ Aktiv – tag et billede af din mad' : 'Gratis fra Google')}
