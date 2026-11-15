@@ -883,6 +883,12 @@ function setPeriodEnd(v){
   if (d < 0 || d > 10 || v > iso(new Date())) { toast('Slutdatoen skal være 0–10 dage efter start og ikke i fremtiden'); return false; }
   state.periodEnds[last] = v; save(); toast('✅ Slut registreret'); return true;
 }
+function periodEndMax(){
+  const last = lastPeriod(), today = iso(new Date());
+  if (!last) return today;
+  const cap = iso(new Date(new Date(last+'T12:00:00').getTime() + 10*864e5));
+  return cap < today ? cap : today;
+}
 function endPeriodToday(){ if (setPeriodEnd(iso(new Date()))) { closeSheet(); render(); } }
 function openPeriod(){
   const last = cycOn() && lastPeriod(); if (!last || state.periodEnds[last]) return null;
@@ -2128,7 +2134,7 @@ function renderSettings(){
     <div class="group">
       ${srow('Seneste startede', `<input type="date" value="${lastPeriod() || ''}" max="${iso(new Date())}" onchange="editLastPeriod(this.value);toast('Gemt · '+dk(new Date(this.value+'T12:00:00')));render()">`)}
       ${srow('Cykluslængde', c.n ? `<b>${c.len}</b><em>dage</em>` : num('cycleLen', g.cycleLen, 'dage', false, 'render()'), c.n ? `Beregnet ud fra dine ${c.n + 1} seneste` : 'Bliver beregnet, når du har registreret 2+')}
-      ${srow('Seneste sluttede', `<input type="date" value="${lastPeriod() ? state.periodEnds[lastPeriod()] || '' : ''}" min="${lastPeriod() || ''}" max="${iso(new Date())}" onchange="setPeriodEnd(this.value);render()">`, 'Tom = endnu ikke slut')}
+      ${srow('Seneste sluttede', `<input type="date" value="${lastPeriod() ? state.periodEnds[lastPeriod()] || '' : ''}" min="${lastPeriod() || ''}" max="${periodEndMax()}" onchange="if (setPeriodEnd(this.value)) render()">`, 'Tom = endnu ikke slut')}
       ${srow('Menstruationens længde', `<b>${pl.len}</b><em>dage</em>`, pl.n ? `Beregnet ud fra dine ${pl.n} seneste` : 'Standard – bliver beregnet, når du registrerer en slutdato')}
       <div class="srow"><span>Næste menstruation</span><span class="sv"><b>${n ? periodLine(false) : '–'}</b></span></div>
       ${n ? `<div class="srow"><span>Næste ægløsning</span><span class="sv"><b>${dk(n.ov)}</b> · ${n.ovDays === 0 ? 'i dag' : `om ${n.ovDays} d.`}</span></div>` : ''}
