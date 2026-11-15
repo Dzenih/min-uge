@@ -13,7 +13,7 @@
 <title>Min uge</title>
 <style>
   :root {
-    --teal: #C8453B; --teal2: #C8453B; --ink: #1E2B2A; --muted: #6E7A77; --line: #E4E0D6;
+    --teal: #1A1A1A; --teal2: #1A1A1A; --ink: #1E2B2A; --muted: #6E7A77; --line: #E4E0D6;
     --bg: #F5F3EE; --card: #fff; --orange: #B0853F; --red: #B5654A; --blue: #3F7A8C; --violet: #7D6B93;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -108,7 +108,8 @@
   @keyframes drawerUp { from { transform: translateY(100%); } to { transform: none; } }
   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
   .drawer-bg { animation: fadeIn .2s ease; }
-  .settings-drawer { height: 92vh; height: 92dvh; max-height: 92vh; max-height: 92dvh; background: var(--bg); box-shadow: 0 -12px 40px rgba(0,0,0,.18); animation: drawerUp .32s cubic-bezier(.2,.8,.2,1); }
+  .settings-drawer { height: 92vh; height: 92dvh; max-height: 92vh; max-height: 92dvh; padding-top: 0; background: var(--bg); box-shadow: 0 -12px 40px rgba(0,0,0,.18); animation: drawerUp .32s cubic-bezier(.2,.8,.2,1); }
+  .settings-drawer .grab { margin: 10px auto 8px; }
   .settings-drawer .dhead { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 -16px; padding: 4px 16px 10px; background: var(--bg); border-bottom: 1px solid var(--line); }
   .settings-drawer .dhead h3 { margin: 0; font-size: 20px; }
   .dclose { width: 36px; height: 36px; padding: 0; border-radius: 50%; background: #fff; border: 1px solid var(--line); display: grid; place-items: center; color: var(--ink); }
@@ -225,7 +226,7 @@
   .settings label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
 
   /* ===== Nordic design (se designguiden i appen) ===== */
-  :root { --teal:#C8453B; --teal2:#C8453B; --warn:#8E2A22; --ink:#1E2B2A; --muted:#6E7A77; --line:#E4E0D6; --bg:#F5F3EE; --orange:#B0853F; --red:#B5654A; --track:#EEEBE3; --spruce-t:#FBE7E5; --birch-t:#F4EBDA; --fjord-t:#E2EEF1; --heather-t:#ECE8F1; --clay-t:#F6E7E1; }
+  :root { --teal:#1A1A1A; --teal2:#1A1A1A; --warn:#8E2A22; --ink:#1E2B2A; --muted:#6E7A77; --line:#E4E0D6; --bg:#F5F3EE; --orange:#B0853F; --red:#B5654A; --track:#EEEBE3; --spruce-t:#E9E9E9; --birch-t:#F4EBDA; --fjord-t:#E2EEF1; --heather-t:#ECE8F1; --clay-t:#F6E7E1; }
   html, body { font-family: -apple-system, "SF Pro Text", "Inter", "Helvetica Neue", Arial, sans-serif; letter-spacing: -.01em; -webkit-font-smoothing: antialiased; }
   header { background: var(--teal); color: #fff; border-radius: 0; padding: calc(10px + env(safe-area-inset-top)) 18px 6px; }
   header .htop { display:flex; align-items:flex-start; justify-content:space-between; }
@@ -882,6 +883,12 @@ function setPeriodEnd(v){
   if (d < 0 || d > 10 || v > iso(new Date())) { toast('Slutdatoen skal være 0–10 dage efter start og ikke i fremtiden'); return false; }
   state.periodEnds[last] = v; save(); toast('✅ Slut registreret'); return true;
 }
+function periodEndMax(){
+  const last = lastPeriod(), today = iso(new Date());
+  if (!last) return today;
+  const cap = iso(new Date(new Date(last+'T12:00:00').getTime() + 10*864e5));
+  return cap < today ? cap : today;
+}
 function endPeriodToday(){ if (setPeriodEnd(iso(new Date()))) { closeSheet(); render(); } }
 function openPeriod(){
   const last = cycOn() && lastPeriod(); if (!last || state.periodEnds[last]) return null;
@@ -936,7 +943,7 @@ function header(){
 }
 
 /* Hver fane har sin kategorifarve (fuld farve til overskrift/aktiv fane, lys tint til siden). Samme farver som logoets prikker. */
-const TAB_COLORS = { today:['#C8453B','#FBE7E5'], food:['#B0853F','#F4EBDA'], train:['#3F7A8C','#E2EEF1'], week:['#4A8A74','#E6F1EC'] };
+const TAB_COLORS = { today:['#1A1A1A','#E9E9E9'], food:['#2F5D50','#E1ECE7'], train:['#3F7A8C','#E2EEF1'], week:['#7D6B93','#ECE8F1'] };
 function applyTabColors(){
   const [c, t] = TAB_COLORS[tab] || TAB_COLORS.today, s = document.documentElement.style;
   s.setProperty('--teal', c); s.setProperty('--teal2', c); s.setProperty('--spruce-t', t); s.setProperty('--bg', t);
@@ -1019,10 +1026,10 @@ function renderToday(){
     ${suggestCard(wd)}
     <div class="card">
       <div class="rings">
-        <div class="ring">${ring(t.kcal, g.kcal, over ? '#B5654A' : '#B0853F')}<div class="c"><b>${r0(Math.abs(left))}</b><span>${over ? 'kcal over' : 'kcal tilbage'}</span></div></div>
+        <div class="ring">${ring(t.kcal, g.kcal, over ? '#B5654A' : '#2F5D50')}<div class="c"><b>${r0(Math.abs(left))}</b><span>${over ? 'kcal over' : 'kcal tilbage'}</span></div></div>
         <div>
-          <div class="stat"><div class="row between"><span>🔥 Kalorier</span><b>${r0(t.kcal)} / ${g.kcal}</b></div><div class="bar"><div style="width:${Math.min(100,t.kcal/g.kcal*100)}%;background:#B0853F"></div></div></div>
-          <div class="stat"><div class="row between"><span>💪 Protein</span><b>${r0(t.p)} / ${g.protein} g</b></div><div class="bar"><div style="width:${Math.min(100,t.p/g.protein*100)}%;background:var(--ink)"></div></div></div>
+          <div class="stat"><div class="row between"><span>🔥 Kalorier</span><b>${r0(t.kcal)} / ${g.kcal}</b></div><div class="bar"><div style="width:${Math.min(100,t.kcal/g.kcal*100)}%;background:#2F5D50"></div></div></div>
+          <div class="stat"><div class="row between"><span>💪 Protein</span><b>${r0(t.p)} / ${g.protein} g</b></div><div class="bar"><div style="width:${Math.min(100,t.p/g.protein*100)}%;background:#2F5D50"></div></div></div>
           <button class="btn small ghost" onclick="openAdd()">＋ Tilføj mad</button>
           <button class="btn small ghost" onclick="snap()">📷</button>
         </div>
@@ -1036,7 +1043,7 @@ function renderToday(){
     <div class="card">
       <h2>✅ Dagens tjekliste</h2>
       <div class="checks">${checks.map(([id,e,l]) => `<button class="chk ${d.checks[id]?'on':''}" onclick="toggleCheck('${id}')"><span class="b">${d.checks[id]?'✓':''}</span>${e} ${l}</button>`).join('')}</div>
-      <h2 style="margin-top:14px">💧 Vand <span class="muted" style="font-weight:400">${(d.water*0.25).toFixed(2).replace('.',',')} l af 2 l</span></h2>
+      <h2 style="margin-top:14px;color:#3F7A8C">💧 Vand <span class="muted" style="font-weight:400">${(d.water*0.25).toFixed(2).replace('.',',')} l af 2 l</span></h2>
       <div class="water">${Array.from({length:8}, (_,i) => `<button class="${i<d.water?'on':''}" onclick="setWater(${i+1})">💧</button>`).join('')}</div>
     </div>
     ${moodCard()}
@@ -1058,8 +1065,8 @@ function renderFood(){
   const list = d.food.slice().reverse();
   $('#view').innerHTML = `
     <div class="card">
-      <div class="stat"><div class="row between"><span>🔥 ${r0(t.kcal)} af ${g.kcal} kcal</span><b>${r0(g.kcal - t.kcal)} tilbage</b></div><div class="bar"><div style="width:${Math.min(100,t.kcal/g.kcal*100)}%;background:${t.kcal>g.kcal?'#B5654A':'#B0853F'}"></div></div></div>
-      <div class="stat"><div class="row between"><span>💪 ${r0(t.p)} af ${g.protein} g protein</span><b>${r0(Math.max(0,g.protein - t.p))} g mangler</b></div><div class="bar"><div style="width:${Math.min(100,t.p/g.protein*100)}%;background:var(--ink)"></div></div></div>
+      <div class="stat"><div class="row between"><span>🔥 ${r0(t.kcal)} af ${g.kcal} kcal</span><b>${r0(g.kcal - t.kcal)} tilbage</b></div><div class="bar"><div style="width:${Math.min(100,t.kcal/g.kcal*100)}%;background:${t.kcal>g.kcal?'#B5654A':'#2F5D50'}"></div></div></div>
+      <div class="stat"><div class="row between"><span>💪 ${r0(t.p)} af ${g.protein} g protein</span><b>${r0(Math.max(0,g.protein - t.p))} g mangler</b></div><div class="bar"><div style="width:${Math.min(100,t.p/g.protein*100)}%;background:#2F5D50"></div></div></div>
       ${macroBlock(t)}
     </div>
     <div class="grid2" style="margin-bottom:12px">
@@ -1960,8 +1967,8 @@ function energyCard(k){ const E = energy(k), max = Math.max(E.burn, E.intake, 1)
   const warn = E.bal < -700 && !today ? '<div class="muted" style="margin-top:8px;color:var(--warn)">⚠️ Over 700 kcal underskud – det kan sænke stofskiftet. Spis lidt mere.</div>'
     : today && E.bal < -700 ? '<div class="muted" style="margin-top:8px">Dagen er ikke slut – husk at spise dine måltider 🍽️</div>' : '';
   return `<div class="card"><h2>⚖️ Energibalance ${today ? '<span class="muted" style="font-weight:400">i dag</span>' : ''}</h2>
-    <div class="stat"><div class="row between"><span>🍽️ Indtag</span><b>${fmt(E.intake)} kcal</b></div>${bar(E.intake, 'var(--ink)')}</div>
-    <div class="stat"><div class="row between"><span>🔥 Forbrænding</span><b>${fmt(E.burn)} kcal</b></div>${bar(E.burn, '#B0853F')}</div>
+    <div class="stat"><div class="row between"><span>🍽️ Indtag</span><b>${fmt(E.intake)} kcal</b></div>${bar(E.intake, '#2F5D50')}</div>
+    <div class="stat"><div class="row between"><span>🔥 Forbrænding</span><b>${fmt(E.burn)} kcal</b></div>${bar(E.burn, '#3F7A8C')}</div>
     <div class="why"><span>Hvile ${fmt(E.bmr)}</span>${E.measured ? `<span>⌚ Aktiv ${fmt(E.measured)}</span>` : `<span>Hverdag ${fmt(E.neat)}</span>`}${E.steps ? `<span>👟 ${fmt(E.steps)} skridt</span>` : ''}${E.train ? `<span>Træning ${fmt(E.train)}</span>` : ''}${E.extra ? `<span>Ekstra ${fmt(E.extra)}</span>` : ''}</div>
     <div class="row between" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)"><span>${today ? 'Status lige nu' : 'Resultat'}</span><b>${E.bal > 0 ? '+' : E.bal < 0 ? '−' : ''}${fmt(E.bal)} kcal</b></div>
     <div class="muted">${balText(E.bal)}${E.measured ? ` · målt af Apple Sundhed${today && E.at ? ' kl. ' + E.at : ''}` : today ? ' · forbrænding er estimeret for hele dagen' : ''}</div>${warn}
@@ -1980,7 +1987,7 @@ function energyWeekCard(){ const wds = [1,2,3,4,5,6,0], todayK = iso(new Date())
 function statsCard(){
   const w = weekActive(mondayOf(vDate())), st = streak(), goal = Math.max(1, 5 - w.s), pct = Math.min(1, w.n/goal);
   return `<div class="card statc">
-    <div class="ringsm">${ring(w.n, goal, '#B0853F', 92)}<div class="c"><b>${w.n}</b><span>af ${goal}</span></div></div>
+    <div class="ringsm">${ring(w.n, goal, '#3F7A8C', 92)}<div class="c"><b>${w.n}</b><span>af ${goal}</span></div></div>
     <div class="nums"><div><b>${hm(w.m)}</b><span>aktiv tid</span></div><div><b>${st ? '🔥 ' + st : '–'}</b><span>${st === 1 ? 'uge i træk' : 'uger i træk'}</span></div>
       <div class="muted" style="grid-column:1/-1">${w.n >= goal ? 'Ugens mål er nået – flot! 🎉' : `${goal - w.n} aktive dage mere for at nå ugens mål. En aktiv dag = træning klaret eller 20+ min ekstra.`}${w.s ? ` 🤒 ${w.s} ${w.s === 1 ? 'sygedag' : 'sygedage'} er trukket fra målet – din streak er beskyttet.` : ''}</div></div></div>`;
 }
@@ -2045,7 +2052,7 @@ function periodLine(compact){
   const n = nextPeriod(); if (!n) return '';
   if (!compact) return `${dk(n.date, { weekday:'short', day:'numeric', month:'short' })} · ${n.late ? 'forventet nu' : `om ${n.days} d.`}`;
   const open = openPeriod();
-  return `<div class="muted" style="margin-top:6px">${n.late ? '🩸 Menstruationen er forventet nu' : `🩸 Næste menstruation ca. <b>${dk(n.date)}</b> (om ${n.days} ${n.days === 1 ? 'dag' : 'dage'})`} · <a href="#" onclick="${open ? 'endPeriodToday' : 'logPeriodToday'}();return false">${open ? 'Slut i dag?' : 'Startet i dag?'}</a></div>
+  return `<div class="muted" style="margin-top:6px">${n.late ? '🩸 Menstruationen er forventet nu' : `🩸 Næste menstruation ca. <b>${dk(n.date)}</b> (om ${n.days} ${n.days === 1 ? 'dag' : 'dage'})`} · <button class="btn small ghost" style="margin-left:4px;vertical-align:middle" onclick="${open ? 'endPeriodToday' : 'logPeriodToday'}()">${open ? 'Slut i dag?' : 'Startet i dag?'}</button></div>
     <div class="muted" style="margin-top:2px">🌟 Næste ægløsning ca. <b>${dk(n.ov)}</b> (${n.ovDays === 0 ? 'i dag' : `om ${n.ovDays} ${n.ovDays === 1 ? 'dag' : 'dage'}`})</div>
     <div class="muted" style="margin-top:2px">🌱 Frugtbart vindue ${dk(fertileWindow().from)} – ${dk(fertileWindow().to)}${fertileWindow().now ? ' · <b>Du er frugtbar nu</b>' : ''}</div>`;
 }
@@ -2127,7 +2134,7 @@ function renderSettings(){
     <div class="group">
       ${srow('Seneste startede', `<input type="date" value="${lastPeriod() || ''}" max="${iso(new Date())}" onchange="editLastPeriod(this.value);toast('Gemt · '+dk(new Date(this.value+'T12:00:00')));render()">`)}
       ${srow('Cykluslængde', c.n ? `<b>${c.len}</b><em>dage</em>` : num('cycleLen', g.cycleLen, 'dage', false, 'render()'), c.n ? `Beregnet ud fra dine ${c.n + 1} seneste` : 'Bliver beregnet, når du har registreret 2+')}
-      ${srow('Seneste sluttede', `<input type="date" value="${lastPeriod() ? state.periodEnds[lastPeriod()] || '' : ''}" min="${lastPeriod() || ''}" max="${iso(new Date())}" onchange="setPeriodEnd(this.value);render()">`, 'Tom = endnu ikke slut')}
+      ${srow('Seneste sluttede', `<input type="date" value="${lastPeriod() ? state.periodEnds[lastPeriod()] || '' : ''}" min="${lastPeriod() || ''}" max="${periodEndMax()}" onchange="if (setPeriodEnd(this.value)) render()">`, 'Tom = endnu ikke slut')}
       ${srow('Menstruationens længde', `<b>${pl.len}</b><em>dage</em>`, pl.n ? `Beregnet ud fra dine ${pl.n} seneste` : 'Standard – bliver beregnet, når du registrerer en slutdato')}
       <div class="srow"><span>Næste menstruation</span><span class="sv"><b>${n ? periodLine(false) : '–'}</b></span></div>
       ${n ? `<div class="srow"><span>Næste ægløsning</span><span class="sv"><b>${dk(n.ov)}</b> · ${n.ovDays === 0 ? 'i dag' : `om ${n.ovDays} d.`}</span></div>` : ''}
@@ -2328,9 +2335,11 @@ const EMOJI_RE = /\p{Extended_Pictographic}(?:\uFE0F|\p{Emoji_Modifier}|\u20E3)*
 const EMOJI_SKIP = new Set([...'♀♂✓✕★●▶⏸⏭↻↺⇄➕➖⬇⬆→←©®']);
 const ART_SKIP_TAGS = new Set(['SCRIPT','STYLE','TEXTAREA','OPTION','INPUT','SVG','NOSCRIPT']);
 const SVG_NS = 'http://www.w3.org/2000/svg';
-function icoEl(name){
+const ICON_COLOR = { '🩸':'#C8453B', '💧':'#3F7A8C', '🌱':'#2F5D50' };
+function icoEl(name, color){
   const s = document.createElementNS(SVG_NS, 'svg'), u = document.createElementNS(SVG_NS, 'use');
   s.setAttribute('class', 'ico'); s.setAttribute('aria-hidden', 'true');
+  if (color) s.style.color = color;
   u.setAttribute('href', '#i-' + name); s.append(u); return s;
 }
 // Variation selectors and ZWJ are stripped; ZWJ sequences fall back to their first code point.
@@ -2352,7 +2361,7 @@ function artify(root){
     for (const m of text.matchAll(EMOJI_RE)){
       if (EMOJI_SKIP.has(m[0].replace(/\uFE0F/g, ''))) continue;
       if (m.index > last) frag.append(text.slice(last, m.index));
-      frag.append(icoEl(iconFor(m[0])));
+      frag.append(icoEl(iconFor(m[0]), ICON_COLOR[m[0].replace(/\uFE0F/g, '')]));
       last = m.index + m[0].length; changed = true;
     }
     if (!changed) continue;
