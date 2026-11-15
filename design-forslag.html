@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Min uge · Designforslag (nordisk)</title>
+<style>
+  :root {
+    --snow: #F5F3EE; --paper: #FFFFFF; --ink: #1E2B2A; --muted: #6E7A77; --line: #E4E0D6; --track: #EEEBE3;
+    --spruce: #2F5D50; --spruce-t: #E1ECE7;
+    --birch: #B0853F; --birch-t: #F4EBDA;
+    --fjord: #3F7A8C; --fjord-t: #E2EEF1;
+    --heather: #7D6B93; --heather-t: #ECE8F1;
+    --clay: #B5654A; --clay-t: #F6E7E1;
+  }
+  .cat-food  { --c: var(--birch);    --t: var(--birch-t); }
+  .cat-train { --c: var(--fjord);    --t: var(--fjord-t); }
+  .cat-prog  { --c: var(--spruce);   --t: var(--spruce-t); }
+  .cat-cyc   { --c: var(--heather);  --t: var(--heather-t); }
+  .cat-alert { --c: var(--clay);     --t: var(--clay-t); }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--snow); color: var(--ink); font-family: Inter, -apple-system, "Helvetica Neue", Arial, sans-serif; line-height: 1.45; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 56px 24px 96px; }
+  h1 { font-size: 40px; font-weight: 600; letter-spacing: -.02em; margin: 0 0 10px; }
+  h2 { font-size: 22px; font-weight: 600; letter-spacing: -.01em; margin: 64px 0 8px; }
+  .lead { color: var(--muted); max-width: 680px; margin: 0 0 20px; }
+  .card { background: var(--paper); border: 1px solid var(--line); border-radius: 20px; padding: 20px; }
+  .eyebrow { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+
+  /* Principper */
+  .principles { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
+  .principles h3 { font-size: 16px; margin: 12px 0 6px; font-weight: 600; }
+  .principles p { margin: 0; color: var(--muted); font-size: 14px; }
+
+  /* Farver */
+  .swatches { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+  .sw { background: var(--paper); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; }
+  .sw i { display: block; height: 84px; }
+  .sw div { padding: 10px 12px; font-size: 13px; }
+  .sw b { display: block; font-size: 14px; font-weight: 600; }
+  .sw code { color: var(--muted); font-size: 12px; }
+
+  /* Typografi */
+  .type { display: grid; gap: 10px; }
+  .type div { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .type code { color: var(--muted); font-size: 12px; white-space: nowrap; }
+
+  /* Ikoner */
+  .ic { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex: none; display: block; }
+  .icons { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 10px; }
+  .g { background: var(--paper); border: 1px solid var(--line); border-radius: 16px; padding: 16px 6px 12px; text-align: center; color: var(--c, var(--ink)); }
+  .g .ic { width: 34px; height: 34px; margin: 0 auto 8px; }
+  .g span { display: block; font-size: 12px; color: var(--muted); }
+
+  table { width: 100%; border-collapse: collapse; background: var(--paper); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; font-size: 14px; }
+  th, td { padding: 9px 14px; text-align: left; border-bottom: 1px solid var(--line); }
+  th { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; }
+  tr:last-child td { border-bottom: none; }
+  td.em { font-size: 20px; width: 70px; }
+  td .ic { width: 22px; height: 22px; color: var(--c); }
+  td.nm { color: var(--muted); }
+
+  /* Skærme */
+  .phones { display: flex; flex-wrap: wrap; gap: 28px; justify-content: center; }
+  .phone-wrap { text-align: center; }
+  .phone { width: 318px; height: 660px; border-radius: 46px; background: var(--ink); padding: 11px; }
+  .screen { position: relative; width: 100%; height: 100%; border-radius: 36px; background: var(--snow); overflow: hidden; padding: 40px 14px 0; }
+  .phone-cap { margin-top: 14px; font-size: 14px; color: var(--muted); }
+  .phone-cap b { color: var(--ink); font-weight: 600; display: block; }
+
+  .s-date { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .s-title { font-size: 26px; font-weight: 600; letter-spacing: -.02em; margin: 2px 0 10px; }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+  .chip { display: inline-flex; align-items: center; gap: 5px; background: var(--paper); border: 1px solid var(--line); border-radius: 99px; padding: 4px 9px; font-size: 12px; }
+  .chip .ic { width: 14px; height: 14px; }
+
+  .s-card { background: var(--paper); border: 1px solid var(--line); border-radius: 20px; padding: 12px; margin-bottom: 10px; }
+  .s-card h4 { margin: 0 0 8px; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+  .s-card h4 .ic { width: 16px; height: 16px; color: var(--c, var(--ink)); }
+  .s-muted { font-size: 12px; color: var(--muted); }
+
+  .row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); }
+  .row:last-child { border-bottom: none; }
+  .row .t { flex: 1; min-width: 0; }
+  .row .t b { display: block; font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row .k { font-size: 13px; font-weight: 600; text-align: right; white-space: nowrap; }
+  .row .k span { display: block; font-size: 11px; font-weight: 400; color: var(--muted); }
+
+  .badge { width: 40px; height: 40px; border-radius: 13px; display: grid; place-items: center; background: var(--t); color: var(--c); flex: none; }
+  .badge .ic { width: 22px; height: 22px; }
+  .badge.lg { width: 56px; height: 56px; border-radius: 18px; }
+  .badge.lg .ic { width: 30px; height: 30px; }
+
+  .btn { background: var(--spruce); color: #fff; border-radius: 12px; padding: 9px 12px; font-size: 13px; font-weight: 600; text-align: center; }
+  .btn.ghost { background: var(--spruce-t); color: var(--spruce); }
+  .btn.full { display: block; width: 100%; padding: 12px; font-size: 14px; }
+
+  .bar { height: 8px; background: var(--track); border-radius: 99px; overflow: hidden; margin: 6px 0; }
+  .bar i { display: block; height: 100%; background: var(--c, var(--spruce)); border-radius: 99px; }
+
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .tile { background: var(--paper); border: 1px solid var(--line); border-radius: 16px; padding: 10px 4px 9px; text-align: center; }
+  .tile .ic { margin: 0 auto 5px; width: 26px; height: 26px; color: var(--c, var(--ink)); }
+  .tile b { display: block; font-size: 12px; font-weight: 600; }
+  .tile span { display: block; font-size: 10px; color: var(--muted); }
+
+  .days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 10px; }
+  .days div { text-align: center; font-size: 11px; padding: 7px 0; border-radius: 12px; background: var(--paper); border: 1px solid var(--line); color: var(--muted); }
+  .days div.on { background: var(--spruce); color: #fff; border-color: var(--spruce); }
+  .days div.today { outline: 1.5px solid var(--spruce); outline-offset: -3px; }
+
+  .nav { position: absolute; left: 10px; right: 10px; bottom: 12px; background: var(--paper); border: 1px solid var(--line); border-radius: 24px; display: grid; grid-template-columns: repeat(4, 1fr); padding: 7px 4px; }
+  .nav div { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 10px; color: var(--muted); }
+  .nav div .ic { width: 21px; height: 21px; }
+  .nav div.on { color: var(--spruce); font-weight: 600; }
+
+  .thumb { width: 42px; height: 42px; border-radius: 13px; background: var(--t); color: var(--c); display: grid; place-items: center; flex: none; }
+  .thumb .ic { width: 22px; height: 22px; }
+
+  .photos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 8px; }
+  .photos div { aspect-ratio: 1; border-radius: 12px; background: linear-gradient(160deg, #E6E2D8, #D5D0C3); }
+
+  .notice { display: flex; gap: 8px; align-items: center; font-size: 12px; color: var(--muted); margin-top: 8px; }
+  .notice .ic { width: 16px; height: 16px; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<!-- Ikonbibliotek: 24×24, linje 1.6 med blød farvefyld (currentColor 14 %) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-bowl" viewBox="0 0 24 24"><path d="M3.5 11h17c0 4.8-3.8 8.5-8.5 8.5S3.5 15.8 3.5 11z" fill="currentColor" fill-opacity=".14"/><path d="M8 7.5c0-1.2 1-1.6 1-3M12 7.5c0-1.2 1-1.6 1-3M16 7.5c0-1.2 1-1.6 1-3"/></symbol>
+    <symbol id="i-apple" viewBox="0 0 24 24"><path d="M12 8.2c-1.6-1.1-5.5-1.3-6.3 2.3-.8 3.6 1.2 9.2 3.6 9.2.9 0 1.4-.5 2.7-.5s1.8.5 2.7.5c2.4 0 4.4-5.6 3.6-9.2C17.5 6.9 13.6 7.1 12 8.2z" fill="currentColor" fill-opacity=".14"/><path d="M12 8.2c0-2 .6-3.6 2.4-4.7M13.8 4.6c1.3-1 2.8-1.1 3.6-.9-.2 1.3-1.2 2.4-2.6 2.6"/></symbol>
+    <symbol id="i-egg" viewBox="0 0 24 24"><path d="M12 3.5c-3.2 0-6 5.4-6 10.3a6 6 0 0 0 12 0c0-4.9-2.8-10.3-6-10.3z" fill="currentColor" fill-opacity=".14"/></symbol>
+    <symbol id="i-bread" viewBox="0 0 24 24"><path d="M5.5 20V10.2C5.5 6.8 8.4 4.5 12 4.5s6.5 2.3 6.5 5.7V20z" fill="currentColor" fill-opacity=".14"/><path d="M9 11.5h.01M12.5 10.5h.01M15.5 13h.01M10 15.5h.01M13.8 16.5h.01"/></symbol>
+    <symbol id="i-fish" viewBox="0 0 24 24"><path d="M3 12c2.6-3.8 7.2-5.4 11.2-3.4 1.4.7 2.5 1.6 3.3 2.4l3.5-2.5v8.2l-3.5-2.5c-.8.8-1.9 1.7-3.3 2.4C10.2 17.4 5.6 15.8 3 12z" fill="currentColor" fill-opacity=".14"/><path d="M7.2 11.2h.01"/></symbol>
+    <symbol id="i-plate" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="5" fill="currentColor" fill-opacity=".14"/></symbol>
+    <symbol id="i-coffee" viewBox="0 0 24 24"><path d="M4 9.5h12.5v4.2a5.3 5.3 0 0 1-5.3 5.3H9.3A5.3 5.3 0 0 1 4 13.7z" fill="currentColor" fill-opacity=".14"/><path d="M16.5 11.2h.8a2.3 2.3 0 0 1 0 4.6h-.8M8 3.5c0 1.3 1 1.7 1 3M11.5 3.5c0 1.3 1 1.7 1 3"/></symbol>
+    <symbol id="i-shake" viewBox="0 0 24 24"><path d="M6.5 5h11l-1.4 15a1 1 0 0 1-1 .9H8.9a1 1 0 0 1-1-.9z" fill="currentColor" fill-opacity=".14"/><path d="M6 9.5h12M13.5 5l2.5-2.5"/></symbol>
+    <symbol id="i-milk" viewBox="0 0 24 24"><path d="M6 8.5 9.5 3h5L18 8.5V20a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1z" fill="currentColor" fill-opacity=".14"/><path d="M6 8.5h12M11 13h2"/></symbol>
+    <symbol id="i-leaf" viewBox="0 0 24 24"><path d="M5 19c0-8.5 5-13.5 14-14 .4 9-4.5 14-13 14.1z" fill="currentColor" fill-opacity=".14"/><path d="M5 19l8-8"/></symbol>
+    <symbol id="i-camera" viewBox="0 0 24 24"><path d="M3.5 8.5a1.5 1.5 0 0 1 1.5-1.5h3l1.8-2.5h5.4l1.8 2.5h3a1.5 1.5 0 0 1 1.5 1.5V18a1.5 1.5 0 0 1-1.5 1.5H5A1.5 1.5 0 0 1 3.5 18z" fill="currentColor" fill-opacity=".14"/><circle cx="12" cy="12.8" r="3.6"/></symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13.5 2.8 5.2 13.6h6.1l-1 7.6 8.6-11h-6.2z" fill="currentColor" fill-opacity=".14"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8"/><path d="M16 16l4.5 4.5"/></symbol>
+    <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M4.5 19.5l.9-4.2L15.6 5.1a2 2 0 0 1 2.8 0l.5.5a2 2 0 0 1 0 2.8L8.7 18.6z" fill="currentColor" fill-opacity=".14"/><path d="M13.8 6.9l3.3 3.3"/></symbol>
+    <symbol id="i-barcode" viewBox="0 0 24 24"><path d="M4 6.5v11M7 6.5v11M9.5 6.5v11M14 6.5v11M16.5 6.5v11M20 6.5v11"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3.6l2.5 5.2 5.7.8-4.1 4 1 5.7L12 16.6l-5.1 2.7 1-5.7-4.1-4 5.7-.8z" fill="currentColor" fill-opacity=".14"/></symbol>
+    <symbol id="i-walk" viewBox="0 0 24 24"><circle cx="13.2" cy="4.6" r="1.9"/><path d="M11.3 9.2 9 13.6l2.8 1.8-1.3 5.1M11.3 9.2l3.2 2.1 2.2 3.1M9 13.6 6.2 17.2"/></symbol>
+    <symbol id="i-run" viewBox="0 0 24 24"><circle cx="14" cy="4.6" r="1.9"/><path d="M12.6 9.2 10 12.8 13 15l-1.6 5M10 12.8l-3.5 1.7M12.6 9.2l3.8 1.4 2.2-1.2"/></symbol>
+    <symbol id="i-bike" viewBox="0 0 24 24"><circle cx="5.8" cy="16.2" r="3.3"/><circle cx="18.2" cy="16.2" r="3.3"/><path d="M5.8 16.2l3.8-6.7h5.3l3.3 6.7M9.6 9.5l2.6 6.7H9.1M15 6.5h2.4"/></symbol>
+    <symbol id="i-row" viewBox="0 0 24 24"><path d="M4 19.5h16M8 16l9-9.5M9.5 17.8 6 16.2"/></symbol>
+    <symbol id="i-swim" viewBox="0 0 24 24"><circle cx="15" cy="6" r="1.8"/><path d="M6 12.5l5-3.5 4 1.5 3-1M4 16.5c1.7 1 3.3 1 5 0s3.3-1 5 0 3.3 1 5 0M4 20.5c1.7 1 3.3 1 5 0s3.3-1 5 0 3.3 1 5 0"/></symbol>
+    <symbol id="i-yoga" viewBox="0 0 24 24"><circle cx="12" cy="4.8" r="2"/><path d="M5 10.5c2 1.3 4.3 1.9 7 1.9s5-.6 7-1.9M12 12.4v3.2M8 20.5c0-3 1.7-5 4-5s4 2 4 5"/></symbol>
+    <symbol id="i-dumbbell" viewBox="0 0 24 24"><path d="M6.5 7.5v9M17.5 7.5v9M3.5 9.5v5M20.5 9.5v5M6.5 12h11"/></symbol>
+    <symbol id="i-dance" viewBox="0 0 24 24"><circle cx="13" cy="4.6" r="1.9"/><path d="M12 9l-3 3.5 3 2.5-2 6.5M12 9l3.5 1 .5 4M9 12.5 5.5 9.5M15.5 10 19 7.5"/></symbol>
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 10.8 12 4l8 6.8V19.5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z" fill="currentColor" fill-opacity=".14"/><path d="M10 20.5v-2.6h4v2.6"/></symbol>
+    <symbol id="i-office" viewBox="0 0 24 24"><rect x="5.5" y="3.5" width="13" height="17" rx="1.5" fill="currentColor" fill-opacity=".14"/><path d="M9 7.5h1.5M13.5 7.5H15M9 11h1.5M13.5 11H15M10 20.5v-2.6h4v2.6"/></symbol>
+    <symbol id="i-drop" viewBox="0 0 24 24"><path d="M12 3.5C9 7.6 6.5 10.8 6.5 14.2a5.5 5.5 0 0 0 11 0c0-3.4-2.5-6.6-5.5-10.7z" fill="currentColor" fill-opacity=".14"/><path d="M9.3 14.4a2.7 2.7 0 0 0 2.4 2.6"/></symbol>
+    <symbol id="i-scale" viewBox="0 0 24 24"><path d="M12 4v15.5M7.5 19.5h9M4.5 6.5h15"/><path d="M4.5 6.5 2 13h5z" fill="currentColor" fill-opacity=".14"/><path d="M19.5 6.5 17 13h5z" fill="currentColor" fill-opacity=".14"/></symbol>
+    <symbol id="i-medal" viewBox="0 0 24 24"><circle cx="12" cy="14.5" r="5.5" fill="currentColor" fill-opacity=".14"/><path d="M8.6 9.4 6.2 3.5h3.6L12 7.4l2.2-3.9h3.6l-2.4 5.9"/></symbol>
+    <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 3.5c.5 3.9 1.6 5 5.5 5.5-3.9.5-5 1.6-5.5 5.5-.5-3.9-1.6-5-5.5-5.5 3.9-.5 5-1.6 5.5-5.5z" fill="currentColor" fill-opacity=".14"/><path d="M18.5 15.5c.2 1.6.7 2.1 2.3 2.3-1.6.2-2.1.7-2.3 2.3-.2-1.6-.7-2.1-2.3-2.3 1.6-.2 2.1-.7 2.3-2.3z"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2.5" fill="currentColor" fill-opacity=".14"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="currentColor" fill-opacity=".14"/><path d="M8 12.3l2.6 2.6 5.6-5.3"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol>
+    <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M12 3.5a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1 2.1h5.2c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3.5z" fill="currentColor" fill-opacity=".14"/><path d="M9.5 20.5h5M10.5 17.6h3"/></symbol>
+    <symbol id="i-warning" viewBox="0 0 24 24"><path d="M12 4 2.8 19.5h18.4z" fill="currentColor" fill-opacity=".14"/><path d="M12 10v4.2M12 16.9h.01"/></symbol>
+    <symbol id="i-trend-up" viewBox="0 0 24 24"><path d="M3.5 17 9.5 11l3.8 3.8 7.2-7.3"/><path d="M15.5 7.5h4.5v4.5"/></symbol>
+    <symbol id="i-flat" viewBox="0 0 24 24"><path d="M4 12h16M16 8.5l3.5 3.5-3.5 3.5"/></symbol>
+    <symbol id="i-sprout" viewBox="0 0 24 24"><path d="M12 21v-9"/><path d="M12 12.5c0-4 2.6-6.5 7-6.5 0 4-2.6 6.5-7 6.5z" fill="currentColor" fill-opacity=".14"/><path d="M12 15c0-3.3-2.3-5.2-6-5.2 0 3.3 2.3 5.2 6 5.2z" fill="currentColor" fill-opacity=".14"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.2" fill="currentColor" fill-opacity=".14"/><path d="M12 2.8v2M12 19.2v2M3.5 7.5l1.4 1.2M19.1 15.3l1.4 1.2M2.8 12h2M19.2 12h2M4.6 18.2l1.4-1.2M18 6.7l1.4-1.2"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.6A8.2 8.2 0 0 1 9.4 4a8.2 8.2 0 1 0 10.6 10.6z" fill="currentColor" fill-opacity=".14"/></symbol>
+  </defs>
+</svg>
+
+<div class="wrap">
+
+  <div class="eyebrow">Designforslag · Min uge</div>
+  <h1>Nordisk ro med kunstneriske ikoner</h1>
+  <p class="lead">Et forslag til en mere moderne og rolig udtryksform: lyse, varme neutrale flader, naturinspirerede accenter og ikoner i stedet for smileyer. Hele appens indhold og flow er uændret; kun det visuelle sprog ændres.</p>
+
+  <h2>Retning</h2>
+  <div class="principles">
+    <div class="card"><div class="badge lg cat-prog"><svg class="ic"><use href="#i-sprout"/></svg></div><h3>Luft og ro</h3><p>Lys baggrund, god afstand mellem elementer og kun ét hovedbudskab pr. kort.</p></div>
+    <div class="card"><div class="badge lg cat-food"><svg class="ic"><use href="#i-leaf"/></svg></div><h3>Natur som inspiration</h3><p>Varme, mineralske toner: gran, birk, fjord og lyng. Ingen neonfarver.</p></div>
+    <div class="card"><div class="badge lg cat-train"><svg class="ic"><use href="#i-bowl"/></svg></div><h3>Kunstneriske ikoner</h3><p>Let håndtegnet linje med blød farvefyld. Hver kategori har sin egen farve.</p></div>
+    <div class="card"><div class="badge lg cat-cyc"><svg class="ic"><use href="#i-moon"/></svg></div><h3>Fladt og roligt</h3><p>Ingen tunge skygger. Afgrænsning sker med hårfine kanter og runde former.</p></div>
+  </div>
+
+  <h2>Farver</h2>
+  <p class="lead">Neutrale flader bærer designet. Kategorifarverne bruges kun til ikoner, små badges og fremskridt, så de aldrig konkurrerer med indholdet.</p>
+  <div class="swatches">
+    <div class="sw"><i style="background:#F5F3EE"></i><div><b>Snee</b><code>#F5F3EE</code><br><span class="s-muted">Baggrund</span></div></div>
+    <div class="sw"><i style="background:#FFFFFF"></i><div><b>Papir</b><code>#FFFFFF</code><br><span class="s-muted">Kort og flader</span></div></div>
+    <div class="sw"><i style="background:#1E2B2A"></i><div><b>Skifer</b><code>#1E2B2A</code><br><span class="s-muted">Tekst og ikoner</span></div></div>
+    <div class="sw"><i style="background:#2F5D50"></i><div><b>Gran</b><code>#2F5D50</code><br><span class="s-muted">Primær og fremskridt</span></div></div>
+    <div class="sw"><i style="background:#B0853F"></i><div><b>Birk</b><code>#B0853F</code><br><span class="s-muted">Mad</span></div></div>
+    <div class="sw"><i style="background:#3F7A8C"></i><div><b>Fjord</b><code>#3F7A8C</code><br><span class="s-muted">Træning og vand</span></div></div>
+    <div class="sw"><i style="background:#7D6B93"></i><div><b>Lyng</b><code>#7D6B93</code><br><span class="s-muted">Cyklus</span></div></div>
+    <div class="sw"><i style="background:#B5654A"></i><div><b>Ler</b><code>#B5654A</code><br><span class="s-muted">Advarsler</span></div></div>
+  </div>
+
+  <h2>Typografi og form</h2>
+  <div class="card">
+    <div class="type">
+      <div><span style="font-size:26px;font-weight:600;letter-spacing:-.02em">Min uge</span><code>Titel · 26 / 600</code></div>
+      <div><span style="font-size:17px;font-weight:600">Gangbånd · Rask gang 5–6 km/t</span><code>Kort-overskrift · 17 / 600</code></div>
+      <div><span style="font-size:14px">1.240 kcal tilbage i dag</span><code>Brødtekst · 14 / 400</code></div>
+      <div><span style="font-size:12px;color:#6E7A77">Uge 3 af 4 · Hjemme</span><code>Hjælpetekst · 12 / 400, #6E7A77</code></div>
+      <div style="border:none"><span style="display:inline-block;background:#F5F3EE;border-radius:20px;padding:10px 18px;font-size:14px">Radius 20 · knapper 12 · chips 99</span><code>Hjørner og afstand: 8 px grid</code></div>
+    </div>
+  </div>
+
+  <h2>Ikonbibliotek</h2>
+  <p class="lead">Ikonerne er tegnet på et 24 px gitter med stregtykkelse 1,6 og blød fyld på 14 %. De bærer kategoriens farve, så man kan se Mad, Træning og Fremgang fra et hurtigt kig.</p>
+  <div class="icons">
+    <div class="g cat-food"><svg class="ic"><use href="#i-bowl"/></svg><span>bowl</span></div>
+    <div class="g cat-food"><svg class="ic"><use href="#i-apple"/></svg><span>apple</span></div>
+    <div class="g cat-food"><svg class="ic"><use href="#i-egg"/></svg><span>egg</span></div>
+    <div class="g cat-food"><svg class="ic"><use href="#i-bread"/></svg><span>bread</span></div>
+    <div class="g cat-food"><svg class="ic"><use href="#i-fish"/></svg><span>fish</span></div>
+    <div class="g cat-food"><svg class="ic"><use href="#i-plate"/></svg><span>plate</span></div>
+    <div class="g cat-food"><svg class="ic"><use href="#i-coffee"/></svg><span>coffee</span></div>
+    <div class="g cat-food"><svg class="ic"><use href="#i-shake"/></svg><span>shake</span></div>
+    <div class="g cat-food"><svg class="ic"><use href="#i-milk"/></svg><span>milk</span></div>
+    <div class="g cat-food"><svg class="ic"><use href="#i-leaf"/></svg><span>leaf</span></div>
+    <div class="g cat-train"><svg class="ic"><use href="#i-walk"/></svg><span>walk</span></div>
+    <div class="g cat-train"><svg class="ic"><use href="#i-run"/></svg><span>run</span></div>
+    <div class="g cat-train"><svg class="ic"><use href="#i-bike"/></svg><span>bike</span></div>
+    <div class="g cat-train"><svg class="ic"><use href="#i-row"/></svg><span>row</span></div>
+    <div class="g cat-train"><svg class="ic"><use href="#i-swim"/></svg><span>swim</span></div>
+    <div class="g cat-train"><svg class="ic"><use href="#i-yoga"/></svg><span>yoga</span></div>
+    <div class="g cat-train"><svg class="ic"><use href="#i-dumbbell"/></svg><span>dumbbell</span></div>
+    <div class="g cat-train"><svg class="ic"><use href="#i-dance"/></svg><span>dance</span></div>
+    <div class="g cat-train"><svg class="ic"><use href="#i-drop"/></svg><span>drop</span></div>
+    <div class="g cat-prog"><svg class="ic"><use href="#i-scale"/></svg><span>scale</span></div>
+    <div class="g cat-prog"><svg class="ic"><use href="#i-medal"/></svg><span>medal</span></div>
+    <div class="g cat-prog"><svg class="ic"><use href="#i-trend-up"/></svg><span>trend-up</span></div>
+    <div class="g cat-prog"><svg class="ic"><use href="#i-flat"/></svg><span>flat</span></div>
+    <div class="g cat-prog"><svg class="ic"><use href="#i-check"/></svg><span>check</span></div>
+    <div class="g cat-prog"><svg class="ic"><use href="#i-sparkle"/></svg><span>sparkle</span></div>
+    <div class="g cat-prog"><svg class="ic"><use href="#i-star"/></svg><span>star</span></div>
+    <div class="g cat-prog"><svg class="ic"><use href="#i-calendar"/></svg><span>calendar</span></div>
+    <div class="g cat-prog"><svg class="ic"><use href="#i-home"/></svg><span>home</span></div>
+    <div class="g cat-prog"><svg class="ic"><use href="#i-office"/></svg><span>office</span></div>
+    <div class="g cat-prog"><svg class="ic"><use href="#i-camera"/></svg><span>camera</span></div>
+    <div class="g cat-prog"><svg class="ic"><use href="#i-bolt"/></svg><span>bolt</span></div>
+    <div class="g cat-prog"><svg class="ic"><use href="#i-search"/></svg><span>search</span></div>
+    <div class="g cat-prog"><svg class="ic"><use href="#i-pencil"/></svg><span>pencil</span></div>
+    <div class="g cat-prog"><svg class="ic"><use href="#i-barcode"/></svg><span>barcode</span></div>
+    <div class="g cat-prog"><svg class="ic"><use href="#i-lock"/></svg><span>lock</span></div>
+    <div class="g cat-cyc"><svg class="ic"><use href="#i-sprout"/></svg><span>sprout</span></div>
+    <div class="g cat-cyc"><svg class="ic"><use href="#i-sun"/></svg><span>sun</span></div>
+    <div class="g cat-cyc"><svg class="ic"><use href="#i-moon"/></svg><span>moon</span></div>
+    <div class="g cat-alert"><svg class="ic"><use href="#i-warning"/></svg><span>warning</span></div>
+    <div class="g cat-prog"><svg class="ic"><use href="#i-bulb"/></svg><span>bulb</span></div>
+  </div>
+
+  <h2>Fra emoji til ikon</h2>
+  <p class="lead">Ikonerne erstatter emoji i både handlinger, mad-kort, øvelser, faser og statusbeskeder.</p>
+  <table>
+    <thead><tr><th>Før</th><th>Ikon</th><th>Navn</th><th>Brug i appen</th></tr></thead>
+    <tbody>
+      <tr><td class="em">🥣</td><td><svg class="ic cat-food" style="color:var(--birch)"><use href="#i-bowl"/></svg></td><td class="nm">bowl</td><td>Havregryn, kefir-skål</td></tr>
+      <tr><td class="em">🍎</td><td><svg class="ic" style="color:var(--birch)"><use href="#i-apple"/></svg></td><td class="nm">apple</td><td>Æble, frugt</td></tr>
+      <tr><td class="em">🥚</td><td><svg class="ic" style="color:var(--birch)"><use href="#i-egg"/></svg></td><td class="nm">egg</td><td>Æg, protein</td></tr>
+      <tr><td class="em">🍞 🥪</td><td><svg class="ic" style="color:var(--birch)"><use href="#i-bread"/></svg></td><td class="nm">bread</td><td>Rugbrød, frokost</td></tr>
+      <tr><td class="em">🍽️</td><td><svg class="ic" style="color:var(--birch)"><use href="#i-plate"/></svg></td><td class="nm">plate</td><td>Aftensmad</td></tr>
+      <tr><td class="em">☕</td><td><svg class="ic" style="color:var(--birch)"><use href="#i-coffee"/></svg></td><td class="nm">coffee</td><td>Kaffe</td></tr>
+      <tr><td class="em">🥤 🥛</td><td><svg class="ic" style="color:var(--birch)"><use href="#i-shake"/></svg></td><td class="nm">shake / milk</td><td>Proteinshake, skyr, mælk</td></tr>
+      <tr><td class="em">🚶‍♀️</td><td><svg class="ic" style="color:var(--fjord)"><use href="#i-walk"/></svg></td><td class="nm">walk</td><td>Gåtur, gangbånd</td></tr>
+      <tr><td class="em">🏃‍♀️</td><td><svg class="ic" style="color:var(--fjord)"><use href="#i-run"/></svg></td><td class="nm">run</td><td>Løb, intervaller</td></tr>
+      <tr><td class="em">🚴‍♀️</td><td><svg class="ic" style="color:var(--fjord)"><use href="#i-bike"/></svg></td><td class="nm">bike</td><td>Cykling</td></tr>
+      <tr><td class="em">🧘‍♀️</td><td><svg class="ic" style="color:var(--fjord)"><use href="#i-yoga"/></svg></td><td class="nm">yoga</td><td>Hvile og stræk</td></tr>
+      <tr><td class="em">🏋️‍♀️</td><td><svg class="ic" style="color:var(--fjord)"><use href="#i-dumbbell"/></svg></td><td class="nm">dumbbell</td><td>Styrke A og B</td></tr>
+      <tr><td class="em">💧</td><td><svg class="ic" style="color:var(--fjord)"><use href="#i-drop"/></svg></td><td class="nm">drop</td><td>Vand, menstruation</td></tr>
+      <tr><td class="em">⚖️</td><td><svg class="ic" style="color:var(--spruce)"><use href="#i-scale"/></svg></td><td class="nm">scale</td><td>Vægt</td></tr>
+      <tr><td class="em">🏅</td><td><svg class="ic" style="color:var(--spruce)"><use href="#i-medal"/></svg></td><td class="nm">medal</td><td>Milepæle</td></tr>
+      <tr><td class="em">🎉 ✅</td><td><svg class="ic" style="color:var(--spruce)"><use href="#i-sparkle"/></svg></td><td class="nm">sparkle / check</td><td>Mål nået, gennemført</td></tr>
+      <tr><td class="em">📷</td><td><svg class="ic" style="color:var(--spruce)"><use href="#i-camera"/></svg></td><td class="nm">camera</td><td>Tag billede</td></tr>
+      <tr><td class="em">⚡</td><td><svg class="ic" style="color:var(--spruce)"><use href="#i-bolt"/></svg></td><td class="nm">bolt</td><td>Fra min plan</td></tr>
+      <tr><td class="em">🔎 ✏️ 📦 ⭐</td><td><svg class="ic" style="color:var(--spruce)"><use href="#i-search"/></svg></td><td class="nm">search · pencil · barcode · star</td><td>Søg, skriv selv, scan, mine</td></tr>
+      <tr><td class="em">🔒</td><td><svg class="ic" style="color:var(--spruce)"><use href="#i-lock"/></svg></td><td class="nm">lock</td><td>Privatliv på telefonen</td></tr>
+      <tr><td class="em">🌙 🌱</td><td><svg class="ic" style="color:var(--heather)"><use href="#i-moon"/></svg></td><td class="nm">moon · sprout · sun</td><td>Cyklusfaser</td></tr>
+      <tr><td class="em">📈 ➖</td><td><svg class="ic" style="color:var(--spruce)"><use href="#i-trend-up"/></svg></td><td class="nm">trend-up · flat</td><td>Vægttrend</td></tr>
+      <tr><td class="em">💡</td><td><svg class="ic" style="color:var(--spruce)"><use href="#i-bulb"/></svg></td><td class="nm">bulb</td><td>Tips</td></tr>
+      <tr><td class="em">⚠️</td><td><svg class="ic" style="color:var(--clay)"><use href="#i-warning"/></svg></td><td class="nm">warning</td><td>Advarsel</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Skærmforslag</h2>
+  <p class="lead">Fire centrale skærme med eksempeldata. Tallene er fiktive; teksterne er hentet fra appen.</p>
+  <div class="phones">
+
+    <!-- I dag -->
+    <div class="phone-wrap">
+      <div class="phone"><div class="screen">
+        <div class="s-date">Søndag 15. november</div>
+        <div class="s-title">Min uge</div>
+        <div class="chips">
+          <span class="chip"><svg class="ic"><use href="#i-calendar"/></svg>Uge 3 af 4</span>
+          <span class="chip"><svg class="ic"><use href="#i-home"/></svg>Hjemme</span>
+          <span class="chip"><svg class="ic"><use href="#i-moon"/></svg>Lutealfase</span>
+        </div>
+        <div class="s-card cat-train">
+          <h4><svg class="ic"><use href="#i-walk"/></svg>I dag</h4>
+          <div class="row" style="padding:0;border:none">
+            <div class="badge cat-train"><svg class="ic"><use href="#i-walk"/></svg></div>
+            <div class="t"><b>Gangbånd</b><span class="s-muted">Rask gang 5–6 km/t · 30 min</span></div>
+            <span class="btn small">Start</span>
+          </div>
+        </div>
+        <div class="s-card cat-food">
+          <h4><svg class="ic"><use href="#i-plate"/></svg>Kalorier</h4>
+          <div class="row" style="padding:0;border:none;justify-content:space-between"><b style="font-size:20px">1.240</b><span class="s-muted">af 1.800 kcal</span></div>
+          <div class="bar"><i style="width:69%"></i></div>
+          <div class="grid3" style="margin-top:8px">
+            <div class="tile cat-train"><svg class="ic"><use href="#i-drop"/></svg><b>5 / 8</b><span>glas vand</span></div>
+            <div class="tile cat-food"><svg class="ic"><use href="#i-egg"/></svg><b>94 g</b><span>protein</span></div>
+            <div class="tile cat-prog"><svg class="ic"><use href="#i-scale"/></svg><b>78,4</b><span>kg</span></div>
+          </div>
+        </div>
+        <div class="s-card cat-cyc">
+          <h4><svg class="ic"><use href="#i-moon"/></svg>Lutealfase · dag 19</h4>
+          <div class="s-muted" style="color:#1E2B2A">Mere appetit er normalt – læg 100–150 kcal oveni, fx skyr.</div>
+        </div>
+        <nav class="nav">
+          <div class="on"><svg class="ic"><use href="#i-home"/></svg>I dag</div>
+          <div><svg class="ic"><use href="#i-plate"/></svg>Mad</div>
+          <div><svg class="ic"><use href="#i-dumbbell"/></svg>Træning</div>
+          <div><svg class="ic"><use href="#i-trend-up"/></svg>Fremgang</div>
+        </nav>
+      </div></div>
+      <div class="phone-cap"><b>I dag</b>Overblik med én hovedhandling</div>
+    </div>
+
+    <!-- Mad -->
+    <div class="phone-wrap">
+      <div class="phone"><div class="screen">
+        <div class="s-date">Mad i dag</div>
+        <div class="s-title">Mad</div>
+        <div class="grid3" style="margin-bottom:12px">
+          <div class="tile cat-food"><svg class="ic"><use href="#i-camera"/></svg><b>Tag billede</b><span>og vælg hvad det er</span></div>
+          <div class="tile cat-food"><svg class="ic"><use href="#i-bolt"/></svg><b>Fra min plan</b><span>ét tryk</span></div>
+          <div class="tile cat-food"><svg class="ic"><use href="#i-search"/></svg><b>Søg mad</b><span>vælg gram</span></div>
+          <div class="tile cat-food"><svg class="ic"><use href="#i-pencil"/></svg><b>Skriv selv</b><span>vi regner kcal</span></div>
+          <div class="tile cat-food"><svg class="ic"><use href="#i-barcode"/></svg><b>Scan stregkode</b><span>på pakken</span></div>
+          <div class="tile cat-food"><svg class="ic"><use href="#i-star"/></svg><b>Mine</b><span>favoritter</span></div>
+        </div>
+        <div class="s-card">
+          <div class="row" style="padding:0"><div class="thumb cat-food"><svg class="ic"><use href="#i-bowl"/></svg></div><div class="t"><b>Kefir-skål med frø</b><span class="s-muted">250 g kefir, chia, bær</span></div><div class="k">270<span>kcal</span></div></div>
+          <div class="row"><div class="thumb cat-food"><svg class="ic"><use href="#i-apple"/></svg></div><div class="t"><b>Æble + mandler</b><span class="s-muted">1 æble og 10 g mandler</span></div><div class="k">100<span>kcal</span></div></div>
+          <div class="row"><div class="thumb cat-food"><svg class="ic"><use href="#i-shake"/></svg></div><div class="t"><b>Proteinshake</b><span class="s-muted">30 g whey med vand</span></div><div class="k">120<span>kcal</span></div></div>
+          <div class="row" style="border:none"><div class="thumb cat-food"><svg class="ic"><use href="#i-coffee"/></svg></div><div class="t"><b>Kaffe med mælk</b><span class="s-muted">ca. 50 ml letmælk</span></div><div class="k">20<span>kcal</span></div></div>
+        </div>
+        <nav class="nav">
+          <div><svg class="ic"><use href="#i-home"/></svg>I dag</div>
+          <div class="on"><svg class="ic"><use href="#i-plate"/></svg>Mad</div>
+          <div><svg class="ic"><use href="#i-dumbbell"/></svg>Træning</div>
+          <div><svg class="ic"><use href="#i-trend-up"/></svg>Fremgang</div>
+        </nav>
+      </div></div>
+      <div class="phone-cap"><b>Mad</b>Handlinger som et roligt ikongitter</div>
+    </div>
+
+    <!-- Træning -->
+    <div class="phone-wrap">
+      <div class="phone"><div class="screen">
+        <div class="s-date">Uge 3 af 4 · Hjemme</div>
+        <div class="s-title">Træning</div>
+        <div class="days">
+          <div>Ma</div><div class="on">Ti</div><div>On</div><div class="today">To</div><div>Fr</div><div>Lø</div><div>Sø</div>
+        </div>
+        <div class="s-card cat-train" style="padding:16px">
+          <div class="row" style="padding:0;border:none">
+            <div class="badge lg cat-train"><svg class="ic"><use href="#i-dumbbell"/></svg></div>
+            <div class="t"><b style="font-size:17px">Styrke B</b><span class="s-muted">Ro 5 min + 5 øvelser · ca. 35 min</span></div>
+          </div>
+          <div class="btn full" style="margin-top:14px;background:var(--fjord)">Start pas</div>
+        </div>
+        <div class="s-card">
+          <h4><svg class="ic"><use href="#i-sparkle"/></svg>Seneste aktiviteter</h4>
+          <div class="row"><div class="thumb cat-train"><svg class="ic"><use href="#i-walk"/></svg></div><div class="t"><b>Gåtur</b><span class="s-muted">i går · 30 min</span></div><div class="k">165<span>kcal</span></div></div>
+          <div class="row"><div class="thumb cat-train"><svg class="ic"><use href="#i-run"/></svg></div><div class="t"><b>Løb</b><span class="s-muted">mandag · 25 min</span></div><div class="k">210<span>kcal</span></div></div>
+          <div class="row" style="border:none"><div class="thumb cat-train"><svg class="ic"><use href="#i-yoga"/></svg></div><div class="t"><b>Yoga / stræk</b><span class="s-muted">søndag · 10 min</span></div><div class="k">20<span>kcal</span></div></div>
+        </div>
+        <nav class="nav">
+          <div><svg class="ic"><use href="#i-home"/></svg>I dag</div>
+          <div><svg class="ic"><use href="#i-plate"/></svg>Mad</div>
+          <div class="on"><svg class="ic"><use href="#i-dumbbell"/></svg>Træning</div>
+          <div><svg class="ic"><use href="#i-trend-up"/></svg>Fremgang</div>
+        </nav>
+      </div></div>
+      <div class="phone-cap"><b>Træning</b>Dagens pas i en tydelig fjordfarve</div>
+    </div>
+
+    <!-- Fremgang -->
+    <div class="phone-wrap">
+      <div class="phone"><div class="screen">
+        <div class="s-date">Fremgang</div>
+        <div class="s-title">Fremgang</div>
+        <div class="s-card cat-prog">
+          <h4><svg class="ic"><use href="#i-scale"/></svg>Vægt</h4>
+          <div class="row" style="padding:0;border:none;justify-content:space-between"><b style="font-size:24px">78,4 kg</b><span class="s-muted">−1,2 kg siden start</span></div>
+          <div class="bar"><i style="width:46%"></i></div>
+          <div class="s-muted">Mål: 15. marts · 46 % af vejen</div>
+          <div class="chips" style="margin:10px 0 0">
+            <span class="chip" style="background:var(--spruce);color:#fff;border-color:var(--spruce)"><svg class="ic" style="color:#fff"><use href="#i-medal"/></svg>5 kg tabt</span>
+            <span class="chip"><svg class="ic"><use href="#i-flat"/></svg>Næste: 2 kg</span>
+          </div>
+        </div>
+        <div class="s-card cat-prog">
+          <h4><svg class="ic"><use href="#i-trend-up"/></svg>Trend</h4>
+          <div class="s-muted" style="color:#1E2B2A">Trenden går lidt ned – det er præcis det, vi håber på.</div>
+        </div>
+        <div class="s-card">
+          <h4><svg class="ic"><use href="#i-camera"/></svg>Progress-billeder</h4>
+          <div class="photos"><div></div><div></div><div></div></div>
+          <div class="notice"><svg class="ic"><use href="#i-lock"/></svg>Gemmes kun på din telefon</div>
+        </div>
+        <nav class="nav">
+          <div><svg class="ic"><use href="#i-home"/></svg>I dag</div>
+          <div><svg class="ic"><use href="#i-plate"/></svg>Mad</div>
+          <div><svg class="ic"><use href="#i-dumbbell"/></svg>Træning</div>
+          <div class="on"><svg class="ic"><use href="#i-trend-up"/></svg>Fremgang</div>
+        </nav>
+      </div></div>
+      <div class="phone-cap"><b>Fremgang</b>Tal og milepæle med grøn accent</div>
+    </div>
+
+  </div>
+
+  <h2>Implementering</h2>
+  <div class="card" style="max-width:720px">
+    <p class="lead" style="margin:0">Ikonerne kan indsættes uden at ændre appens opbygning. Emoji-værdierne i datastrukturerne (fx <code>e:'🥣'</code>, <code>e:'🏋️‍♀️'</code>) erstattes af ikon-nøgler (fx <code>icon:'bowl'</code>), som renderes som <code>&lt;svg&gt;&lt;use href="#i-bowl"/&gt;&lt;/svg&gt;</code>. Farven følger kategorien via klasserne <code>cat-food</code>, <code>cat-train</code>, <code>cat-prog</code> og <code>cat-cyc</code>. Den nuværende <code>index.html</code> er ikke ændret.</p>
+  </div>
+
+</div>
+</body>
+</html>
