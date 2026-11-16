@@ -132,7 +132,7 @@
   .why span { background:#fff; border-radius:99px; padding:4px 10px; font-size:12px; border:1px solid #e8e8e8; }
   .wk .loc { display:block; border:0; background:#f0f0f0; border-radius:8px; margin-top:4px; padding:2px 0; font-size:14px; width:100%; }
   .moved { margin-top: 8px; font-size: 12px; background: rgba(255,255,255,.6); border-radius: 99px; padding: 4px 10px; display: inline-block; }
-  .days button { position: relative; } .days .sw { position: absolute; top: 2px; right: 4px; font-style: normal; font-size: 10px; color: #262626; }
+  .days button { position: relative; } .days .sw { position: absolute; top: 2px; right: 4px; font-style: normal; font-size: 10px; color: #262626; } .days .pl { position: absolute; top: 2px; left: 4px; font-style: normal; font-size: 10px; color: #262626; }
   .sh { margin: 14px 0 8px; font-size: 14px; color: #525252; }
   .opt.sel { border-color: var(--teal); background: #fafafa; }
   .shead { display: flex; align-items: center; justify-content: space-between; gap: 10px; } .shead h3 { margin: 0 0 10px; } .shead .btn { margin-bottom: 10px; }
@@ -799,6 +799,7 @@ state.favs = state.favs || [];
 state.meals = state.meals || [];
 state.scanned = state.scanned || {};
 state.days = state.days || {};
+state.plus = state.plus || {};
 state.weights = state.weights || [];
 state.measures = state.measures || [];
 state.periods = state.periods || (state.settings.cycleStart ? [state.settings.cycleStart] : []);
@@ -990,13 +991,13 @@ function weekNav(){
   return `<div class="vnav"><button onclick="shiftView(-7)" aria-label="Uge tilbage"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button>
     <span>${esc(lbl)}</span>
     ${viewK ? '<button class="reset" onclick="setView(null)">I dag</button>' : ''}
-    <button onclick="shiftView(7)" aria-label="Uge frem" ${iso(mon) >= iso(mondayOf(new Date())) ? 'disabled' : ''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button></div>`;
+    <button onclick="shiftView(7)" aria-label="Uge frem" ${iso(mon) >= iso(addDays(mondayOf(new Date()), 7)) ? 'disabled' : ''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button></div>`;
 }
 function weekStrip(){
   const todayK = iso(new Date()), cur = vIso(), order = [1,2,3,4,5,6,0];
-  return `<div class="days">${order.map((wd,i) => { const k = keyForWeekday(wd), dd = state.days[k]; return `<button class="${k===cur?'on':''} ${k===todayK?'today':''}" onclick="setView('${k}')">${SHORT[i]}<span class="ok">${dd && dd.done ? '✅' : schFor(wd).e}</span>${srcFor(wd)!==wd?'<i class="sw">⇄</i>':''}</button>`; }).join('')}</div>`;
+  return `<div class="days">${order.map((wd,i) => { const k = keyForWeekday(wd), dd = state.days[k]; return `<button class="${k===cur?'on':''} ${k===todayK?'today':''}" onclick="setView('${k}')">${SHORT[i]}<span class="ok">${dd && dd.done ? '✅' : schFor(wd).e}</span>${srcFor(wd)!==wd?'<i class="sw">⇄</i>':''}${((state.plus||{})[k]||[]).length ? '<i class="pl">＋</i>' : ''}</button>`; }).join('')}</div>`;
 }
-function shiftView(n){ const base = vDate(); base.setDate(base.getDate() + n); const k = iso(base); if (k > iso(new Date())) return; setView(k); }
+function shiftView(n){ const base = vDate(); base.setDate(base.getDate() + n); const k = iso(base); if (k > iso(addDays(mondayOf(new Date()), 13))) return; setView(k); }
 /* Vandret swipe på alle faner skifter uge (venstre = frem, højre = tilbage) */
 let swipeX = null, swipeY = null;
 document.addEventListener('touchstart', e => {
@@ -1387,17 +1388,18 @@ function figure(id){
 function full(o){ const r = Object.assign({}, o); r.kr = r.kr || r.kl; r.fr = r.fr || r.fl; r.er = r.er || r.el; r.hr = r.hr || r.hl; return r; }
 
 function renderTrain(){
-  const todayK = iso(new Date()), key = keyForWeekday(trainDay), d = day(key), sch = schFor(trainDay), w0 = weekInfo(), moved = srcFor(trainDay) !== trainDay, adj = adjustFor(key);
+  const todayK = iso(new Date()), key = keyForWeekday(trainDay), d = state.days[key] || { sets:{}, done:false }, future = key > todayK, sch = schFor(trainDay), w0 = weekInfo(), moved = srcFor(trainDay) !== trainDay, adj = adjustFor(key);
   const w = adj && adj.lighter ? Object.assign({}, w0, { sets: Math.min(2, w0.sets) }) : w0;
   const order = [1,2,3,4,5,6,0];
   let html = `${workToggle(trainDay)}${suggestCard(trainDay)}
     <div class="hero t-${sch.type}"><div class="big">${sch.e}</div><h2>${sch.title}</h2><div style="font-size:14px">${DAYNAMES[trainDay]} · ${sch.sub}</div>
       ${moved ? `<div class="moved">⇄ Ændret denne uge · planen var ${SCHEDULE[trainDay].e} ${SCHEDULE[trainDay].title}</div>` : ''}
-      ${adj ? `<div class="adj">${adj.msg}${adj.covered && !d.done ? `<div><button class="btn small" style="margin-top:6px" onclick="setDone('${key}',true)">✓ Marker som klaret</button></div>` : ''}</div>` : ''}
+      ${adj ? `<div class="adj">${adj.msg}${adj.covered && !d.done && !future ? `<div><button class="btn small" style="margin-top:6px" onclick="setDone('${key}',true)">✓ Marker som klaret</button></div>` : ''}</div>` : ''}
       <button class="btn small swapbtn" onclick="openSwap()">🔄 ${moved ? 'Ændr' : 'Byt dag'}</button></div>
+    <button class="btn small ghost" style="width:100%;margin-bottom:12px" onclick="openPlus()">＋ Tilføj træning</button>
     ${key <= iso(new Date()) ? feelRow(key) : ''}`;
   if (adj && adj.rest && !d.done) { $('#view').innerHTML = html + `<div class="card"><h2>🛌 Hvil i dag</h2><div style="font-size:14px">Ingen sæt og ingen timer i dag. Vil du gerne tage træningen senere på ugen, kan du flytte den.</div>
-    <button class="btn small ghost" style="margin-top:10px" onclick="openSwap()">🔄 Flyt ${sch.title.toLowerCase()} til en anden dag</button></div>${extraCard(key)}`; return; }
+    <button class="btn small ghost" style="margin-top:10px" onclick="openSwap()">🔄 Flyt ${sch.title.toLowerCase()} til en anden dag</button></div>${plusCards(key)}${future ? '' : extraCard(key)}`; return; }
 
   if (sch.type === 'str') {
     const ids = PROGRAMS[sch.prog];
@@ -1419,12 +1421,13 @@ function renderTrain(){
     html += timerCard(adj && adj.segs ? adj.segs : adj && adj.factor ? scaleSegs(segsFor(srcFor(trainDay), w), adj.factor) : segsFor(srcFor(trainDay), w), adj && adj.segs ? 'Tilpasset timer' : adj && adj.factor ? 'Forkortet timer' : 'Timer', key);
     if (srcFor(trainDay) === 6) html += `<div class="card"><b>❄️ Vinter</b><div style="font-size:14px">Mørkt, glat eller meget koldt? Lav samme intervaller på gangbåndet. Husk refleks og lys udenfor.</div></div>`;
   }
-  html += d.done
+  html += plusCards(key);
+  if (!future) html += d.done
     ? `<button class="btn full gray" onclick="setDone('${key}',false)">✅ Gennemført – fortryd</button>`
     : `<button class="btn full" onclick="setDone('${key}',true)">Marker dagens træning som gennemført</button>`;
-  html += extraCard(key);
+  if (!future) html += extraCard(key);
   $('#view').innerHTML = html;
-  if (timer.run && timer.key === key) tickUI();
+  if (timer.run && timer.key && timer.key.indexOf(key) === 0) tickUI();
 }
 function srcFor(wd){ const v = (state.swaps || {})[keyForWeekday(wd)]; return v == null ? wd : v; }
 function schFor(wd){ return SCHEDULE[srcFor(wd)]; }
@@ -1441,16 +1444,96 @@ function openSwap(){
       <div class="muted" style="margin-bottom:10px">Ændringen gælder kun denne uge. Næste uge følger du planen igen.</div>
       ${srcFor(me) !== me ? `<button class="btn full gray" style="margin-bottom:12px" onclick="resetSwap(${me})">↺ Tilbage til planen (${SCHEDULE[me].e} ${SCHEDULE[me].title})</button>` : ''}
       <h4 class="sh">⇄ Byt med en anden dag</h4>${others}
-      <h4 class="sh">Eller vælg bare en træning til ${DAYNAMES[me].toLowerCase()}</h4>${all}
+      <h4 class="sh">Erstat dagens træning med</h4>${all}
     </div>`;
 }
 function swapDays(a, b){
   const sa = srcFor(a), sb = srcFor(b); setSrc(a, sb); setSrc(b, sa); save(); closeSheet(); openEx = null;
   toast(`⇄ Byttet: ${SHORT[(a+6)%7]} ${SCHEDULE[sb].e} · ${SHORT[(b+6)%7]} ${SCHEDULE[sa].e}`); render();
 }
-function pickWorkout(wd, src){ setSrc(wd, src); save(); closeSheet(); openEx = null; toast(`${SCHEDULE[src].e} ${DAYNAMES[wd]}: ${SCHEDULE[src].title}`); render(); }
+function pickWorkout(wd, src){
+  const prev = srcFor(wd); setSrc(wd, src); save(); openEx = null;
+  const props = src !== prev ? proposeRest(wd, prev) : [];
+  closeSheet(); toast(`${SCHEDULE[src].e} ${DAYNAMES[wd]}: ${SCHEDULE[src].title}`); render();
+  if (props.length) openProposal(props);
+}
 function resetSwap(wd){ setSrc(wd, wd); save(); closeSheet(); openEx = null; toast('↺ Tilbage til planen'); render(); }
 function keyForWeekday(wd){ const m = mondayOf(vDate()); m.setDate(m.getDate() + ((wd+6)%7)); return iso(m); }
+
+/* ================= EKSTRA PAS OG JUSTERING AF UGEN ================= */
+const LOAD_PTS = { str:2, row:2, run:3, walk:1, rest:0 };
+let pendingProps = null;
+function dayPts(wd){ const k = keyForWeekday(wd); return LOAD_PTS[schFor(wd).type] + ((state.plus || {})[k] || []).reduce((a, p) => a + LOAD_PTS[SCHEDULE[p.src].type], 0); }
+function openPlus(){
+  const me = trainDay, opts = [1,2,5,6].map(src => { const sc = SCHEDULE[src];
+    return `<button class="opt" onclick="addPlus(${me},${src})"><span class="e">${sc.e}</span><span class="t"><b>${sc.title}</b><span>${sc.sub}</span></span><span class="plus">＋</span></button>`; }).join('');
+  $('#overlay').innerHTML = `<div class="backdrop" onclick="closeSheet()"></div>
+    <div class="sheet"><div class="grab"></div>
+      <div class="shead"><h3>＋ Tilføj træning</h3><button class="btn small gray" onclick="closeSheet()">Luk</button></div>
+      <div class="muted" style="margin-bottom:10px">Ekstra pas ${DAYNAMES[me].toLowerCase()}, oven i dagens plan. Dagens træning bliver liggende. Styrke kan du i stedet bytte ind via 🔄.</div>
+      ${opts}
+    </div>`;
+}
+function addPlus(wd, src){
+  const k = keyForWeekday(wd); state.plus = state.plus || {};
+  (state.plus[k] = state.plus[k] || []).push({ src, done:false });
+  save(); closeSheet();
+  const props = proposeRest(wd, null);
+  toast(`＋ ${SCHEDULE[src].e} ${SCHEDULE[src].title} · ${DAYNAMES[wd]}`); render();
+  if (props.length) openProposal(props);
+}
+function togglePlus(key, i, v){
+  if (key > iso(new Date())) return;
+  const p = (state.plus || {})[key] && state.plus[key][i]; if (!p) return;
+  p.done = v === undefined ? !p.done : v; save();
+  if (p.done) { toast('🎉 Ekstra pas gennemført'); vibrate([60,40,60]); }
+  render();
+}
+function removePlus(key, i){
+  if (timer.key && timer.key.indexOf(key + '#p') === 0) resetTimer();
+  state.plus[key].splice(i, 1); if (!state.plus[key].length) delete state.plus[key];
+  save(); toast('Ekstra pas fjernet'); render();
+}
+function plusCards(key){
+  return ((state.plus || {})[key] || []).map((p, i) => { const sc = SCHEDULE[p.src];
+    return `<div class="card"><div class="shead"><b>＋ ${sc.e} ${sc.title}</b><button class="btn small gray" onclick="removePlus('${key}',${i})">Fjern</button></div>
+      <div style="font-size:14px">${sc.sub}</div></div>
+      ${timerCard(segsFor(p.src, weekInfo()), 'Ekstra pas', key + '#p' + i)}
+      <button class="btn full ${p.done ? 'gray' : ''}" onclick="togglePlus('${key}',${i})" ${key > iso(new Date()) ? 'style="display:none"' : ''}>${p.done ? '✅ Gennemført – fortryd' : 'Marker ekstra pas som gennemført'}</button>`; }).join('');
+}
+/* Foreslår ændringer af resten af ugen (kun ikke-gennemførte dage fra i dag og frem):
+   A: dagen bliver hård (≥3 point) → næste hårde dag senere samme uge gøres let (løb/row → gang, styrke → hvile).
+   B: et styrkepas er erstattet, og der er under 2 styrkepas tilbage → en senere let dag bliver et styrkepas. */
+function proposeRest(wd, prev){
+  const todayK = iso(new Date()), open = w => keyForWeekday(w) >= todayK && !((state.days[keyForWeekday(w)] || {}).done);
+  const later = ORDER.slice(ORDER.indexOf(wd) + 1).filter(open), out = [];
+  if (dayPts(wd) >= 3) {
+    const t = later.find(w => HEAVY.includes(schFor(w).type));
+    if (t != null) { const to = schFor(t).type === 'str' ? 3 : 1;
+      out.push({ wd:t, to, why:`${DAYNAMES[wd]} bliver en hård dag, så ${DAYNAMES[t].toLowerCase()} gøres lettere.` }); }
+  }
+  if (prev != null && SCHEDULE[prev].type === 'str' && schFor(wd).type !== 'str') {
+    const strLeft = ORDER.filter(w => open(w) && schFor(w).type === 'str').length;
+    const t = later.find(w => LIGHT.includes(schFor(w).type) && !out.some(p => p.wd === w));
+    if (strLeft < 2 && t != null) out.push({ wd:t, to: ORDER.some(w => srcFor(w) === 4) ? 0 : 4, why:`Der er kun ${strLeft} styrkepas tilbage i ugen, så ${DAYNAMES[t].toLowerCase()} bliver et styrkepas.` });
+  }
+  return out.map(p => Object.assign(p, { text:`${DAYNAMES[p.wd]}: ${schFor(p.wd).e} ${schFor(p.wd).title} → ${SCHEDULE[p.to].e} ${SCHEDULE[p.to].title}` }));
+}
+function openProposal(props){
+  pendingProps = props;
+  $('#overlay').innerHTML = `<div class="backdrop" onclick="closeSheet()"></div>
+    <div class="sheet"><div class="grab"></div>
+      <h3>Justér resten af ugen?</h3>
+      <div class="muted" style="margin-bottom:10px">Din ændring gør ugen mere hård eller let. Vil du have disse ændringer?</div>
+      ${props.map(p => `<div class="opt"><span class="e">${SCHEDULE[p.to].e}</span><span class="t"><b>${p.text}</b><span>${p.why}</span></span></div>`).join('')}
+      <div class="row" style="margin-top:12px"><button class="btn gray" onclick="closeSheet()">Afslå</button><button class="btn" onclick="applyProposals()">Bekræft</button></div>
+    </div>`;
+}
+function applyProposals(){
+  (pendingProps || []).forEach(p => setSrc(p.wd, p.to));
+  pendingProps = null; save(); closeSheet(); openEx = null;
+  toast('✓ Resten af ugen er justeret'); render();
+}
 
 /* ================= HJEMME / KONTOR ================= */
 const ORDER = [1,2,3,4,5,6,0];
@@ -1696,7 +1779,8 @@ function nextSeg(){
   if (timer.i >= timer.segs.length) {
     clearInterval(tInt); timer.run = false; beep(988,.3); setTimeout(() => beep(1318,.4), 300); vibrate([200,100,200,100,400]);
     const k = timer.key; Object.assign(timer, { segs:[], i:0, key:null });
-    setDone(k, true); return;
+    if (k && k.indexOf('#p') > -1) { const [pk, pi] = k.split('#p'); togglePlus(pk, +pi, true); } else setDone(k, true);
+    return;
   }
   timer.left = timer.segs[timer.i][1]; timer.end = Date.now() + timer.left*1000;
   beep(880); setTimeout(() => beep(880), 220); vibrate([150,80,150]);
@@ -1806,6 +1890,7 @@ function measureCard(){
 /* Sæt og pause */
 let restInt = null;
 function tapSet(key, id, s, sets){
+  if (key > iso(new Date())) return;
   const d = day(key); d.sets[id] = d.sets[id] || [];
   d.sets[id][s] = !d.sets[id][s]; if (d.sets[id][s]) ensureLog(key, id); save();
   if (d.sets[id][s]) {
@@ -1951,12 +2036,17 @@ function stepsWeekCard(){ const wds = [1,2,3,4,5,6,0], ks = wds.map(keyForWeekda
     <div class="muted" style="margin-top:8px">Snit ${fmt(avg)} skridt · stiplet = 8.000 · sort = mål nået</div></div>`; }
 
 /* ================= ENERGIBALANCE ================= */
-function trainBurn(k){ const d = state.days[k]; if (!d || !d.done) return 0; const sch = schForKey(k), w = curWeight(k);
+function trainBurn(k){ return mainBurn(k) + plusBurn(k); }
+function mainBurn(k){ const d = state.days[k]; if (!d || !d.done) return 0; const sch = schForKey(k), w = curWeight(k);
   if (sch.type === 'str') return burnOf({ t:'str', min:35, i:1 }, w);
   if (sch.type === 'walk') return burnOf({ t:'walk', min:planMin(k), i:1.1 }, w);
   if (sch.type === 'row') return burnOf({ t:'row', min:planMin(k), i:.85 }, w);
   if (sch.type === 'run') return burnOf({ t:'run', min:planMin(k), i:.7 }, w);
   return 0; }
+/* Gennemførte ekstra pas giver samme forbrænding som et tilsvarende pas i planen (styrke tilføjes ikke som ekstra pas) */
+function plusBurn(k){ const w = curWeight(k), I = { walk:1.1, row:.85, run:.7 };
+  return ((state.plus || {})[k] || []).filter(p => p.done).reduce((a, p) => { const sc = SCHEDULE[p.src];
+    return a + burnOf({ t:sc.type, min: segsFor(p.src, weekInfo()).reduce((s, x) => s + x[1], 0)/60, i: I[sc.type] }, w); }, 0); }
 function energy(k){ const G = goalFor(k), w = curWeight(k), bmr = G.bmr, neat = Math.round(bmr*.45), H = hOf(k), intake = r0(totals(k).kcal);
   if (H && H.active > 0) { const burn = bmr + H.active; return { bmr, measured: H.active, steps: H.steps, at: H.at, neat:0, train:0, extra:0, burn, intake, bal: intake - burn }; }
   const train = trainBurn(k), extra = extrasOf(k).reduce((a,x) => a + burnOf(x, w), 0), burn = bmr + neat + train + extra;
