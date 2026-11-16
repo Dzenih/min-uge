@@ -1449,7 +1449,10 @@ function openSwap(){
 }
 function swapDays(a, b){
   const sa = srcFor(a), sb = srcFor(b); setSrc(a, sb); setSrc(b, sa); save(); closeSheet(); openEx = null;
+  const props = [...proposeRest(a, sa), ...proposeRest(b, sb)]
+    .filter((p, i, arr) => p.wd !== a && p.wd !== b && arr.findIndex(q => q.wd === p.wd) === i);
   toast(`⇄ Byttet: ${SHORT[(a+6)%7]} ${SCHEDULE[sb].e} · ${SHORT[(b+6)%7]} ${SCHEDULE[sa].e}`); render();
+  if (props.length) openProposal(props);
 }
 function pickWorkout(wd, src){
   const prev = srcFor(wd); setSrc(wd, src); save(); openEx = null;
@@ -1465,12 +1468,12 @@ const LOAD_PTS = { str:2, row:2, run:3, walk:1, rest:0 };
 let pendingProps = null;
 function dayPts(wd){ const k = keyForWeekday(wd); return LOAD_PTS[schFor(wd).type] + ((state.plus || {})[k] || []).reduce((a, p) => a + LOAD_PTS[SCHEDULE[p.src].type], 0); }
 function openPlus(){
-  const me = trainDay, opts = [1,2,5,6].map(src => { const sc = SCHEDULE[src];
+  const me = trainDay, opts = [1,2,4,0,5,6].map(src => { const sc = SCHEDULE[src];
     return `<button class="opt" onclick="addPlus(${me},${src})"><span class="e">${sc.e}</span><span class="t"><b>${sc.title}</b><span>${sc.sub}</span></span><span class="plus">＋</span></button>`; }).join('');
   $('#overlay').innerHTML = `<div class="backdrop" onclick="closeSheet()"></div>
     <div class="sheet"><div class="grab"></div>
       <div class="shead"><h3>＋ Tilføj træning</h3><button class="btn small gray" onclick="closeSheet()">Luk</button></div>
-      <div class="muted" style="margin-bottom:10px">Ekstra pas ${DAYNAMES[me].toLowerCase()}, oven i dagens plan. Dagens træning bliver liggende. Styrke kan du i stedet bytte ind via 🔄.</div>
+      <div class="muted" style="margin-bottom:10px">Ekstra pas ${DAYNAMES[me].toLowerCase()}, oven i dagens plan. Dagens træning bliver liggende.</div>
       ${opts}
     </div>`;
 }
