@@ -770,7 +770,7 @@ const EX = {
     props:'<rect x="15" y="150" width="160" height="4" rx="2" fill="#d4d4d4"/>',
     A:{ h:[30,136], n:[48,142], p:[92,146], kl:[120,120], fl:[136,148], el:[70,142], hl:[90,140] },
     B:{ h:[30,136], n:[48,140], p:[92,118], kl:[124,116], fl:[136,148], el:[70,132], hl:[90,114] } },
-  oarow: { name:'Etarms roning', reps:'12 pr. arm', db:'l',
+  oarow: { name:'Etarms rækker med håndvægt', reps:'12 pr. arm', db:'l',
     tips:['Støt hånd og knæ på en stol','Træk vægten op mod hoften – albuen tæt på kroppen','Sænk langsomt. Skift arm'],
     props:'<rect x="128" y="108" width="40" height="7" rx="2" fill="#a3a3a3"/><line x1="132" y1="115" x2="132" y2="150" stroke="#a3a3a3" stroke-width="4"/><line x1="164" y1="115" x2="164" y2="150" stroke="#a3a3a3" stroke-width="4"/>',
     A:{ h:[138,74], n:[124,80], p:[78,92], kl:[84,120], fl:[84,148], kr:[72,120], fr:[70,148], er:[132,94], hr:[136,108], el:[120,100], hl:[120,122] },
@@ -791,7 +791,9 @@ Object.assign(EX, {
   lungek: Object.assign({}, EX.lunge, { name:'Udfald uden vægt', db:false, tips:['Tag et langt skridt frem, og sænk bagknæet mod gulvet.','Hold overkroppen oprejst, og skub fra forfoden.'] }),
   goodm: Object.assign({}, EX.rdl, { name:'Hofteløft stående', db:false, tips:['Skub hofterne bagud, og hold ryggen lige.','Mærk baglåret strække sig, og stram balderne når du rejser dig.'] }),
   hipk: Object.assign({}, EX.hip, { name:'Hofteløft på ryggen', db:false, tips:['Læg dig på ryggen med fødderne i gulvet.','Løft hoften, og stram balderne helt op.'] }),
-  sht: Object.assign({}, EX.plank, { name:'Skuldertryk i planke', reps:'10 pr. side', time:undefined, db:false, tips:['Stå i planke, og tag skiftevis den modsatte skulder.','Hold hoften stille, så kroppen ikke vipper.'] })
+  sht: Object.assign({}, EX.plank, { name:'Skuldertryk i planke', reps:'10 pr. side', time:undefined, db:false, tips:['Stå i planke, og tag skiftevis den modsatte skulder.','Hold hoften stille, så kroppen ikke vipper.'] }),
+  bikew: Object.assign({}, EX.warm, { name:'Opvarmning på cyklen', tips:['Træd roligt med let modstand.','Øg tempoet lidt, så du bliver varm.'] }),
+  bwrow: Object.assign({}, EX.plank, { name:'Rygløft på maven', reps:'12', time:undefined, db:false, tips:['Lig på maven med arme og ben lidt løftet fra gulvet.','Løft brystet og armene let op, og hold 1 sek.','Sænk roligt og træk skulderbladene sammen.'] })
 });
 const PROGRAMS = { A:['row','goblet','lunge','press','pushup','plank'], B:['row','rdl','hip','oarow','curl','deadbug'] };
 
@@ -1427,13 +1429,13 @@ function renderTrain(){
         <div class="sets">${Array.from({length:sets}, (_,s) => `<button class="set ${got[s]?'on':''}" onclick="tapSet('${key}','${id}',${s},${sets})">${got[s] ? '✓' : s+1}</button>`).join('')}<span class="lbl">${isWarm(id) ? 'tryk når du er varm' : 'tryk efter hvert sæt'}</span></div>
       </div>`;
     });
-    if (sch.prog === 'B') html += `<div class="card"><b>🚶‍♀️ Bagefter: rolig gåtur 30 min</b><div class="muted">Ude eller på gangbåndet.</div></div>`;
-    if (!eqOf(trainDay).haand && sch.prog === 'B') html += `<div class="card"><b>Uden håndvægte</b><div class="muted">Curl og roning med vægt: brug vandflasker eller en rygsæk med bøger.</div></div>`;
+    if (sch.prog === 'B') html += `<div class="card"><b>🚶‍♀️ Bagefter: rolig gåtur 30 min</b><div class="muted">${walkLabel(trainDay) === 'Gangbånd' ? 'På gangbåndet.' : 'Udenfor.'}</div></div>`;
+    if (!eqOf(trainDay).haand && sch.prog === 'B') html += `<div class="card"><b>Uden håndvægte</b><div class="muted">Curl og rækker med vægt: brug vandflasker eller en rygsæk med bøger.</div></div>`;
   } else if (sch.type === 'rest') {
     html += timerCard(STRETCHES, 'Stræk-program', key);
   } else {
     html += timerCard(adj && adj.segs ? adj.segs : adj && adj.factor ? scaleSegs(segsFor(srcFor(trainDay), w), adj.factor) : segsFor(srcFor(trainDay), w), adj && adj.segs ? 'Tilpasset timer' : adj && adj.factor ? 'Forkortet timer' : 'Timer', key);
-    if (srcFor(trainDay) === 6) html += `<div class="card"><b>❄️ Vinter</b><div style="font-size:14px">Mørkt, glat eller meget koldt? Lav samme intervaller på gangbåndet. Husk refleks og lys udenfor.</div></div>`;
+    if (srcFor(trainDay) === 6) html += `<div class="card"><b>❄️ Vinter</b><div style="font-size:14px">Mørkt, glat eller meget koldt? Lav samme intervaller ${walkLabel(trainDay) === 'Gangbånd' ? 'på gangbåndet' : 'indendørs'}. Husk refleks og lys udenfor.</div></div>`;
   }
   html += plusCards(key);
   if (!future) html += d.done
@@ -1445,21 +1447,22 @@ function renderTrain(){
 }
 function srcFor(wd){ const v = (state.swaps || {})[keyForWeekday(wd)]; return v == null ? wd : v; }
 function schFor(wd){ return adaptSch(srcFor(wd), wd); }
-const BW = { goblet:'squatk', lunge:'lungek', press:'sht', rdl:'goodm', hip:'hipk' };
+const BW = { goblet:'squatk', lunge:'lungek', press:'sht', rdl:'goodm', hip:'hipk', oarow:'bwrow' };
 function eqOf(wd){ const e = state.settings.eq; return e.gym.on && e.gym.days.includes(wd) ? e.gym.eq : e.home; }
 function setEq(path, v){ const k = path.split('.'), last = k.pop(); let o = state.settings.eq; k.forEach(p => o = o[p]); o[last] = v; save(); render(); }
 function toggleGymDay(wd, on){ const g = state.settings.eq.gym, i = g.days.indexOf(wd); if (on && i < 0) g.days.push(wd); if (!on && i >= 0) g.days.splice(i, 1); save(); render(); }
-function isWarm(id){ return id === 'row' || id === 'warm'; }
+function isWarm(id){ return ['row','bikew','warm'].includes(id); }
 function exFor(id, wd){ const e = state.settings.eq, eq = eqOf(wd);
-  if (id === 'row') return eq.ro ? 'row' : 'warm';
+  if (id === 'row') { const bike = eq.cykel && (e.pref.machine === 'cykel' || !eq.ro); return bike ? 'bikew' : eq.ro ? 'row' : 'warm'; }
   return BW[id] && (!eq.haand || e.pref.strength === 'krop') ? BW[id] : id; }
+function walkLabel(wd){ const e = state.settings.eq; return eqOf(wd).baand && e.pref.cardio === 'baand' ? 'Gangbånd' : 'Udendørs gang'; }
 function adaptSch(src, wd){
   const base = SCHEDULE[src], pref = state.settings.eq.pref, eq = eqOf(wd);
-  const indoor = eq.baand && pref.cardio === 'baand', walk = indoor ? 'Gangbånd' : 'Udendørs gang';
+  const indoor = eq.baand && pref.cardio === 'baand', walk = walkLabel(wd);
   const mach = pref.machine === 'cykel' ? (eq.cykel ? 'cykel' : eq.ro ? 'romaskine' : null) : (eq.ro ? 'romaskine' : eq.cykel ? 'cykel' : null);
-  if (base.type === 'str') return Object.assign({}, base, { ids: PROGRAMS[base.prog].map(id => exFor(id, wd)) });
+  if (base.type === 'str') return Object.assign({}, base, { ids: PROGRAMS[base.prog].map(id => exFor(id, wd)), sub: base.sub.replace('Ro 5 min', mach === 'cykel' ? 'Cykel 5 min' : mach ? 'Ro 5 min' : 'Gang på stedet 5 min') });
   if (src === 1) return Object.assign({}, base, { sub: `${walk}, roligt · 20 min (valgfri)` });
-  if (src === 2) return Object.assign({}, base, { sub: `${walk} · rask gang 5–6 km/t · 30 min` });
+  if (src === 2) return Object.assign({}, base, { title: indoor ? 'Gangbånd' : 'Rask gang udenfor', sub: `${walk} · rask gang 5–6 km/t · 30 min` });
   if (src === 5) return Object.assign({}, base, { sub: mach ? `${walk} 30 min + ${mach} 10 min` : `${walk} 30 min · intervaller` });
   return base;
 }
@@ -1671,7 +1674,7 @@ function goalCard(k){ const G = goalFor(k);
 function segsFor(wd, w){
   if (wd === 1) return [['Rolig gang', 20*60, '#a3a3a3']];
   if (wd === 2) return [['Opvarmning, roligt', 180, '#d4d4d4'], ['Rask gang 5–6 km/t', (w.walk-6)*60, '#404040'], ['Nedkøling', 180, '#d4d4d4']];
-  if (wd === 5) { const s = [['Gangbånd, rask gang', w.walk*60 - 600, '#404040']]; for (let i=0;i<5;i++) s.push(['Lidt hurtigere', 60, '#262626'], ['Roligt', 60, '#d4d4d4']); return s; }
+  if (wd === 5) { const s = [[`${walkLabel(wd)}, rask gang`, w.walk*60 - 600, '#404040']]; for (let i=0;i<5;i++) s.push(['Lidt hurtigere', 60, '#262626'], ['Roligt', 60, '#d4d4d4']); return s; }
   if (wd === 6) {
     const s = [['Opvarmning: gang', 300, '#a3a3a3']];
     if (!w.int) s.push(['Rolig tur, gang eller let jog', 30*60, '#171717']);
@@ -2193,6 +2196,7 @@ const DG_LOG = [
   'Brandfarver (sort, rød, orange, grå) erstattet af designtokens i knapper, ringe, toasts og statuslinjer',
   'Indstillinger åbnes som bundpanel (drawer) med titel og luk-knap i stedet for som fane',
   'Udstyr derhjemme, træningscenter (med dage) og præferencer i Indstillinger. Øvelser og uge tilpasses udstyret',
+  'Udendørs, cykel og kropsvægt-præferencer vises korrekt: roning/gangbånd fjernes fra øvelser, titler og timere når de ikke er valgt',
 ];
 const DG_RULES = [
   'Ikoner kommer fra sprite-biblioteket: <svg class="ico"><use href="#i-navn"/></svg>. Ingen emojis i ny UI.',
